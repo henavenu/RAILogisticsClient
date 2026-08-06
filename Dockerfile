@@ -7,10 +7,16 @@
 # ─────────────────────────────────────────────────────────────────────────────
 FROM python:3.12-slim
 
-# NOTE: do NOT set PIP_NO_CACHE_DIR here — it would defeat the BuildKit pip cache
-# mounts below (--mount=type=cache,target=/root/.cache/pip), which is what makes
-# rebuilds fast (downloads are reused instead of re-fetched).
-ENV PYTHONUNBUFFERED=1 \
+# NOTE: this Dockerfile must build with the CLASSIC docker builder, not just
+# BuildKit. Cloud Run's auto-generated Cloud Build trigger runs a plain
+# `docker build --no-cache` with no DOCKER_BUILDKIT=1, and any
+# `RUN --mount=type=cache,...` line fails there with "the --mount option requires
+# BuildKit". So no mount syntax below. Losing the pip cache mounts costs nothing
+# in Cloud Build (fresh VM per run, and --no-cache defeats them regardless);
+# locally it just means pip re-downloads when a requirements layer changes.
+# With no cache mount to preserve, PIP_NO_CACHE_DIR keeps the image smaller.
+ENV PIP_NO_CACHE_DIR=1 \
+    PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
 # System deps: nginx (proxy), supervisor (process mgr), bash/curl (entrypoint).
@@ -33,7 +39,7 @@ COPY trust-agents/sentinel/requirements.txt ./trust-agents/sentinel/requirements
 COPY trust-agents/coordinator/requirements.txt ./trust-agents/coordinator/requirements.txt
 COPY sdk/examples/mybank_clean/requirements.txt ./sdk/examples/mybank_clean/requirements.txt
 COPY sdk/examples/pharma_logistics/requirements.txt ./sdk/examples/pharma_logistics/requirements.txt
-RUN --mount=type=cache,target=/root/.cache/pip \
+RUN \
     pip install \
       -r requirements.txt \
       -r trust-agents/sentinel/requirements.txt \
@@ -51,7 +57,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 COPY privacy-proxy ./privacy-proxy
 COPY sdk ./sdk
 COPY sdk-langgraph ./sdk-langgraph
-RUN --mount=type=cache,target=/root/.cache/pip \
+RUN \
     pip install ./privacy-proxy ./sdk ./sdk-langgraph
 
 # ── App code + container config ──────────────────────────────────────────────
