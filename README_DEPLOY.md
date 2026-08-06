@@ -50,13 +50,13 @@ The repo is already initialized and committed locally at
 `/Users/981061/PharmaLogistics-Demo`. It has **no remote yet** — that is the only
 thing standing between you and a pushed repo.
 
-### 1a. Create the empty repo under the `sharadcognizant` org
+### 1a. Create the empty repo under `henavenu`
 
 With the `gh` CLI:
 
 ```bash
 cd /Users/981061/PharmaLogistics-Demo
-gh repo create sharadcognizant/pharma-logistics-trust-demo \
+gh repo create henavenu/RAILogisticsClient \
   --private \
   --source=. \
   --remote=origin \
@@ -66,15 +66,15 @@ gh repo create sharadcognizant/pharma-logistics-trust-demo \
 That single command creates it, wires `origin`, and pushes. **If it succeeds, skip
 to Part 2.**
 
-Or via the web UI: https://github.com/organizations/sharadcognizant/repositories/new
-— name `pharma-logistics-trust-demo`, **private**, and do **not** initialize with a
-README (the local repo already has one).
+Or via the web UI: https://github.com/new — owner `henavenu`, name
+`RAILogisticsClient`, **private**, and do **not** initialize with a README
+(the local repo already has one).
 
 ### 1b. Push (only if you used the web UI)
 
 ```bash
 cd /Users/981061/PharmaLogistics-Demo
-git remote add origin https://github.com/sharadcognizant/pharma-logistics-trust-demo.git
+git remote add origin https://github.com/henavenu/RAILogisticsClient.git
 git branch -M main
 git push -u origin main
 ```
