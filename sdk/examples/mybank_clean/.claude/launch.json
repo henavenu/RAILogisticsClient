@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "run-generate-primer-pdf",
+      "runtimeExecutable": "C:\\Users\\shara\\Cursor Projects\\rai-trust-platform\\sdk\\examples\\mybank_clean\\venv\\Scripts\\python.exe",
+      "runtimeArgs": ["C:\\Users\\shara\\Cursor Projects\\rai-trust-platform\\sdk\\examples\\mybank_clean\\_run_and_serve.py"],
+      "port": 18432
+    }
+  ]
+}

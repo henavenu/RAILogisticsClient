@@ -1,0 +1,73 @@
+# Reverse proxy for the single-container deployment. Cloud Run hits __PORT__
+# (substituted from $PORT by entrypoint.sh). Routes: PAP (UI+API), MyBank (app),
+# and same-origin /agents/* routes so the browser dashboard can reach the
+# loopback-only agent services (Sentinel/Coordinator/trust-agents) through the
+# proxy. Guardrail / PE / Mock Assurance are reached server-side over loopback and
+# are NOT exposed here.
+worker_processes 1;
+events { worker_connections 1024; }
+http {
+  access_log /dev/stdout;
+  error_log  /dev/stderr;
+  sendfile on;
+  # SSE streams (audit/alerts) must not be buffered and need a long read timeout.
+  proxy_buffering off;
+  proxy_read_timeout 3600s;
+  proxy_http_version 1.1;
+  proxy_set_header Host $host;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+
+  # ── Redirects must stay RELATIVE ────────────────────────────────────────────
+  # Cloud Run terminates TLS at :443 and forwards to this container on $PORT
+  # (8080). nginx only ever sees the plain-HTTP :8080 hop, so any ABSOLUTE
+  # redirect it builds carries the wrong scheme AND the wrong port — a browser
+  # sent to "http://<svc>.a.run.app:8080/mybank/" simply fails to connect.
+  # These three directives make every Location header a bare path ("/mybank/"),
+  # which the browser resolves against the real origin.
+  #   absolute_redirect/port_in_redirect → nginx's own redirects (e.g. /mybank)
+  #   proxy_redirect                     → redirects issued by the upstream apps
+  #                                        (FastAPI's redirect_slashes, e.g. /ui)
+  absolute_redirect off;
+  port_in_redirect  off;
+  proxy_redirect ~^https?://[^/]+(/.*)$ $1;
+
+  server {
+    listen __PORT__;
+
+    # ── PAP: governance UI + API (dashboard, agent-activity, snapshots, audit) ──
+    location /ui/         { proxy_pass http://127.0.0.1:3002; }
+    location /v1/         { proxy_pass http://127.0.0.1:3002; }
+    location /internal/   { proxy_pass http://127.0.0.1:3002; }
+    location = /docs      { proxy_pass http://127.0.0.1:3002; }
+    location /openapi.json { proxy_pass http://127.0.0.1:3002; }
+
+    # ── Trust agents: same-origin routes so the browser dashboard can reach
+    #    loopback-only services through the proxy. The trailing slash on BOTH the
+    #    location and the upstream strips the prefix:
+    #        /agents/sentinel/verdicts  →  127.0.0.1:3012/verdicts
+    #    The dashboard JS is told these paths by PAP's /v1/ui-config (UI_* env). ──
+    location /agents/sentinel/    { proxy_pass http://127.0.0.1:3012/; }
+    location /agents/coordinator/ { proxy_pass http://127.0.0.1:3013/; }
+    location /agents/trust/       { proxy_pass http://127.0.0.1:3005/; }
+
+    # ── MyBank application, mounted under /mybank/ ──────────────────────────────
+    #    The trailing slash on BOTH sides strips the prefix, so the app still sees
+    #    its own routes at the root:  /mybank/api/chat  →  127.0.0.1:5000/api/chat
+    #
+    #    This only works because mybank's ui/index.html calls its API with RELATIVE
+    #    paths ("api/chat", not "/api/chat"). Absolute paths would resolve to the
+    #    origin root and hit PharmaLogistics instead — both apps expose an
+    #    identically-named /api/* surface. If you re-sync mybank_clean/ui/index.html
+    #    from the upstream MVP repo, re-apply that change or myBank's chat will
+    #    silently drive the wrong app.
+    #
+    #    The exact-match redirect is required: at "/mybank" (no trailing slash) the
+    #    browser resolves "api/chat" against "/" and bypasses the prefix entirely.
+    location = /mybank { return 301 /mybank/; }
+    location /mybank/  { proxy_pass http://127.0.0.1:5000/; }
+
+    # ── PharmaLogistics (chat UI at /, its API at /api/*) — the default app ──
+    location / { proxy_pass http://127.0.0.1:5001; }
+  }
+}

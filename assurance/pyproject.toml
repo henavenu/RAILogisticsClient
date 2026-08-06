@@ -1,0 +1,64 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rai-assurance"
+version = "0.1.0"
+description = "RAI Trust Platform — Observability & Assurance Service"
+requires-python = ">=3.11"   # 3.12 works fine
+dependencies = [
+    # API
+    "fastapi[standard]>=0.115",
+    "uvicorn[standard]>=0.32",
+    # Tracing
+    "arize-otel>=0.6",            # send/instrument spans → Arize
+    "arize>=8",                   # export/pull spans (ArizeClient) — arize_provider.py
+    "openinference-instrumentation-langchain>=0.1",
+    "openinference-instrumentation-openai>=0.1",
+    "openinference-instrumentation-anthropic>=0.1",
+    "opentelemetry-sdk>=1.27",
+    # LLM-as-judge eval framework (evals/evals.py: phoenix.evals.*)
+    "arize-phoenix-evals>=3",
+    # LangGraph / LangChain
+    "langchain>=0.3",
+    "langchain-openai>=0.2",
+    "langchain-anthropic>=0.3",
+    "langgraph>=0.2",
+    # LLM SDKs
+    "openai>=1.55",
+    "anthropic>=0.40",
+    # Scheduling
+    "apscheduler>=3.10",
+    # Data / utils
+    "pydantic>=2.9",
+    "httpx>=0.27",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+    "black>=24.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["core", "metrics", "evals", "api", "rai_client"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

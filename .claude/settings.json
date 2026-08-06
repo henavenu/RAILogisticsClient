@@ -1,0 +1,6 @@
+{
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": ["Read(C:\\Users\\shara\\Cursor Projects\\rai-trust-platform\\**)", "Write(C:\\Users\\shara\\Cursor Projects\\rai-trust-platform\\**)", "Edit(C:\\Users\\shara\\Cursor Projects\\rai-trust-platform\\**)"]
+  }
+}

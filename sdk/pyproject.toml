@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rai-trust-sdk"
+version = "0.1.0"
+description = "RAI Trust Platform SDK — governance for LangChain and LangGraph agents"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary" }
+dependencies = [
+    "httpx>=0.25",
+    "pydantic>=2.0",
+    # OTel API only — zero-overhead no-op when no TracerProvider is configured.
+    # Enables automatic GUARDRAIL span emission inside evaluate() so RAI spans
+    # appear as children of LangChain / LangGraph spans in Arize and any other
+    # OTLP-compatible backend without any host-app configuration.
+    "opentelemetry-api>=1.20",
+    # OpenInference semantic conventions — attribute name constants (GUARDRAIL
+    # span kind, input.value, output.value, session.id, …).  Required for Arize
+    # evaluator compatibility; no transitive deps beyond opentelemetry-api.
+    "openinference-semantic-conventions>=0.1",
+]
+
+[project.optional-dependencies]
+# Installs langchain-core only (shared base; works for both LC and LG callbacks)
+langchain = [
+    "langchain-core>=0.2",
+]
+# LangGraph runtime (pulls langchain-core transitively)
+langgraph = [
+    "langgraph>=0.1",
+]
+# Provider-agnostic OTLP telemetry — works with Arize, Jaeger, Grafana, Honeycomb, …
+otel = [
+    "opentelemetry-sdk>=1.20",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.20",
+    "opentelemetry-exporter-otlp-proto-http>=1.20",
+]
+# Presidio NLP privacy proxy — Microsoft Presidio + spaCy NER
+# After install: python -m spacy download en_core_web_lg
+presidio = [
+    "presidio-analyzer>=2.2",
+    "presidio-anonymizer>=2.2",
+    "spacy>=3.0",
+]
+# Everything
+all = [
+    "rai-trust-sdk[langchain,langgraph,otel,presidio]",
+]
+
+[project.urls]
+Repository = "https://github.com/your-org/rai-trust-platform"
+
+[tool.hatch.build.targets.wheel]
+packages = ["rai_trust_sdk"]

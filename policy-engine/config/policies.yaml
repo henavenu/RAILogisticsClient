@@ -1,0 +1,314 @@
+# ── Policy Defaults — seeder format ───────────────────────────────────────────
+#
+# This file is read by pap/core/seed.py (seed_policies) on first run.
+# Format: dict keyed by dimension_id.
+# Idempotent — existing rows in config_policies are never overwritten by the seeder.
+#
+# MessageWriter fields (policy_code, normative_action, normative_guidance) are
+# managed separately in policy_messages.yaml and applied via apply_messages.py.
+#
+policies:
+
+  # ── Safety ──────────────────────────────────────────────────────────────────
+  hate:
+    severity: 3
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Response may contain hateful language — review before delivery."
+      coercive:  "Content blocked — hateful language detected."
+
+  harassment:
+    severity: 3
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Response may contain harassment — review before delivery."
+      coercive:  "Content blocked — harassment detected."
+
+  sexual_content:
+    severity: 3
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Response may contain sexual content — review before delivery."
+      coercive:  "Content blocked — sexual content detected."
+
+  self_harm:
+    severity: 3
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Content flagged for self-harm references — referred for safeguarding review."
+      coercive:  "Content blocked — self-harm content detected."
+
+  violence:
+    severity: 3
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Response may contain violent content — review before delivery."
+      coercive:  "Content blocked — violent content detected."
+
+  misconduct:
+    severity: 2
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Response may facilitate misconduct — review before delivery."
+      coercive:  "Content blocked — misconduct risk detected."
+
+  # ── Security ─────────────────────────────────────────────────────────────────
+  prompt_injection:
+    severity: 3
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Input may contain injection patterns — review before processing."
+      coercive:  "Request blocked — prompt injection detected."
+
+  jailbreak:
+    severity: 3
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Input shows constraint-bypass signals — review before processing."
+      coercive:  "Request blocked — jailbreak attempt detected."
+
+  malicious_intent:
+    severity: 3
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Input may indicate malicious intent — flagged for review."
+      coercive:  "Content blocked — malicious intent detected."
+
+  # ── Privacy ──────────────────────────────────────────────────────────────────
+  sensitive_data_disclosure:
+    severity: 3
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Response may expose sensitive data — review and redact before delivery."
+      coercive:  "Response blocked — sensitive data exposure detected."
+
+  sensitive_data_request:
+    severity: 3
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Request for sensitive data — redirect to secure channel."
+      coercive:  "Request blocked — sensitive data access not permitted through this channel."
+
+  data_leakage:
+    severity: 2
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Response may contain data leakage — review and remove out-of-scope information."
+      coercive:  "Response blocked — data leakage detected."
+
+  data_minimisation_violation:
+    severity: 2
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Response discloses more data than necessary — reduce scope before delivery."
+      coercive:  "Response blocked — data minimisation violation detected."
+
+  # ── Compliance ───────────────────────────────────────────────────────────────
+  sanctions_country_reference:
+    severity: 3
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Request references a sanctioned jurisdiction — referred to Compliance."
+      coercive:  "Request blocked — sanctioned jurisdiction reference detected."
+
+  sanctions_entity_mention:
+    severity: 3
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Named counterparty requires sanctions screening — referred to Compliance."
+      coercive:  "Request blocked — sanctioned entity mention detected."
+
+  sanctions_evasion_signal:
+    severity: 3
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Request contains sanctions evasion signals — referred to Compliance."
+      coercive:  "Request blocked — sanctions evasion pattern detected."
+
+  aml_structuring_signal:
+    severity: 3
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Transaction pattern may indicate structuring — referred to AML/Compliance."
+      coercive:  "Request blocked — AML structuring signal detected."
+
+  corporate_policy:
+    severity: 2
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Response may conflict with corporate AI policy — review before delivery."
+      coercive:  "Content blocked — corporate policy violation detected."
+
+  # ── EU AI Act ─────────────────────────────────────────────────────────────────
+  eu_ai_act_prohibited_practice:
+    severity: 3
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Response may contain EU AI Act prohibited practice — review before delivery."
+      coercive:  "Content blocked — EU AI Act prohibited practice detected."
+
+  eu_ai_act_bias_discrimination:
+    severity: 2
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Response may exhibit discriminatory bias — review before delivery."
+      coercive:  "Content blocked — discriminatory bias detected."
+
+  eu_ai_act_transparency:
+    severity: 2
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "AI disclosure required — add transparency notice before delivery."
+      coercive:  "Content blocked — EU AI Act transparency obligation not met."
+
+  # ── Transparency ─────────────────────────────────────────────────────────────
+  groundedness:
+    severity: 2
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Response contains ungrounded claims — revise against source context."
+      coercive:  "Content blocked — ungrounded or fabricated content detected."
+
+  # ── Operational ──────────────────────────────────────────────────────────────
+  off_topic_request:
+    severity: 2
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Request is outside permitted scope — redirect to an in-scope response."
+      coercive:  "Request blocked — outside permitted application scope."
+
+  prompt_repetition:
+    severity: 1
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Repeated prompt pattern detected — vary your request to proceed."
+      coercive:  "Request blocked — excessive prompt repetition detected."
+
+  session_risk_scorer:
+    severity: 2
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 6]
+      coercive:   [7, 9]
+    remediations:
+      normative: "Session risk threshold reached — referred for operator review."
+      coercive:  "Session suspended — risk ceiling exceeded."
+
+  # ── Agent Coordination — Payment Surge Council ────────────────────────────────
+  # Advisory-only signals raised by the four payment-arbitration agents during a
+  # high-volume surge. ALL are capped at NORMATIVE (coercive range [10,10] is
+  # unreachable since scores are 1–9) so the multi-agent deliberation runs to
+  # completion instead of any single agent hard-blocking. The cross-turn conflict
+  # is detected by Sentinel, which escalates to HITL with a precedence-ranked
+  # recommendation (compliance > customer_experience > revenue).
+  fraud_velocity_signal:
+    severity: 2
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 9]
+      coercive:   [10, 10]
+    remediations:
+      normative: "Fraud agent flagged elevated transaction velocity — advisory only; coordinator arbitrates."
+      coercive:  "n/a — fraud_velocity_signal is advisory-only (never blocks)."
+
+  revenue_override_signal:
+    severity: 2
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 9]
+      coercive:   [10, 10]
+    remediations:
+      normative: "Revenue agent proposed overriding a risk control to approve volume — advisory; coordinator arbitrates."
+      coercive:  "n/a — revenue_override_signal is advisory-only (never blocks)."
+
+  cx_friction_signal:
+    severity: 1
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 9]
+      coercive:   [10, 10]
+    remediations:
+      normative: "Customer-experience agent flagged false-decline friction — recommends step-up verification."
+      coercive:  "n/a — cx_friction_signal is advisory-only (never blocks)."
+
+  risk_exposure_signal:
+    severity: 3
+    thresholds:
+      permissive: [1, 4]
+      normative:  [5, 9]
+      coercive:   [10, 10]
+    remediations:
+      normative: "Risk-policy agent flagged regulatory/financial exposure (reporting threshold / high-risk corridor) — advisory; coordinator arbitrates."
+      coercive:  "n/a — risk_exposure_signal is advisory-only (never blocks)."

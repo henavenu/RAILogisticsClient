@@ -1,0 +1,777 @@
+<title>Model Card — Field Reference</title>
+<style>
+  :root{
+    --ground:#F6F6FB; --surface:#FFFFFF; --surface-2:#F1F0F8;
+    --ink:#171522; --ink-2:#3A3648; --muted:#615C74; --faint:#8A859C;
+    --line:#E5E2EF; --line-2:#EEECF5;
+    --accent:#6B4AF0; --accent-2:#5637E0; --accent-soft:#ECE7FD;
+    --crit:#B6483C; --crit-soft:#F6E7E4;
+    --warn:#9A6B18; --warn-soft:#F5ECD8;
+    --good:#1F8A5E; --good-soft:#E0F1E9;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    --mono:"SF Mono","Cascadia Code","JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ground:#100F17; --surface:#181723; --surface-2:#201E2E;
+      --ink:#ECEAF6; --ink-2:#C7C3D6; --muted:#9A94AE; --faint:#726C86;
+      --line:#2A2838; --line-2:#232130;
+      --accent:#A594FF; --accent-2:#B8ABFF; --accent-soft:#241E3C;
+      --crit:#E38377; --crit-soft:#331E1B;
+      --warn:#D9A441; --warn-soft:#33280F;
+      --good:#5DC79A; --good-soft:#14291F;
+    }
+  }
+  :root[data-theme="light"]{
+    --ground:#F6F6FB; --surface:#FFFFFF; --surface-2:#F1F0F8;
+    --ink:#171522; --ink-2:#3A3648; --muted:#615C74; --faint:#8A859C;
+    --line:#E5E2EF; --line-2:#EEECF5;
+    --accent:#6B4AF0; --accent-2:#5637E0; --accent-soft:#ECE7FD;
+    --crit:#B6483C; --crit-soft:#F6E7E4; --warn:#9A6B18; --warn-soft:#F5ECD8;
+    --good:#1F8A5E; --good-soft:#E0F1E9;
+  }
+  :root[data-theme="dark"]{
+    --ground:#100F17; --surface:#181723; --surface-2:#201E2E;
+    --ink:#ECEAF6; --ink-2:#C7C3D6; --muted:#9A94AE; --faint:#726C86;
+    --line:#2A2838; --line-2:#232130;
+    --accent:#A594FF; --accent-2:#B8ABFF; --accent-soft:#241E3C;
+    --crit:#E38377; --crit-soft:#331E1B; --warn:#D9A441; --warn-soft:#33280F;
+    --good:#5DC79A; --good-soft:#14291F;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+       font-size:16.5px;line-height:1.7;-webkit-font-smoothing:antialiased;}
+  @media (prefers-reduced-motion:no-preference){ html{scroll-behavior:smooth} }
+  a{color:var(--accent);text-decoration:none}
+  code,.mono{font-family:var(--mono);font-size:.86em}
+  code{background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:.05em .38em;color:var(--ink-2)}
+
+  /* Masthead */
+  .masthead{background:var(--surface);border-bottom:1px solid var(--line);}
+  .mast-in{max-width:1180px;margin:0 auto;padding:34px 28px 30px;display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+  .brand{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1.title{font-family:var(--serif);font-weight:600;font-size:clamp(30px,4.6vw,46px);line-height:1.05;margin:12px 0 0;letter-spacing:-.01em;text-wrap:balance;max-width:16ch}
+  .dek{margin:14px 0 0;max-width:60ch;color:var(--muted);font-size:16px}
+  .mast-meta{display:flex;gap:22px;flex-wrap:wrap;margin-top:20px}
+  .mast-meta div{font-size:12.5px}
+  .mast-meta .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--faint);font-size:10.5px}
+  .mast-meta .v{color:var(--ink-2);margin-top:2px}
+  .themebtn{flex:0 0 auto;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+            background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--muted);cursor:pointer}
+  .themebtn:hover{color:var(--ink);border-color:var(--accent)}
+
+  /* Read-me strip */
+  .howto{max-width:1180px;margin:0 auto;padding:18px 28px;border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+  .howto .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);
+              border:1px solid var(--accent);border-radius:20px;padding:4px 11px;flex:0 0 auto}
+  .howto p{margin:0;color:var(--muted);font-size:14px;max-width:78ch}
+  .howto b{color:var(--ink-2)}
+
+  /* Layout */
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px 90px;display:grid;grid-template-columns:248px 1fr;gap:44px;align-items:start}
+  nav.toc{position:sticky;top:18px;align-self:start;max-height:calc(100vh - 36px);overflow-y:auto;padding:26px 0 20px;font-size:13.5px}
+  nav.toc .grp{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:18px 0 7px;font-weight:600}
+  nav.toc .grp:first-child{margin-top:0}
+  nav.toc a{display:block;color:var(--muted);padding:3px 0 3px 12px;border-left:2px solid transparent;line-height:1.35}
+  nav.toc a:hover{color:var(--ink)}
+  nav.toc a.active{color:var(--accent);border-left-color:var(--accent);font-weight:600}
+
+  article{min-width:0;padding-top:22px}
+
+  .group-head{margin:0 0 8px;padding-top:26px}
+  .group-head:first-child{padding-top:4px}
+  .group-num{font-family:var(--serif);font-size:15px;color:var(--accent);font-weight:600;letter-spacing:.02em}
+  .group-title{font-family:var(--serif);font-size:clamp(24px,3.2vw,32px);font-weight:600;margin:2px 0 0;letter-spacing:-.01em;text-wrap:balance}
+  .group-rule{height:2px;background:linear-gradient(90deg,var(--accent),transparent);margin:14px 0 30px;border-radius:2px}
+
+  .entry{padding:0 0 44px;scroll-margin-top:20px;max-width:74ch}
+  .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  h3.term{font-family:var(--serif);font-size:23px;font-weight:600;margin:6px 0 0;letter-spacing:-.005em;line-height:1.15}
+  .gist{background:var(--accent-soft);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;
+        padding:14px 18px;margin:16px 0 18px;color:var(--ink);font-size:16.5px;line-height:1.62}
+  .gist .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:5px}
+  .depth p{margin:0 0 13px}
+  .depth p:last-child{margin-bottom:0}
+  .depth b{color:var(--ink)}
+  .depth ul{margin:6px 0 14px;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+  .depth ul li{position:relative;padding-left:20px;color:var(--ink-2)}
+  .depth ul li::before{content:"";position:absolute;left:2px;top:.62em;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  .depth ul li b{color:var(--ink)}
+
+  .subhead{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:20px 0 8px;font-weight:600}
+
+  .mycard{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 16px;font-size:14px;color:var(--ink-2)}
+  .mycard .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:5px}
+
+  .risk{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.03em;
+        border-radius:6px;padding:3px 9px;text-transform:uppercase}
+  .risk .dot{width:8px;height:8px;border-radius:50%}
+  .risk.hi{color:var(--crit);background:var(--crit-soft)} .risk.hi .dot{background:var(--crit)}
+  .risk.med{color:var(--warn);background:var(--warn-soft)} .risk.med .dot{background:var(--warn)}
+  .risk.lo{color:var(--good);background:var(--good-soft)} .risk.lo .dot{background:var(--good)}
+  .riskrow{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 4px}
+
+  table.mini{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:14px;display:block;overflow-x:auto}
+  table.mini th,table.mini td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line-2);vertical-align:top}
+  table.mini th{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;white-space:nowrap}
+  table.mini td{color:var(--ink-2)} table.mini td b{color:var(--ink)}
+  table.mini td.mono{font-family:var(--mono);font-size:12.5px;color:var(--ink)}
+
+  footer{max-width:1180px;margin:0 auto;padding:28px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;font-family:var(--mono);letter-spacing:.03em}
+
+  @media (max-width:900px){
+    .wrap{grid-template-columns:1fr;gap:0}
+    nav.toc{position:static;max-height:none;overflow:visible;border-bottom:1px solid var(--line);padding:18px 0 22px;margin-bottom:8px}
+    nav.toc .cols{columns:2;column-gap:26px}
+  }
+  @media (max-width:560px){ nav.toc .cols{columns:1} }
+</style>
+
+<header class="masthead">
+  <div class="mast-in">
+    <div>
+      <div class="brand">Neuro Trust · RAI Trust Platform</div>
+      <h1 class="title">Model Card — Field Reference</h1>
+      <p class="dek">Every field on an agent's model card, explained. Each entry opens in plain English, then goes into the technical detail a governance reviewer, operator, or leader needs to defend the choice.</p>
+      <div class="mast-meta">
+        <div><div class="k">Reads with</div><div class="v">Agent Registry → Model card</div></div>
+        <div><div class="k">Framing</div><div class="v">Sovereign AI · model-independent control</div></div>
+        <div><div class="k">Scope</div><div class="v">6 sections · 30 fields</div></div>
+      </div>
+    </div>
+    <button class="themebtn" id="themebtn" type="button" aria-label="Toggle light and dark theme">◑ Theme</button>
+  </div>
+</header>
+
+<div class="howto">
+  <span class="tag">How to read this</span>
+  <p>Every field follows the same shape: <b>In one breath</b> — two lines, no jargon, the version you'd tell a colleague in the hallway. Then <b>In depth</b> — what the term actually means, why it matters for governance, and how it reads on your live model cards (Llama&nbsp;3.3&nbsp;70B, Claude&nbsp;Opus&nbsp;5, Gemini&nbsp;2.5&nbsp;Flash, and the sovereign EU option).</p>
+</div>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Contents">
+    <div class="cols">
+      <div class="grp">Start here</div>
+      <a href="#s0">Why a model card exists</a>
+      <div class="grp">1 · Classification</div>
+      <a href="#s1-1">1.1 Model type</a>
+      <a href="#s1-2">1.2 Weights</a>
+      <a href="#s1-3">1.3 Provider</a>
+      <a href="#s1-4">1.4 Substrate &amp; custody</a>
+      <a href="#s1-5">1.5 Withdrawal risk</a>
+      <a href="#s1-6">1.6 License</a>
+      <div class="grp">2 · Hosting &amp; residency</div>
+      <a href="#s2-1">2.1 Hosting region</a>
+      <a href="#s2-2">2.2 Data residency</a>
+      <div class="grp">3 · Capacity &amp; cost</div>
+      <a href="#s3-1">3.1 Tokens</a>
+      <a href="#s3-2">3.2 Context window</a>
+      <a href="#s3-3">3.3 Max output</a>
+      <a href="#s3-4">3.4 Cost</a>
+      <div class="grp">4 · Controls</div>
+      <a href="#s4-1">4.1 No-train on inference</a>
+      <a href="#s4-2">4.2 Zero data retention</a>
+      <a href="#s4-3">4.3 Data-residency guarantee</a>
+      <a href="#s4-4">4.4 Guardrails &amp; safety</a>
+      <a href="#s4-5">4.5 PII redaction</a>
+      <a href="#s4-6">4.6 Rate limits</a>
+      <a href="#s4-7">4.7 Tool-use gating</a>
+      <a href="#s4-8">4.8 Private net &amp; CMEK</a>
+      <div class="grp">5 · Training data</div>
+      <a href="#s5-1">5.1 Training sources</a>
+      <a href="#s5-2">5.2 Knowledge cutoff</a>
+      <div class="grp">6 · Certifications</div>
+      <a href="#s6-1">6.1 SOC 2 Type II</a>
+      <a href="#s6-2">6.2 ISO/IEC 27001</a>
+      <a href="#s6-3">6.3 ISO/IEC 42001</a>
+      <a href="#s6-4">6.4 HIPAA (BAA)</a>
+      <a href="#s6-5">6.5 GDPR</a>
+      <a href="#s6-6">6.6 FedRAMP</a>
+      <a href="#s6-7">6.7 EU AI Act</a>
+    </div>
+  </nav>
+
+  <article>
+
+    <!-- ORIENTATION -->
+    <div class="group-head"><div class="group-num">00</div><div class="group-title">Why a model card exists</div></div>
+    <div class="group-rule"></div>
+
+    <section class="entry" id="s0">
+      <div class="eyebrow">Orientation</div>
+      <h3 class="term">The model is not a detail — it's a dependency</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        An agent is only as trustworthy, available, and compliant as the model underneath it. A model card is the label on that engine — so you can govern the model, not just the agent.</div>
+      <div class="depth">
+        <p>Two agents can look identical in the registry and behave completely differently because of the model wired underneath. One might run on a frontier API in a foreign jurisdiction that could be cut off by a sanction; the other on weights you host in your own data center. Same agent card, radically different risk.</p>
+        <p><b>Sovereign AI</b> and <b>model-independent control</b> are the reasons this section exists. Sovereign AI means you can answer "whose infrastructure, whose law, whose kill-switch?" for every model in production. Model-independent control means your governance — policies, audit, kill-switches, human-in-the-loop — sits <em>above</em> any single model, so no one vendor's outage, price change, or policy shift can hold your agents hostage.</p>
+        <p>The model card turns that from a slogan into a checklist. Each field below answers one governance question: <em>who holds the engine, where does it run, what can it cost me, what am I promised about my data, and can I prove it in an audit?</em></p>
+      </div>
+    </section>
+
+    <!-- 1 CLASSIFICATION -->
+    <div class="group-head"><div class="group-num">01</div><div class="group-title">Classification</div></div>
+    <div class="group-rule"></div>
+
+    <section class="entry" id="s1-1">
+      <div class="eyebrow">Classification · 1.1</div>
+      <h3 class="term">Model type</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        What kind of AI engine this is and how big it is. "70B dense transformer" means 70&nbsp;billion tunable dials, all used on every word it reads or writes.</div>
+      <div class="depth">
+        <p>The model type tells you the <b>architecture</b> and the <b>size</b>, which together set the ceiling on capability, speed, and cost.</p>
+        <ul>
+          <li><b>Transformer</b> — the near-universal architecture behind modern LLMs. It reads a sequence of tokens and predicts the next one, using an "attention" mechanism to weigh how much each earlier token matters. Everything on your cards is a transformer.</li>
+          <li><b>Dense</b> vs <b>Mixture-of-Experts (MoE)</b> — in a <em>dense</em> model (like Llama&nbsp;3.3&nbsp;70B) every parameter is active for every token. In an <em>MoE</em> model a router activates only a few "expert" sub-networks per token, so a model can hold huge total parameters but only pay compute for a slice — cheaper to run at a given quality.</li>
+          <li><b>Parameters</b> (the "70B", "8B") — the count of learned numbers. More parameters generally means more capability and more compute per token. It's a rough proxy for power, not a guarantee.</li>
+          <li><b>Reasoning / "thinking" models</b> — models that generate a hidden chain of intermediate tokens before answering (e.g. Claude Opus 5's adaptive thinking). They trade latency and output tokens for accuracy on hard, multi-step problems.</li>
+        </ul>
+        <p>For governance the type matters because it drives the <em>failure surface</em>: a small dense model is cheap and predictable but weaker at nuance; a frontier reasoning model is powerful but slower, pricier, and more prone to over-elaboration.</p>
+      </div>
+      <div class="mycard"><span class="lbl">On your model cards</span>Pharma­Logistics and MyBank both run dense Llama models (70B and 8B). Claude Opus 5 is shown as a frontier reasoning model — the fallback tier in your <code>.env</code> priority list.</div>
+    </section>
+
+    <section class="entry" id="s1-2">
+      <div class="eyebrow">Classification · 1.2</div>
+      <h3 class="term">Weights</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        The weights <em>are</em> the trained model — billions of numbers learned from data. Who holds those numbers decides who really controls the AI.</div>
+      <div class="depth">
+        <p>During training, a model is shown enormous amounts of text and its internal numbers are nudged, again and again, until it predicts language well. Those final numbers — the <b>weights</b> (also called <b>parameters</b> or <b>the checkpoint</b>) — are the entire learned model. A weights file plus the architecture code is a runnable model; without the weights you have an empty shell.</p>
+        <p>This is the single most important governance fact about any model, because <b>whoever holds the weights holds the engine</b>:</p>
+        <ul>
+          <li><b>Open-weight models</b> (Llama, Mistral, Gemma) publish the weights for download. You can copy them, run them on your own hardware, inspect them, fine-tune them, and keep running them even if the original publisher disappears.</li>
+          <li><b>Closed / proprietary models</b> (Claude, Gemini, GPT) never release the weights. You reach them only through the provider's API. The capability is rented, not owned.</li>
+        </ul>
+        <p>"Open-weight" is not the same as "open-source": you usually get the weights but <em>not</em> the training data or the training code, and often under a license with conditions (see 1.6). Weights also can't be meaningfully read by a human — they're opaque numbers — so "open" means <em>runnable and re-hostable</em>, not <em>transparent</em>.</p>
+        <p>Why it's load-bearing for sovereignty: if you hold the weights, no vendor can unilaterally switch your agents off. If you don't, your continuity depends entirely on the provider's terms, pricing, and goodwill — which is exactly what <b>withdrawal risk</b> (1.5) measures.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s1-3">
+      <div class="eyebrow">Classification · 1.3</div>
+      <h3 class="term">Provider (vs developer)</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        Two different companies can matter: the one that <em>built</em> the model and the one that <em>runs</em> it for you. They're often not the same.</div>
+      <div class="depth">
+        <p>The card separates two roles that people casually merge:</p>
+        <ul>
+          <li><b>Developer / model maker</b> — who trained the weights and is responsible for the model's capabilities, safety training, and license. Example: Meta develops Llama.</li>
+          <li><b>Provider / host</b> — whose infrastructure actually serves the inference request you send. Example: <em>Groq</em> serves Llama on its custom LPU hardware; <em>Vertex AI</em> serves Gemini and can also serve Claude.</li>
+        </ul>
+        <p>The distinction is not pedantic — your contract, your data-handling promises, your certifications, your uptime SLA, and your bill usually come from the <b>provider</b>, while the model's behavior and license come from the <b>developer</b>. The same Llama&nbsp;3.3&nbsp;70B served by Groq, by AWS Bedrock, or by your own servers gives you three different sets of guarantees, regions, and prices for one identical model.</p>
+        <p>When you assess a model, read both: a trustworthy developer served by an untrustworthy host is still an untrustworthy deployment, and vice versa.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s1-4">
+      <div class="eyebrow">Classification · 1.4</div>
+      <h3 class="term">Substrate &amp; custody</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        "Substrate" is where the model physically lives and who operates it. It's the difference between renting an engine and owning one.</div>
+      <div class="depth">
+        <p>Substrate combines two questions — <em>are the weights open or closed?</em> and <em>who runs the inference?</em> — into one custody model. There are four common ones, from least to most control:</p>
+        <table class="mini">
+          <thead><tr><th>Substrate</th><th>Weights held by</th><th>Inference run by</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">Proprietary hosted</td><td>Provider</td><td>Provider</td></tr>
+            <tr><td class="mono">Open-weight, externally hosted</td><td>Open (re-hostable)</td><td>A third party</td></tr>
+            <tr><td class="mono">Open-weight, self-hosted</td><td>You</td><td>You</td></tr>
+            <tr><td class="mono">Sovereign / national</td><td>A national jurisdiction</td><td>That jurisdiction</td></tr>
+          </tbody>
+        </table>
+        <p><b>Custody</b> is the plain-language version of the same idea: who could, in principle, take the model away from you or see the data flowing through it. Proprietary hosted means the provider holds both the engine and your traffic; self-hosted means you hold both; sovereign means a specific state's law and procurement govern both.</p>
+        <p>This field is the backbone of the sovereign-AI story, because it directly determines <b>withdrawal risk</b> (next) and shapes every data-control promise below it. A model card that only told you "it's Llama" would hide the fact that Llama-via-Groq and Llama-on-your-own-GPUs are worlds apart in custody.</p>
+      </div>
+      <div class="mycard"><span class="lbl">On your model cards</span>Llama-via-Groq shows as <em>open-weight, externally hosted</em>; Claude Opus 5 as <em>proprietary hosted</em>; the sovereign EU option as <em>open-weight, self-hosted / on-prem</em>. Same governance layer above all three — that's model-independent control in action.</div>
+    </section>
+
+    <section class="entry" id="s1-5">
+      <div class="eyebrow">Classification · 1.5</div>
+      <h3 class="term">Withdrawal risk</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        The chance that access to this model gets pulled out from under you — by a price hike, a shutdown, or a sanction. Higher risk means less control over your own continuity.</div>
+      <div class="depth">
+        <p>Withdrawal risk asks a continuity question: <em>if this model became unavailable tomorrow, how exposed am I?</em> It follows directly from substrate, and the card grades it in three tiers:</p>
+        <div class="riskrow">
+          <span class="risk hi"><span class="dot"></span>High</span>
+          <span class="risk med"><span class="dot"></span>Medium</span>
+          <span class="risk lo"><span class="dot"></span>Low</span>
+        </div>
+        <ul>
+          <li><span class="risk hi"><span class="dot"></span>High</span> &nbsp;<b>Proprietary hosted.</b> Access can be revoked unilaterally — model deprecation, a price or terms change, capacity throttling, export controls, or sanctions. You have no fallback except migrating to another model.</li>
+          <li><span class="risk med"><span class="dot"></span>Medium</span> &nbsp;<b>Open-weight but externally hosted, or region-pinnable proprietary.</b> The specific endpoint can still be withdrawn or repriced, but you have an escape hatch: re-host the open weights elsewhere, or pin to another region/vendor.</li>
+          <li><span class="risk lo"><span class="dot"></span>Low</span> &nbsp;<b>Self-hosted open weights.</b> No one can unilaterally switch it off. The trade-off is that you now own patching, safety tuning, evaluation, and uptime.</li>
+        </ul>
+        <p>Withdrawal risk is not the same as "quality" or "safety" — a high-risk frontier model may be the best performer available. It's a <em>dependency</em> risk, and it's exactly what the emergency <b>Kill &amp; Replace</b> control on the model card is designed to mitigate: if a high-risk model is compromised or cut off, you re-bind every agent on it to a lower-risk alternative in one move.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s1-6">
+      <div class="eyebrow">Classification · 1.6</div>
+      <h3 class="term">License</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        The legal terms for using the model. It decides whether you can self-host it, fine-tune it, and use its output commercially — or whether you're limited to the vendor's API rules.</div>
+      <div class="depth">
+        <p>The license is the contract that governs the weights or the API. It's a governance field, not a footnote, because it constrains your options for mitigating every other risk on the card.</p>
+        <ul>
+          <li><b>Permissive open licenses</b> (e.g. Apache&nbsp;2.0, MIT) — self-host, modify, redistribute, and use commercially with minimal conditions. Maximum flexibility.</li>
+          <li><b>Community / source-available licenses</b> (e.g. the Llama Community License) — open weights you can self-host and fine-tune, but with conditions: an acceptable-use policy, an attribution requirement, and thresholds (very large deployments need a separate agreement). Open enough to give you sovereignty, but read the fine print.</li>
+          <li><b>Proprietary commercial API terms</b> (Claude, Gemini, GPT) — you don't get the weights at all; you get a right to call the API under the provider's usage policy, data terms, and rate limits. This is where the data-control promises in Section 4 come from — they are contractual, defined by these terms.</li>
+        </ul>
+        <p>Two things reviewers check most: whether <b>the output can be used commercially and to train competing models</b>, and whether <b>self-hosting or fine-tuning is permitted</b>. The answer determines whether "just re-host it" is actually a legal option when withdrawal risk bites.</p>
+      </div>
+    </section>
+
+    <!-- 2 HOSTING & RESIDENCY -->
+    <div class="group-head"><div class="group-num">02</div><div class="group-title">Hosting &amp; residency</div></div>
+    <div class="group-rule"></div>
+
+    <section class="entry" id="s2-1">
+      <div class="eyebrow">Hosting &amp; residency · 2.1</div>
+      <h3 class="term">Hosting region</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        The physical place — the data center and country — where your prompts are actually processed. Geography decides which laws apply to your data.</div>
+      <div class="depth">
+        <p>When your agent calls a model, the request travels to a specific data center somewhere on earth and is processed there. The hosting region names that place. It matters for three concrete reasons:</p>
+        <ul>
+          <li><b>Jurisdiction.</b> Data processed in a country is subject to that country's laws — including lawful-access and disclosure powers. An EU citizen's data processed in the US sits under different legal exposure than the same data processed in Frankfurt.</li>
+          <li><b>Latency.</b> Physics: a region far from your users adds round-trip milliseconds to every call.</li>
+          <li><b>Availability &amp; blast radius.</b> A single region is a single point of failure; a regional outage or a regional policy change affects only agents pinned there.</li>
+        </ul>
+        <p>Proprietary providers increasingly let you <b>pin</b> the region (Vertex AI regions like <code>europe-west</code>; Anthropic's <code>inference_geo</code>). Shared open-weight endpoints often don't — you get "provider default," usually US. "Global / multi-region" means the provider may route anywhere for capacity, which is great for uptime and weak for residency guarantees.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s2-2">
+      <div class="eyebrow">Hosting &amp; residency · 2.2</div>
+      <h3 class="term">Data residency</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        A promise about where your data stays — not just where it's processed, but where it's stored and that it won't quietly leave that boundary.</div>
+      <div class="depth">
+        <p>Hosting region (2.1) is <em>where the compute runs</em>; <b>data residency</b> is the stronger, contractual promise that your data — the request, any logs, any cached content — <em>stays within</em> a defined geographic or legal boundary and is not copied out of it.</p>
+        <p>The distinction matters because a request can be processed in the EU while logs, backups, or support access still flow to the US. A residency guarantee closes that gap. Reviewers grade it on a spectrum:</p>
+        <ul>
+          <li><b>Full residency</b> — data never leaves the boundary (the norm for self-hosted / sovereign; on your card, the EU on-prem option).</li>
+          <li><b>Region-pinned with commitments</b> — the provider contractually keeps processing and storage in-region (available on enterprise Vertex, configurable on Anthropic via <code>inference_geo</code>).</li>
+          <li><b>No guarantee</b> — shared endpoints (e.g. the public Groq endpoint) make no residency commitment; treat data as leaving your boundary.</li>
+        </ul>
+        <p>Residency is the field that regulators (GDPR, sector rules) and customers ask about first. It pairs tightly with <b>no-train</b> and <b>zero data retention</b> in Section 4: residency says <em>where</em>, those say <em>whether it's kept and reused at all</em>.</p>
+      </div>
+    </section>
+
+    <!-- 3 CAPACITY & COST -->
+    <div class="group-head"><div class="group-num">03</div><div class="group-title">Capacity &amp; cost</div></div>
+    <div class="group-rule"></div>
+
+    <section class="entry" id="s3-1">
+      <div class="eyebrow">Capacity &amp; cost · 3.1</div>
+      <h3 class="term">Tokens</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        Models don't read words — they read tokens, little chunks of text. Roughly, one token is about four characters, and ~750 words is about 1,000 tokens.</div>
+      <div class="depth">
+        <p>A <b>token</b> is the unit a model actually processes. Text is broken into tokens by a <em>tokenizer</em> — common words become one token, rarer words split into pieces ("tokenization" → <code>token</code> + <code>ization</code>), and spaces and punctuation count too. Numbers, code, and non-English text tend to use more tokens per character.</p>
+        <p>Everything else in this section is denominated in tokens, so it's the base unit you need:</p>
+        <ul>
+          <li><b>Rough conversions (English):</b> ~4 characters ≈ 1 token; ~¾ of a word ≈ 1 token; 1,000 tokens ≈ 750 words ≈ 1½ pages.</li>
+          <li><b>Input vs output tokens</b> are counted and priced separately (see 3.4). A long document you send is input; the model's reply is output.</li>
+          <li><b>Tokenizers differ by model</b>, so the <em>same</em> text can be a different token count on different models — which changes both cost and how much fits in the context window.</li>
+        </ul>
+        <p>Practical upshot for operators: token counts, not word counts, drive both your bill and your capacity limits. A 50-page contract isn't "50 pages" to the model — it's roughly 25,000 tokens that must fit inside the context window and get paid for at the input rate.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s3-2">
+      <div class="eyebrow">Capacity &amp; cost · 3.2</div>
+      <h3 class="term">Context window</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        The model's working memory — the most it can "hold in mind" at once, counting everything you send plus everything it writes. Go over it and the oldest content falls off.</div>
+      <div class="depth">
+        <p>The <b>context window</b> is the maximum number of tokens the model can attend to in a single request. It's a hard ceiling that covers the <em>whole</em> exchange: system prompt + conversation history + documents you attach + the model's own reply (and, for reasoning models, the hidden thinking tokens).</p>
+        <p>Why it matters:</p>
+        <ul>
+          <li><b>It bounds how much the model can consider.</b> A 128K window (Llama) holds roughly a short book; a 1M window (Claude Opus 5, Gemini 2.5) holds a large codebase or a stack of contracts at once.</li>
+          <li><b>Overflow is lossy.</b> Exceed it and something must be dropped, summarized, or "compacted" — the model can silently lose earlier context, which is a correctness and audit concern.</li>
+          <li><b>Bigger isn't free.</b> Filling a huge window costs more (you pay per input token) and can slow responses. Large windows are a capability, not a default to max out.</li>
+        </ul>
+        <p>For long-running agents, the context window is the constraint behind features like history compaction and memory files — mechanisms to work around the ceiling without silently losing state.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s3-3">
+      <div class="eyebrow">Capacity &amp; cost · 3.3</div>
+      <h3 class="term">Max output tokens</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        The most the model can write in a single reply. Set it too low and long answers get cut off mid-sentence.</div>
+      <div class="depth">
+        <p><b>Max output</b> is the cap on how many tokens the model may generate in one response. It's separate from — and always smaller than — the context window, and on reasoning models it must also cover the hidden thinking tokens.</p>
+        <ul>
+          <li><b>Truncation risk.</b> If a task needs a 40-page report but the output cap is set low, the reply stops abruptly (a "max_tokens" stop) and you must continue or retry. Reviewers check that the cap matches the job.</li>
+          <li><b>Latency and cost scale with it.</b> Output tokens are generated one at a time and are the expensive half of the bill (3.4), so a generous cap is capacity you may pay for.</li>
+          <li><b>Provider ceilings vary.</b> Frontier models allow very large outputs (Claude Opus 5 up to 128K tokens, typically via streaming); hosted open-weight endpoints often cap lower (Groq caps Llama outputs well below the context window).</li>
+        </ul>
+        <p>Rule of thumb: the context window is <em>how much it can read</em>; max output is <em>how much it can write back</em>.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s3-4">
+      <div class="eyebrow">Capacity &amp; cost · 3.4</div>
+      <h3 class="term">Cost (input vs output)</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        You pay per million tokens, and writing costs more than reading — often about five times more. That's why long, chatty answers get expensive fast.</div>
+      <div class="depth">
+        <p>Model pricing is quoted <b>per million tokens</b>, split into two rates:</p>
+        <table class="mini">
+          <thead><tr><th>Model</th><th>Input / 1M</th><th>Output / 1M</th></tr></thead>
+          <tbody>
+            <tr><td>Llama 3.3 70B (Groq)</td><td class="mono">$0.59</td><td class="mono">$0.79</td></tr>
+            <tr><td>Llama 3.1 8B (Groq)</td><td class="mono">$0.05</td><td class="mono">$0.08</td></tr>
+            <tr><td>Gemini 2.5 Flash</td><td class="mono">$0.30</td><td class="mono">$2.50</td></tr>
+            <tr><td>Claude Opus 5</td><td class="mono">$5.00</td><td class="mono">$25.00</td></tr>
+          </tbody>
+        </table>
+        <p><b>Why output costs more:</b> input tokens are processed in parallel in one pass, but output tokens are generated <em>serially</em> — the model runs a full forward pass for every single token it writes. That sequential work is the expensive part, so output rates run roughly 3–5× input rates.</p>
+        <ul>
+          <li><b>Prompt caching</b> can cut repeated input cost by ~90% — if the same big system prompt or document prefix is reused across calls, the provider bills the cached portion at a fraction of the normal rate.</li>
+          <li><b>Reasoning models bill their thinking.</b> Hidden thinking tokens count as output, so a "cheap-looking" answer can carry a large invisible output cost. Effort/verbosity controls exist to manage this.</li>
+          <li><b>Self-hosted has no per-token price</b> — you pay infrastructure (GPUs, power, ops) instead. That flips the economics at high volume and removes per-call metering entirely, which is part of the sovereign option's appeal.</li>
+        </ul>
+        <p>For governance, cost is also a <em>control</em> surface: the model card's cost figures let you compare the true expense of a high-risk frontier model against a cheaper self-hosted one before an emergency forces the choice.</p>
+      </div>
+    </section>
+
+    <!-- 4 CONTROLS -->
+    <div class="group-head"><div class="group-num">04</div><div class="group-title">Controls</div></div>
+    <div class="group-rule"></div>
+
+    <section class="entry" id="s4-1">
+      <div class="eyebrow">Controls · 4.1</div>
+      <h3 class="term">No-train on inference</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        A promise that the provider won't use your prompts and the model's answers to train future models. What you send stays yours — it doesn't become part of the next model's brain.</div>
+      <div class="depth">
+        <p>"Inference" is just the act of <em>using</em> a trained model to get an answer (as opposed to "training," which is building the model). Every request your agent makes is an inference call. <b>No-train on inference</b> is the commitment that the content of those calls — your inputs and the model's outputs — <b>will not be fed back into training</b> a new or improved model.</p>
+        <p>This is the single most important data-governance promise on the card, and it's frequently misunderstood, so precisely:</p>
+        <ul>
+          <li><b>What it prevents:</b> your proprietary prompts, customer data, and the model's responses being absorbed into a future model's weights, where they could — in principle — surface in someone else's answer or be memorized verbatim.</li>
+          <li><b>What it does <em>not</em> by itself cover:</b> whether the data is <em>logged or stored</em> at all. That's a separate promise — <b>zero data retention</b> (4.2). A provider can honor no-train while still keeping logs for abuse monitoring; conversely, no retention implies no training.</li>
+          <li><b>Where it comes from:</b> it's contractual, set by the provider's data terms and your tier. Enterprise/API tiers (Anthropic, enterprise OpenAI, Groq, Vertex enterprise) are typically no-train by default; some consumer/free tiers train on data unless you opt out. Always verify by tier, not by brand.</li>
+          <li><b>Self-hosted answer:</b> if you run the weights yourself, the question is moot — the data never leaves your infrastructure, so there's nothing to train on. This is why the sovereign option lists it as inherent rather than promised.</li>
+        </ul>
+        <p>For a regulated buyer, "no-train" is the difference between "we use this vendor" and "legal signed off." It's what lets you route sensitive banking or pharma data through a third-party model without that data leaking into the vendor's product.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s4-2">
+      <div class="eyebrow">Controls · 4.2</div>
+      <h3 class="term">Zero data retention (ZDR)</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        The provider keeps no copy of your request or the answer once it's been processed. Nothing is logged, so there's nothing to leak, subpoena, or breach later.</div>
+      <div class="depth">
+        <p>Where <b>no-train</b> (4.1) is about <em>reuse</em>, <b>zero data retention</b> is about <em>storage</em>. Under ZDR the provider processes your request, returns the answer, and retains none of it — no request logs, no response logs, no cached copies beyond the moment of processing.</p>
+        <ul>
+          <li><b>Why it's stronger than no-train:</b> retained logs are a standing liability even if never used for training — they can be breached, accessed by insiders, or compelled by legal process. ZDR removes the target entirely.</li>
+          <li><b>The trade-off:</b> providers often keep short-term logs specifically for <em>abuse and safety monitoring</em>. Turning on ZDR can mean forgoing some of that safety tooling, and it may be gated to enterprise agreements or exclude certain features.</li>
+          <li><b>How it's offered:</b> typically a contractual option you must enable (e.g. Anthropic's zero-data-retention agreements), not a universal default.</li>
+        </ul>
+        <p>ZDR is what you reach for with the most sensitive workloads — PHI, PII, privileged material — where "we promise not to train on it" isn't enough and the answer has to be "there is no copy."</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s4-3">
+      <div class="eyebrow">Controls · 4.3</div>
+      <h3 class="term">Data-residency guarantee / region pinning</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        A control that forces the model to run in a chosen country and keep your data there. The lever behind the residency promise in 2.2.</div>
+      <div class="depth">
+        <p>This is the operational <em>control</em> that delivers the residency <em>property</em> from Section 2. Instead of accepting the provider's default routing, you pin the deployment to a specific region and get a contractual commitment that processing and storage stay there.</p>
+        <ul>
+          <li><b>Vertex AI:</b> choose a regional endpoint (<code>europe-west4</code>, <code>us-central1</code>, …) so inference physically runs in that jurisdiction.</li>
+          <li><b>Anthropic:</b> the <code>inference_geo</code> parameter routes requests to a chosen region (e.g. US or EU).</li>
+          <li><b>Self-hosted / sovereign:</b> residency is absolute — the model runs where your hardware is, full stop.</li>
+        </ul>
+        <p>Reviewers treat this as the enforcement mechanism for data-sovereignty commitments to regulators and customers. Without pinning, "we process in the EU" is an aspiration; with it, it's an auditable configuration.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s4-4">
+      <div class="eyebrow">Controls · 4.4</div>
+      <h3 class="term">Guardrails &amp; content safety</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        The safety layer that screens what goes into and comes out of the model — blocking or flagging harmful, unsafe, or policy-violating content.</div>
+      <div class="depth">
+        <p>Guardrails are the checks wrapped around inference to keep behavior inside acceptable bounds. They operate at two points:</p>
+        <ul>
+          <li><b>Input filtering</b> — screening prompts for disallowed requests, prompt-injection attempts, or attempts to extract the system prompt.</li>
+          <li><b>Output filtering</b> — screening the model's response for unsafe content (violence, CSAM, self-harm, certain cyber/bio content) before it reaches the user.</li>
+        </ul>
+        <p>These come in two flavors that reviewers should distinguish:</p>
+        <ul>
+          <li><b>Provider-native safety</b> — built into the model and its API (Claude's safety classifiers and refusals, Google's configurable safety filters). You get these automatically; frontier models sometimes <em>refuse</em> outright, which your app must handle gracefully.</li>
+          <li><b>Platform guardrails</b> — the policy checks <em>your</em> governance layer adds on top, independent of the model. This is the model-independent-control principle: your policy engine evaluates every call, so safety doesn't depend on any one vendor's built-ins.</li>
+        </ul>
+        <p>The card's "content safety" entry tells you what the model/provider brings; your RAI Trust platform is what guarantees a consistent floor regardless of which model an agent runs on.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s4-5">
+      <div class="eyebrow">Controls · 4.5</div>
+      <h3 class="term">PII redaction</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        Automatically finding and masking personal details — names, account numbers, health info — before they reach the model or before an answer is stored.</div>
+      <div class="depth">
+        <p><b>PII</b> is personally identifiable information. <b>PII redaction</b> detects it and replaces it with placeholders (<code>[NAME]</code>, <code>[ACCOUNT]</code>) so the sensitive value never travels further than it must.</p>
+        <ul>
+          <li><b>Inbound redaction</b> — strip PII from a prompt before it leaves your boundary for a third-party model, so the provider never sees the raw values.</li>
+          <li><b>Outbound / storage redaction</b> — mask PII in responses, logs, and audit trails so your own systems don't over-retain it.</li>
+        </ul>
+        <p>It's a layered defense: it complements no-train and residency rather than replacing them. Even under a no-train, in-region deployment, redaction means the highest-sensitivity fields never enter the model at all — the strongest position when a data-subject asks "who saw my data?" the answer is "no system did, it was masked at the door."</p>
+        <p>Caveat reviewers note: automated detection is never perfect (free-text, typos, and novel formats slip through), so redaction is a risk-reducer, not an absolute guarantee — pair it with residency and no-train, don't rely on it alone.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s4-6">
+      <div class="eyebrow">Controls · 4.6</div>
+      <h3 class="term">Rate limits</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        Caps on how many requests or tokens you can send per minute. They protect the service — and they can also throttle your agents at the worst moment.</div>
+      <div class="depth">
+        <p>Rate limits are ceilings the provider enforces, usually expressed as <b>RPM</b> (requests per minute), <b>TPM</b> (tokens per minute), and sometimes daily token caps. Two reasons they belong on a governance card:</p>
+        <ul>
+          <li><b>Availability risk.</b> A burst of agent activity — a fan-out of sub-agents, a spike in traffic — can hit the limit and start returning <code>429</code> errors. If your agents don't back off and retry gracefully, that's an outage you caused, not the provider.</li>
+          <li><b>Capacity planning.</b> Limits are tiered by contract; the tier that comfortably served pilot traffic may throttle production. They're a number to negotiate before scale, not discover during an incident.</li>
+        </ul>
+        <p>They also interact with withdrawal risk: a provider can tighten limits or deprioritize your tier, which is a softer form of "withdrawal." Self-hosting removes external rate limits entirely — your only ceiling is your own hardware.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s4-7">
+      <div class="eyebrow">Controls · 4.7</div>
+      <h3 class="term">Tool-use gating</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        A checkpoint that pauses an agent before it takes a real-world action — sending money, a wire, a shipment — until a policy or a human approves it.</div>
+      <div class="depth">
+        <p>Modern agents don't just chat — they <em>act</em>, by calling tools (transfer funds, place an order, send a message). <b>Tool-use gating</b> is the control that intercepts those actions and requires approval before they execute.</p>
+        <ul>
+          <li><b>Policy gating</b> — your governance engine evaluates each tool call against policy and returns PERMISSIVE / normative / coercive, blocking or escalating high-risk actions automatically.</li>
+          <li><b>Human-in-the-loop (HITL)</b> — for consequential or ambiguous actions, the agent pauses and a person approves, denies, or asks for more information.</li>
+        </ul>
+        <p>This is where the model card meets the rest of your platform. Gating is deliberately <em>model-independent</em>: whether an agent runs on Llama, Claude, or a sovereign model, the same policy checks and HITL council sit between its intent and any irreversible action. The model can propose; only the governance layer disposes. That's the concrete meaning of "govern the agent, not just trust the model."</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s4-8">
+      <div class="eyebrow">Controls · 4.8</div>
+      <h3 class="term">Private networking &amp; customer-managed keys (VPC-SC / CMEK)</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        Enterprise controls that keep model traffic on a private network and let <em>you</em> hold the encryption keys — so the provider can't decrypt your data without you.</div>
+      <div class="depth">
+        <p>Two related enterprise controls, most visible on cloud-hosted models:</p>
+        <ul>
+          <li><b>Private networking</b> — routing model calls over a private network perimeter instead of the public internet. Google's <b>VPC-SC</b> (VPC Service Controls) is the canonical example: it draws a boundary around your cloud resources so data can't be exfiltrated to services outside it. Equivalents exist as PrivateLink / private endpoints on other clouds.</li>
+          <li><b>CMEK — customer-managed encryption keys.</b> By default the provider encrypts your data with keys it controls. With CMEK, <em>you</em> own the encryption keys (in your key-management service). Revoke the key and the data becomes unreadable — even to the provider. It turns "trust us with encryption" into "we can't read it without your permission."</li>
+        </ul>
+        <p>These are the controls that get an enterprise security team to yes on a hosted model. They don't change the model's behavior; they harden the pipe and the custody of the data flowing through it — narrowing the gap between a hosted deployment and a self-hosted one.</p>
+      </div>
+    </section>
+
+    <!-- 5 TRAINING DATA -->
+    <div class="group-head"><div class="group-num">05</div><div class="group-title">Training data</div></div>
+    <div class="group-rule"></div>
+
+    <section class="entry" id="s5-1">
+      <div class="eyebrow">Training data · 5.1</div>
+      <h3 class="term">Training data sources</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        What the model learned from before you ever used it. The mix of data shapes its knowledge, its blind spots, and its legal and bias risk.</div>
+      <div class="depth">
+        <p>A model's behavior is downstream of what it was trained on. The card records what's disclosed — which is often only a broad description, because full training-set transparency is rare.</p>
+        <ul>
+          <li><b>Typical mix:</b> large-scale public web text, licensed datasets, code, and (for many models) human-feedback data used to align behavior. Open-weight models publish broad descriptions; frontier models describe theirs only in general terms.</li>
+          <li><b>Why it's a governance field:</b> the source mix drives <b>bias</b> (over- or under-representation of groups, languages, viewpoints), <b>IP/copyright exposure</b> (was the data licensed?), and <b>capability gaps</b> (a model trained thin on your domain will be weaker there).</li>
+          <li><b>What you usually can't get:</b> the exact corpus. This opacity is itself a risk to record — you're accepting a model whose full provenance you cannot fully audit, which is one argument for keeping a model-independent policy layer that doesn't depend on trusting any single training pipeline.</li>
+        </ul>
+        <p>For regulated use, note the model's disclosed sources and its documented evaluations rather than assuming — "trained on the internet" is not a compliance answer.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s5-2">
+      <div class="eyebrow">Training data · 5.2</div>
+      <h3 class="term">Knowledge cutoff</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        The date the model's built-in knowledge stops. Ask it about anything after that and it's guessing unless you give it fresh information.</div>
+      <div class="depth">
+        <p>The <b>knowledge cutoff</b> is the point in time after which the model saw no training data. Everything before it may be "known"; everything after it is not — the model will either say it doesn't know or, worse, confidently invent an answer (a hallucination).</p>
+        <ul>
+          <li><b>It's a staleness control.</b> A model with a 2023 cutoff has no native knowledge of 2024–2026 events, prices, regulations, or product changes. For domains that move fast (sanctions lists, rates, policy), that gap is a correctness and compliance risk.</li>
+          <li><b>The mitigation is retrieval.</b> You close the gap by <em>feeding</em> current data into the prompt — tool calls, search, retrieval over your own systems — rather than relying on the model's memory. Your agents already do this by pulling live account, shipment, and policy data at request time.</li>
+          <li><b>Cutoff ≠ release date.</b> A model released in 2026 can still have an earlier knowledge cutoff; check the model's own documentation.</li>
+        </ul>
+        <p>Governance takeaway: never trust a model's built-in memory for anything time-sensitive or authoritative. The cutoff tells you exactly how far you can, and where retrieval must take over.</p>
+      </div>
+    </section>
+
+    <!-- 6 CERTIFICATIONS -->
+    <div class="group-head"><div class="group-num">06</div><div class="group-title">Certifications &amp; compliance</div></div>
+    <div class="group-rule"></div>
+
+    <section class="entry" id="s6-1">
+      <div class="eyebrow">Certifications · 6.1</div>
+      <h3 class="term">SOC 2 Type II</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        An independent auditor's report that the provider's security controls not only exist but actually worked over a period of months. The baseline "are they serious about security?" badge.</div>
+      <div class="depth">
+        <p><b>SOC 2</b> (System and Organization Controls 2) is an audit framework from the AICPA covering five "trust services criteria" — <em>security, availability, processing integrity, confidentiality, privacy</em>. An independent auditor examines the provider's controls and issues a report.</p>
+        <ul>
+          <li><b>Type I vs Type II — the important distinction.</b> Type I says the controls were <em>designed</em> properly at a single point in time. <b>Type II</b> says the auditor <em>tested that they operated effectively over a period</em> (typically 6–12 months). Type II is the one that counts — it's evidence of practice, not just policy.</li>
+          <li><b>It's a report, not a pass/fail stamp.</b> You (or your vendor-risk team) can request the actual report under NDA to see scope and any exceptions.</li>
+          <li><b>What it does and doesn't tell you:</b> it attests to security-program maturity; it does <em>not</em> certify the AI model's safety or accuracy. It's table stakes for enterprise procurement, not a statement about model quality.</li>
+        </ul>
+        <p>On the card, "SOC 2 Type II" on a provider (e.g. Groq, Anthropic, Google Cloud) is the minimum most enterprise security reviews expect before a hosted model can be used with real data.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s6-2">
+      <div class="eyebrow">Certifications · 6.2</div>
+      <h3 class="term">ISO/IEC 27001</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        The international standard for running a proper information-security program. Certification means an external body verified the provider manages security by the book.</div>
+      <div class="depth">
+        <p><b>ISO/IEC 27001</b> is the globally recognized standard for an <b>ISMS</b> — an Information Security Management System. Where SOC 2 produces an auditor's <em>report</em>, ISO 27001 produces a <em>certification</em> against a fixed international standard, issued by an accredited body and re-checked on a cycle.</p>
+        <ul>
+          <li><b>What it covers:</b> a systematic, risk-based approach to securing information — governance, risk assessment, access control, incident response, supplier management, and continual improvement.</li>
+          <li><b>Related numbers you'll see:</b> <b>27017</b> (cloud-specific security) and <b>27018</b> (protection of PII in the cloud) are companion standards providers often hold alongside 27001.</li>
+          <li><b>SOC 2 vs 27001:</b> heavily overlapping. SOC 2 is US-origin and report-based; ISO 27001 is international and certificate-based. Global buyers often want both; European and international procurement lean toward ISO.</li>
+        </ul>
+        <p>For a governance file, ISO 27001 is the internationally portable way to show a provider's security program is externally validated, not self-asserted.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s6-3">
+      <div class="eyebrow">Certifications · 6.3</div>
+      <h3 class="term">ISO/IEC 42001</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        The first international standard specifically for managing <em>AI</em> responsibly. Think of it as ISO 27001, but for AI governance instead of general security.</div>
+      <div class="depth">
+        <p><b>ISO/IEC 42001</b> (published 2023) is the world's first management-system standard for <b>artificial intelligence</b> — an <b>AIMS</b>, AI Management System. It's the newest and most AI-specific badge on the card, and the most directly relevant to what your platform does.</p>
+        <ul>
+          <li><b>What it covers:</b> how an organization governs AI across its lifecycle — risk and impact assessment, data governance, transparency, human oversight, bias management, and continual monitoring of AI systems.</li>
+          <li><b>Why it's distinct from 27001:</b> 27001 secures <em>information</em>; 42001 governs <em>AI-specific</em> risks (model behavior, automated decisions, AI supply chain) that traditional security standards don't address.</li>
+          <li><b>Why it's rising fast:</b> it's becoming the reference framework organizations use to demonstrate "responsible AI" to regulators and customers, and it maps closely onto emerging law like the EU AI Act (6.7).</li>
+        </ul>
+        <p>A provider holding ISO 42001 signals they govern their AI, not just their servers — the same posture your RAI Trust platform is built to give you across every model you run.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s6-4">
+      <div class="eyebrow">Certifications · 6.4</div>
+      <h3 class="term">HIPAA (and the BAA)</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        The US law protecting health information. To put any health data through a model, the provider must sign a specific contract (a BAA) taking on legal responsibility for it.</div>
+      <div class="depth">
+        <p><b>HIPAA</b> (Health Insurance Portability and Accountability Act) governs <b>PHI</b> — protected health information — in the US. Providers don't get "HIPAA certified" (there's no such certificate); instead, HIPAA readiness hinges on one document:</p>
+        <ul>
+          <li><b>The BAA — Business Associate Agreement.</b> A contract in which the provider legally commits to HIPAA's safeguards for the PHI you send. <b>Without a signed BAA, you cannot lawfully put PHI through that model, full stop</b> — regardless of how secure it is technically.</li>
+          <li><b>Scope matters:</b> a provider may offer a BAA only on certain tiers, regions, or with ZDR enabled. "HIPAA (via BAA)" on the card means the option exists — you still have to execute it.</li>
+          <li><b>It pairs with the data controls:</b> a defensible PHI deployment usually combines a BAA with no-train (4.1), often ZDR (4.2), residency (4.3), and PII handling (4.5).</li>
+        </ul>
+        <p>For a healthcare or pharma workload, this is the gate: no BAA, no PHI, no exceptions.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s6-5">
+      <div class="eyebrow">Certifications · 6.5</div>
+      <h3 class="term">GDPR</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        Europe's data-protection law. It gives people strong rights over their personal data and applies to anyone handling EU residents' data — with heavy fines for getting it wrong.</div>
+      <div class="depth">
+        <p><b>GDPR</b> (General Data Protection Regulation) is the EU's comprehensive personal-data law. Like HIPAA, it's a <em>regulation to comply with</em>, not a certificate to earn — "GDPR" on the card means the provider offers the terms and controls needed to use them compliantly.</p>
+        <ul>
+          <li><b>Core obligations:</b> a lawful basis for processing, data-minimization, purpose limitation, and honoring data-subject rights — access, correction, deletion ("right to erasure"), and portability.</li>
+          <li><b>What you need from a provider:</b> a <b>Data Processing Agreement (DPA)</b>, defined roles (controller vs processor), sub-processor transparency, and lawful handling of any transfer of EU data outside the EU (Standard Contractual Clauses or equivalent).</li>
+          <li><b>Direct tie to earlier fields:</b> GDPR is <em>why</em> residency (2.2 / 4.3), no-train (4.1), retention limits (4.2), and PII redaction (4.5) are on this card — they're the mechanisms that make an AI deployment defensible under it.</li>
+          <li><b>Stakes:</b> fines reach up to €20M or 4% of global annual turnover, so this is a board-level risk, not a checkbox.</li>
+        </ul>
+        <p>Practically, GDPR is the lens EU customers use to interrogate every other control here — the certifications and data promises exist largely to answer its questions.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s6-6">
+      <div class="eyebrow">Certifications · 6.6</div>
+      <h3 class="term">FedRAMP</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        The US government's security stamp for cloud services. If a model provider has it, US federal agencies are allowed to use them — a very high bar to clear.</div>
+      <div class="depth">
+        <p><b>FedRAMP</b> (Federal Risk and Authorization Management Program) is the standardized security-authorization program a cloud service must clear before US federal agencies can use it. It's one of the most rigorous certifications on the card.</p>
+        <ul>
+          <li><b>Impact levels:</b> authorizations come at <b>Low</b>, <b>Moderate</b>, and <b>High</b> — matching the sensitivity of the data the service is cleared to handle. "FedRAMP High" is the top tier for the most sensitive unclassified federal data.</li>
+          <li><b>Built on NIST:</b> it's grounded in NIST 800-53 controls and involves continuous monitoring, not a one-time review — an authorization must be maintained.</li>
+          <li><b>Signal beyond government:</b> even outside the public sector, FedRAMP authorization is read as strong evidence of a mature, heavily audited security posture — useful for regulated commercial buyers too.</li>
+        </ul>
+        <p>On the card, FedRAMP (typically on major cloud hosts like Google Cloud/Vertex) tells you the provider can meet public-sector requirements — relevant if any of your workloads touch government or critical-infrastructure customers.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="s6-7">
+      <div class="eyebrow">Certifications · 6.7</div>
+      <h3 class="term">EU AI Act</h3>
+      <div class="gist"><span class="lbl">In one breath</span>
+        Europe's new law that regulates AI by how risky its use is. Higher-risk uses carry real legal obligations — and this is the framework your governance work is built to satisfy.</div>
+      <div class="depth">
+        <p>The <b>EU AI Act</b> is the first comprehensive law regulating AI, and unlike the certifications above it targets <em>AI systems specifically</em>. It's risk-tiered — obligations scale with how the AI is used, not what technology it is:</p>
+        <ul>
+          <li><b>Prohibited</b> — a small set of banned uses (e.g. social scoring, certain biometric surveillance).</li>
+          <li><b>High-risk</b> — uses in areas like credit, employment, and critical infrastructure. These carry the heavy obligations: risk management, data governance, logging, transparency, <b>human oversight</b>, accuracy, and conformity assessment before deployment.</li>
+          <li><b>Limited-risk</b> — transparency duties (e.g. telling people they're talking to AI, labeling AI-generated content).</li>
+          <li><b>Minimal-risk</b> — most uses; few or no obligations.</li>
+          <li><b>GPAI</b> — general-purpose AI models (the foundation models on your cards) carry their own transparency and, for the most capable, systemic-risk obligations on the model makers.</li>
+        </ul>
+        <p>"EU AI Act conformity" on a card (often self-attested for the sovereign option) signals alignment with these obligations. Crucially, the Act's high-risk requirements — logging, human oversight, risk management, traceability — are <em>exactly</em> what your RAI Trust platform provides: audit trails, HITL councils, policy evaluation, and per-agent governance. The model card documents the model's part; your platform delivers the system-level compliance the Act actually demands.</p>
+      </div>
+    </section>
+
+  </article>
+</div>
+
+<footer>
+  Neuro Trust · RAI Trust Platform — Model Card Field Reference. Companion to the Agent Registry → Model card view. Values shown for illustration; verify current provider terms and certifications before relying on them for compliance.
+</footer>
+
+<script>
+(function(){
+  // Theme toggle — flips data-theme, overriding the OS preference in both directions.
+  var btn = document.getElementById('themebtn');
+  function current(){
+    var set = document.documentElement.getAttribute('data-theme');
+    if (set) return set;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  btn.addEventListener('click', function(){
+    document.documentElement.setAttribute('data-theme', current() === 'dark' ? 'light' : 'dark');
+  });
+
+  // Scrollspy — highlight the current section in the contents rail.
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+  var byId = {};
+  links.forEach(function(a){ byId[a.getAttribute('href').slice(1)] = a; });
+  var sections = Array.prototype.slice.call(document.querySelectorAll('section.entry'));
+  if ('IntersectionObserver' in window){
+    var active = null;
+    var obs = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting){
+          var a = byId[e.target.id];
+          if (a && a !== active){
+            if (active) active.classList.remove('active');
+            a.classList.add('active');
+            active = a;
+          }
+        }
+      });
+    }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+    sections.forEach(function(s){ obs.observe(s); });
+  }
+})();
+</script>

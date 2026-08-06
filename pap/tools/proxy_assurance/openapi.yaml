@@ -1,0 +1,212 @@
+openapi: "3.1.0"
+
+info:
+  title: Mock Assurance Provider
+  version: "0.4.0"
+  description: >
+    Drop-in mock for the RAI Assurance v0.4 API contract.
+    Implements all production endpoints plus /v1/_test/* for
+    switching scenarios at runtime without restarting the service.
+
+servers:
+  - url: http://127.0.0.1:3010
+    description: Local dev
+
+paths:
+
+  /v1/healthz:
+    get:
+      summary: Liveness + provider state
+      responses:
+        "200":
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /v1/catalog:
+    get:
+      summary: Metric catalog (8 metrics)
+      parameters:
+        - name: app_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ordered metric catalog
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogResponse"
+
+  /v1/metrics:
+    get:
+      summary: Batch metric read
+      parameters:
+        - name: app_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: ids
+          in: query
+          required: true
+          description: Comma-separated metric_id list
+          schema:
+            type: string
+            example: "hallucination_rate,groundedness_score"
+        - name: window
+          in: query
+          schema:
+            type: string
+            enum: ["1h", "6h", "24h", "7d"]
+            default: "1h"
+      responses:
+        "200":
+          description: Batch metrics response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricsResponse"
+
+  /v1/metrics/{metric_id}:
+    get:
+      summary: Single metric read
+      parameters:
+        - name: metric_id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: hallucination_rate
+        - name: app_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: window
+          in: query
+          schema:
+            type: string
+            enum: ["1h", "6h", "24h", "7d"]
+            default: "1h"
+      responses:
+        "200":
+          description: Single metric response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricsResponse"
+
+  /v1/_test/scenario:
+    get:
+      summary: Read current scenario  [TEST ONLY — not part of real Assurance contract]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scenario:
+                    type: string
+                    enum: [ok, no_data, provider_unavailable, partial, slow]
+    post:
+      summary: Switch scenario at runtime  [TEST ONLY — not part of real Assurance contract]
+      parameters:
+        - name: scenario
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [ok, no_data, provider_unavailable, partial, slow]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scenario:
+                    type: string
+                  changed:
+                    type: boolean
+        "400":
+          description: Unknown scenario
+
+components:
+  schemas:
+
+    HealthResponse:
+      type: object
+      required: [status, provider_status]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, down]
+        provider_status:
+          type: string
+          enum: [reachable, unreachable, unknown]
+
+    CatalogResponse:
+      type: object
+      required: [metric_count, metrics]
+      properties:
+        metric_count:
+          type: integer
+          example: 8
+        metrics:
+          type: array
+          items:
+            type: object
+            required: [metric_id, unit]
+            properties:
+              metric_id:
+                type: string
+              unit:
+                type: string
+                enum: ["%", "score", "count", "ms", ""]
+
+    MetricItem:
+      type: object
+      required: [metric_id, value, unit, data_status, error]
+      properties:
+        metric_id:
+          type: string
+        value:
+          type: number
+          nullable: true
+        unit:
+          type: string
+          enum: ["%", "score", "count", "ms", ""]
+        data_status:
+          type: string
+          enum: [ok, no_data, provider_unavailable, unsupported, partial]
+        error:
+          type: string
+          nullable: true
+
+    MetricsResponse:
+      type: object
+      required: [app_id, window, data_status, metric_count, metrics]
+      properties:
+        app_id:
+          type: string
+          example: mybank_clean
+        window:
+          type: string
+          enum: ["1h", "6h", "24h", "7d"]
+        data_status:
+          type: string
+          enum: [ok, no_data, provider_unavailable, unsupported, partial]
+          description: >
+            Envelope rollup: all-same → that status; mixed → partial.
+        metric_count:
+          type: integer
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricItem"

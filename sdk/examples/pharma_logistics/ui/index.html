@@ -1,0 +1,3191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PharmaLogistics</title>
+<script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Dark theme (filter-based) ────────────────────────────────────────────
+   PharmaLogistics is authored light with many hardcoded inline hex colors, so a dark
+   theme is produced by inverting the whole document and rotating hues 180° to
+   keep the original hue families. Real raster media is counter-inverted so it
+   renders normally; inline SVG/icons are UI chrome and invert with the page. */
+html.theme-dark { filter: invert(1) hue-rotate(180deg); background: #0f1117; }
+html.theme-dark img,
+html.theme-dark video,
+html.theme-dark .no-invert { filter: invert(1) hue-rotate(180deg); }
+html { transition: filter .18s ease; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #F4F1FB;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Top app bar ─────────────────────────────────────────────────
+   PharmaLogistics uses a full-width, top-bar-driven layout (distinct from
+   the sidebar-driven MyBank reference). The bar carries brand + facility
+   identity + user; a second toolbar strip below carries actions. */
+header {
+  background: linear-gradient(90deg, #3A1F6E 0%, #4B2A87 55%, #5A34A0 100%);
+  color: white;
+  padding: 0 26px;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 14px rgba(46,26,87,0.32);
+  z-index: 20;
+}
+
+.logo {
+  font-size: 21px; font-weight: 700; letter-spacing: -0.3px;
+  display: flex; align-items: center; gap: 9px;
+  flex-shrink: 0;
+}
+.logo em { color: #C6B6FF; font-style: normal; font-weight: 400; }
+.logo-icon {
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 7px rgba(124,92,255,0.55));
+}
+
+/* Facility identity block in the middle of the top bar */
+.facility-id {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-left: 22px;
+  margin-left: 4px;
+  border-left: 1px solid rgba(255,255,255,0.16);
+  min-width: 0;
+}
+.facility-id .fac-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+}
+.facility-id .fac-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.62);
+  white-space: nowrap;
+}
+.facility-id .fac-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 20px;
+  padding: 3px 11px;
+  white-space: nowrap;
+}
+.facility-id .fac-status .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 6px rgba(74,222,128,0.7);
+}
+
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 24px;
+  padding: 5px 14px 5px 5px;
+}
+
+.avatar {
+  width: 30px; height: 30px;
+  background: #7C5CFF;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px; color: #ffffff;
+}
+
+.user-chip span { font-size: 13px; }
+
+/* ── Inventory strip (compact chips under the top bar) ───────────── */
+.inventory-strip {
+  background: #2E1A57;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 26px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  scrollbar-width: thin;
+}
+.inventory-strip .strip-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.55);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+/* Category / Location segmented toggle */
+.inv-toggle {
+  display: flex;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.inv-toggle button {
+  font: inherit;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 9px;
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,0.55);
+  cursor: pointer;
+}
+.inv-toggle button + button { border-left: 1px solid rgba(255,255,255,0.16); }
+.inv-toggle button:hover { color: rgba(255,255,255,0.85); }
+.inv-toggle button.active {
+  background: rgba(255,255,255,0.16);
+  color: #ffffff;
+}
+
+#accountsList {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+/* Inventory is tracked by pharma product category — handling class, storage
+   temperature band, regulatory schedule. An aggregate unit count across the DC
+   is not an operationally meaningful number, so it is not shown. */
+.inv-cat {
+  background: rgba(255,255,255,0.065);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-left: 3px solid var(--cat-accent, #B9A6FF);
+  border-radius: 8px;
+  padding: 5px 11px 6px 9px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 138px;
+  flex-shrink: 0;
+}
+.inv-cat .cat-name {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.90);
+  text-transform: uppercase;
+  letter-spacing: 0.55px;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+.inv-cat .cat-detail {
+  font-size: 8.5px;
+  color: rgba(255,255,255,0.48);
+  letter-spacing: 0.3px;
+  line-height: 1.3;
+  margin-bottom: 1px;
+  white-space: nowrap;
+}
+.inv-cat .cat-units {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  line-height: 1.15;
+}
+.inv-cat .cat-uom {
+  font-size: 9.5px;
+  opacity: 0.55;
+  margin-left: 3px;
+  font-weight: 500;
+}
+/* Regulated categories carry a schedule/serialization marker */
+.inv-cat .cat-reg {
+  font-size: 8px;
+  font-weight: 700;
+  margin-left: 4px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.72);
+  letter-spacing: 0.4px;
+  vertical-align: 1px;
+}
+
+/* ── Action toolbar (replaces the tall left sidebar) ─────────────── */
+.action-bar {
+  background: white;
+  border-bottom: 1px solid #E0D8F4;
+  padding: 11px 26px;
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.action-group + .action-group {
+  padding-left: 26px;
+  border-left: 1px solid #E9E3F6;
+}
+.action-group.scenarios {
+  background: #FBF9FF;
+  border: 1px solid #E0D8F4;
+  border-radius: 12px;
+  padding: 7px 12px 7px 14px;
+}
+.group-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #8B7BB8;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+.action-group.scenarios .group-label { color: #7C5CFF; }
+
+.section-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+/* Action chips — horizontal pill buttons */
+.action-btn {
+  background: #F4F1FB;
+  border: 1px solid #E0D8F4;
+  border-radius: 22px;
+  padding: 7px 14px;
+  text-align: left;
+  font-size: 12.5px;
+  color: #4B2A87;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 500;
+  transition: background 0.13s, border-color 0.13s, box-shadow 0.13s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.action-btn:hover { background: #EDE8F9; border-color: #7C5CFF; box-shadow: 0 1px 5px rgba(124,92,255,0.18); }
+
+.action-btn.danger {
+  background: #fff8f8;
+  border-color: #fecdd3;
+  color: #be123c;
+}
+.action-btn.danger:hover { background: #fff1f2; border-color: #fca5a5; }
+
+.action-btn.preferred {
+  background: #f5f3ff;
+  border-color: #c4b5fd;
+  color: #4c1d95;
+}
+.action-btn.preferred:hover { background: #ede9fe; border-color: #8b5cf6; }
+
+/* Reset chip — subtle, sits at the far right of the toolbar */
+.action-btn.reset-chip {
+  background: #F1F3F7;
+  border-color: #C7CDD9;
+  color: #556070;
+  margin-left: auto;
+}
+.action-btn.reset-chip:hover { background: #E2E6EE; border-color: #94a3b8; box-shadow: none; }
+
+/* ── Body row: chat + right drawers ──────────────────────────────── */
+.layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Prompt suggestions strip ─────────────────────────────── */
+.suggestions-strip {
+  padding: 8px 16px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.sug-group-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  width: 100%;
+  margin-bottom: 2px;
+}
+.sug-pill {
+  font-size: 12px;
+  padding: 4px 11px;
+  border: 1px solid #dde3ed;
+  border-radius: 20px;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.sug-pill:hover { background: #EDE8F9; border-color: #7C5CFF; color: #4B2A87; }
+
+/* ── Advisory notice in chat ──────────────────────────────── */
+.msg-advisory {
+  background: #fffbeb;
+  border: 1.5px solid #fcd34d;
+  border-radius: 12px;
+  padding: 13px 15px;
+  font-size: 13px;
+  color: #78350f;
+  line-height: 1.5;
+}
+.advisory-header {
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 5px;
+  font-size: 13px;
+}
+
+/* HITL pending message bubble */
+.msg-hitl {
+  background: #fffbeb;
+  border: 1.5px solid #fcd34d;
+  border-radius: 12px;
+  padding: 13px 15px;
+}
+.hitl-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  color: #92400e;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.hitl-body { font-size: 13px; color: #78350f; line-height: 1.5; }
+.hitl-footer {
+  margin-top: 9px;
+  font-size: 11.5px;
+  color: #a16207;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.hitl-spinner {
+  width: 10px; height: 10px;
+  border: 2px solid #fcd34d;
+  border-top-color: #d97706;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* HITL resolved overlay on a pending bubble */
+.hitl-resolved {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.hitl-resolved.approved { background: #dcfce7; color: #15803d; }
+.hitl-resolved.rejected { background: #fee2e2; color: #b91c1c; }
+
+.action-icon { font-size: 15px; width: 20px; text-align: center; }
+
+/* Governance panel — only visible after SDK instrumentation */
+.gov-panel {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 10px;
+  padding: 13px 14px;
+  display: none;
+}
+.gov-panel.visible { display: block; }
+.gov-panel.warn { background: #fefce8; border-color: #fde047; }
+.gov-panel.block { background: #fff1f2; border-color: #fecdd3; }
+
+.gov-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #15803d;
+  margin-bottom: 8px;
+}
+.gov-panel.warn .gov-title { color: #a16207; }
+.gov-panel.block .gov-title { color: #be123c; }
+
+.gov-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #374151;
+  padding: 2px 0;
+}
+
+/* ── Showcase panel ────────────────────────────────────────────── */
+.showcase-panel {
+  border: 1px solid #dde3ed;
+  border-radius: 10px;
+  padding: 12px 13px;
+  background: #f8fafc;
+}
+.showcase-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #64748b;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.showcase-btn {
+  width: 100%;
+  background: white;
+  border: 1px solid #E0D8F4;
+  border-radius: 8px;
+  padding: 8px 11px;
+  text-align: left;
+  font-size: 12px;
+  color: #4B2A87;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 500;
+  transition: background 0.13s, border-color 0.13s;
+  margin-bottom: 5px;
+  font-family: inherit;
+}
+.showcase-btn:last-of-type { margin-bottom: 0; }
+.showcase-btn:hover:not(:disabled) { background: #EDE8F9; border-color: #7C5CFF; }
+.showcase-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.showcase-btn .sc-icon { font-size: 13px; }
+
+/* ── Showcase turn-by-turn playback ──────────────────────────── */
+.sc-log {
+  margin-top: 9px;
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 320px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.sc-log.visible { display: flex; }
+.sc-turn {
+  background: white;
+  border: 1px solid #e8eef6;
+  border-left: 3px solid #94a3b8;
+  border-radius: 6px;
+  padding: 6px 9px;
+  font-size: 11px;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.sc-turn.show { opacity: 1; transform: translateY(0); }
+.sc-turn[data-role="user_prompt"]    { border-left-color: #6366f1; }
+.sc-turn[data-role="tool_call"]      { border-left-color: #0891b2; }
+.sc-turn[data-role="agent_to_agent"] { border-left-color: #d97706; }
+.sc-turn-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 3px;
+}
+.sc-role-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: #f1f5f9;
+  color: #475569;
+}
+.sc-role-badge.user_prompt    { background: #ede9fe; color: #4f46e5; }
+.sc-role-badge.tool_call      { background: #e0f2fe; color: #0369a1; }
+.sc-role-badge.agent_to_agent { background: #fef3c7; color: #92400e; }
+.sc-agents {
+  font-size: 9.5px;
+  color: #64748b;
+  margin-left: auto;
+}
+.sc-verdict {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: auto;
+}
+.sc-verdict.PERMISSIVE { background: #dcfce7; color: #15803d; }
+.sc-verdict.NORMATIVE  { background: #fef9c3; color: #854d0e; }
+.sc-verdict.COERCIVE   { background: #fee2e2; color: #b91c1c; }
+.sc-verdict.pending    { background: #f1f5f9; color: #94a3b8; }
+.sc-content {
+  color: #334155;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+.sc-footer {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px solid #f1f5f9;
+  text-align: center;
+}
+
+/* ── Chat ───────────────────────────────────────────────────────── */
+.chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-header {
+  background: white;
+  border-bottom: 1px solid #dde3ed;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+.online-dot {
+  width: 8px; height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chat-header-text { font-size: 14px; color: #475569; }
+.chat-header-text strong { color: #4B2A87; }
+
+/* Messages */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.welcome-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  gap: 10px;
+  padding: 40px;
+  text-align: center;
+}
+
+.welcome-state .welcome-icon { font-size: 40px; }
+.welcome-state h3 { font-size: 18px; color: #334155; font-weight: 600; }
+.welcome-state p { font-size: 14px; line-height: 1.6; max-width: 320px; }
+
+/* Message rows */
+.msg-row {
+  display: flex;
+  gap: 10px;
+  max-width: 78%;
+}
+
+.msg-row.user { align-self: flex-end; flex-direction: row-reverse; }
+.msg-row.bank { align-self: flex-start; }
+
+.msg-icon {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.msg-row.bank .msg-icon { background: #4B2A87; color: #ffffff; }
+.msg-row.user .msg-icon { background: #7C5CFF; color: #ffffff; }
+
+.msg-body { display: flex; flex-direction: column; gap: 5px; }
+
+.msg-bubble {
+  padding: 11px 15px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.msg-row.user .msg-bubble { white-space: pre-wrap; }
+.msg-row.bank .msg-bubble { white-space: pre-wrap; }
+
+.msg-row.bank .msg-bubble {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-bottom-left-radius: 4px;
+  color: #1e293b;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.msg-row.user .msg-bubble {
+  background: #4B2A87;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+/* Blocked message */
+.msg-blocked {
+  background: #fff1f2;
+  border: 1.5px solid #fecdd3;
+  border-radius: 12px;
+  padding: 13px 15px;
+}
+
+.blocked-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  color: #be123c;
+  font-size: 13px;
+  margin-bottom: 7px;
+}
+
+.violations {
+  font-size: 12.5px;
+  color: #7f1d1d;
+  padding-left: 4px;
+}
+
+.violations li {
+  list-style: none;
+  padding: 2px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.violations li::before { content: "•"; color: #f43f5e; }
+
+.blocked-footer {
+  margin-top: 9px;
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+
+/* Verdict pill */
+.verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 20px;
+  align-self: flex-start;
+  letter-spacing: 0.2px;
+}
+
+.verdict.PERMISSIVE { background: #dcfce7; color: #15803d; }
+.verdict.NORMATIVE  { background: #fef9c3; color: #a16207; }
+.verdict.COERCIVE   { background: #fee2e2; color: #b91c1c; }
+
+/* PII masked badge — shown on user message when Privacy Proxy detects PII */
+.pii-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 20px;
+  align-self: flex-end;
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  letter-spacing: 0.2px;
+  margin-top: 2px;
+}
+
+/* Typing */
+.typing-row {
+  display: none;
+  align-self: flex-start;
+  align-items: center;
+  gap: 10px;
+}
+.typing-row.visible { display: flex; }
+
+.typing-bubble {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  border-bottom-left-radius: 4px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.dots { display: flex; gap: 4px; align-items: center; }
+.dots span {
+  width: 6px; height: 6px;
+  background: #94a3b8;
+  border-radius: 50%;
+  animation: bob 1.3s infinite ease-in-out;
+}
+.dots span:nth-child(2) { animation-delay: 0.18s; }
+.dots span:nth-child(3) { animation-delay: 0.36s; }
+@keyframes bob {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-5px); }
+}
+
+/* Input */
+.input-bar {
+  background: white;
+  border-top: 1px solid #dde3ed;
+  padding: 14px 20px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+#input {
+  flex: 1;
+  background: #f1f5f9;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 22px;
+  padding: 11px 18px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: none;
+  outline: none;
+  max-height: 120px;
+  line-height: 1.45;
+  transition: border-color 0.15s, background 0.15s;
+  color: #1e293b;
+}
+
+#input:focus { border-color: #7C5CFF; background: white; }
+#input::placeholder { color: #94a3b8; }
+
+#sendBtn {
+  width: 42px; height: 42px;
+  background: #4B2A87;
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.1s;
+}
+
+#sendBtn:hover:not(:disabled) { background: #6B4AF0; transform: scale(1.05); }
+#sendBtn:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
+
+/* ── Login overlay ─────────────────────────────────────────────── */
+#login-overlay {
+  position: fixed; inset: 0; background: #2E1A57;
+  display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+.login-card {
+  background: white; border-radius: 18px; padding: 44px 40px;
+  width: 360px; box-shadow: 0 24px 64px rgba(0,0,0,0.45);
+}
+.login-logo { font-size: 26px; font-weight: 700; color: #4B2A87; margin-bottom: 4px; }
+.login-logo em { color: #7C5CFF; font-style: normal; font-weight: 500; }
+.login-tagline { font-size: 13px; color: #64748b; margin-bottom: 32px; }
+.login-label {
+  display: block; font-size: 11.5px; font-weight: 600;
+  color: #374151; letter-spacing: 0.4px; margin-bottom: 6px;
+}
+.login-input {
+  width: 100%; padding: 10px 13px; border: 1.5px solid #e2e8f0;
+  border-radius: 9px; font-size: 14px; color: #1e293b; outline: none;
+  transition: border-color 0.15s; margin-bottom: 18px;
+  font-family: inherit;
+}
+.login-input:focus { border-color: #7C5CFF; box-shadow: 0 0 0 3px rgba(124,92,255,0.12); }
+.login-btn {
+  width: 100%; padding: 12px; background: #4B2A87; color: white;
+  border: none; border-radius: 9px; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: background 0.15s; font-family: inherit;
+}
+.login-btn:hover:not(:disabled) { background: #6B4AF0; }
+.login-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+.login-error {
+  color: #be123c; font-size: 13px; margin-top: 14px;
+  background: #fff1f2; border-radius: 7px; padding: 8px 12px; display: none;
+}
+.login-hint {
+  font-size: 11px; color: #94a3b8; margin-top: 20px; text-align: center;
+  border-top: 1px solid #f1f5f9; padding-top: 14px;
+}
+.login-hint code { background: #f8fafc; border-radius: 4px; padding: 1px 5px; font-size: 11px; }
+
+/* ── Agent activity chain ─────────────────────────────────────── */
+.agent-chain {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.agent-chain-label {
+  font-size: 10px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 2px;
+}
+.agent-chip {
+  font-size: 11px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 2px 9px;
+  color: #475569;
+  font-weight: 500;
+}
+.agent-chain-arrow { color: #94a3b8; font-size: 13px; line-height: 1; }
+
+/* ── Header logout button ──────────────────────────────────────── */
+.logout-btn {
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.8); border-radius: 7px; padding: 4px 12px;
+  font-size: 12px; cursor: pointer; margin-left: 10px; font-family: inherit;
+  transition: background 0.13s;
+}
+.logout-btn:hover { background: rgba(255,255,255,0.2); color: white; }
+
+/* ── Interaction trace panel ───────────────────────────────────── */
+.interaction-panel {
+  width: 0;
+  overflow: hidden;
+  border-left: 1px solid transparent;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: width 0.22s ease, border-color 0.22s ease;
+}
+.interaction-panel.open {
+  width: 268px;
+  border-left-color: #E0D8F4;
+  overflow-y: auto;
+}
+.ip-header {
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid #e8eef5;
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  z-index: 1;
+}
+.ip-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+.ip-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+}
+.ip-clear-btn {
+  font-size: 10px;
+  color: #94a3b8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-family: inherit;
+}
+.ip-clear-btn:hover { color: #475569; background: #e8eef5; }
+.ip-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 0; }
+.ip-empty {
+  font-size: 11.5px;
+  color: #94a3b8;
+  text-align: center;
+  padding: 28px 16px;
+  line-height: 1.6;
+}
+
+/* ── Cards view: vertical timeline spine ──────────────────────────── */
+.trace-entry {
+  display: flex;
+  gap: 10px;
+  padding-bottom: 10px;
+  position: relative;
+}
+.trace-spine {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 20px;
+}
+.trace-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #4B2A87;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  z-index: 1;
+}
+.trace-dot.blocked { background: #be123c; }
+.trace-dot.hitl    { background: #a16207; }
+.trace-spine-line {
+  width: 2px;
+  flex: 1;
+  background: #e2e8f0;
+  margin-top: 2px;
+  min-height: 14px;
+}
+.trace-card {
+  flex: 1;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  padding: 8px 10px;
+  margin-bottom: 0;
+  min-width: 0;
+}
+.trace-turn-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 4px;
+}
+.trace-user {
+  font-size: 11.5px;
+  color: #4B2A87;
+  font-weight: 500;
+  margin-bottom: 5px;
+  line-height: 1.35;
+  word-break: break-word;
+}
+.trace-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 5px;
+}
+.trace-node {
+  font-size: 10px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1px 6px;
+  color: #475569;
+  font-weight: 500;
+}
+.trace-node.user-node    { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+.trace-node.agent-node   { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
+.trace-node.pe-node      { background: #faf5ff; border-color: #e9d5ff; color: #7c3aed; }
+.trace-node.privacy-node { background: #fff7ed; border-color: #fed7aa; color: #c2410c; }
+.trace-node.hitl-node     { background: #fefce8; border-color: #fde047; color: #a16207; }
+.trace-node.block-node    { background: #fff1f2; border-color: #fecdd3; color: #be123c; }
+.trace-node.conflict-node { background: #fff7ed; border-color: #fed7aa; color: #c2410c; font-weight: 600; }
+.trace-arrow { font-size: 10px; color: #94a3b8; line-height: 1; }
+.trace-verdict {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 3px;
+}
+.trace-verdict.clear   { background: #dcfce7; color: #15803d; }
+.trace-verdict.watch   { background: #fefce8; color: #a16207; }
+.trace-verdict.alert   { background: #fff1f2; color: #be123c; }
+.trace-verdict.hitl    { background: #fef3c7; color: #92400e; }
+.trace-verdict.blocked { background: #ffe4e6; color: #be123c; }
+.trace-verdict.default { background: #f1f5f9; color: #475569; }
+
+/* ── Post-HITL card CTA buttons ──────────────────────────────────── */
+.card-cta-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+.card-cta-btn {
+  font-size: 12px;
+  padding: 6px 13px;
+  border-radius: 8px;
+  border: 1px solid #E0D8F4;
+  background: #F4F1FB;
+  color: #4B2A87;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  transition: background 0.12s, border-color 0.12s;
+}
+.card-cta-btn:hover { background: #EDE8F9; border-color: #7C5CFF; }
+.card-cta-btn.primary {
+  background: #4B2A87;
+  color: white;
+  border-color: #4B2A87;
+}
+.card-cta-btn.primary:hover { background: #6B4AF0; }
+
+/* Toggle button in chat header */
+.ip-toggle-btn {
+  font-size: 11px;
+  background: #F1F3F7;
+  border: 1px solid #C7CDD9;
+  color: #3A4252;
+  border-radius: 7px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.13s;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.ip-toggle-btn:hover { background: #E2E6EE; color: #1F2530; }
+.ip-toggle-btn.active { background: #3A4252; border-color: #3A4252; color: #fff; }
+/* ── Governance Lens — presenter-driven glass-box replay ─────────────────────── */
+#gov-lens { width:0; overflow:hidden; background:#fff; border-left:1px solid transparent;
+  display:flex; flex-direction:column; flex-shrink:0; transition:width .22s ease; font-size:12px; color:#0D1B3E; }
+#gov-lens.open { width:470px; border-left-color:#DDE3EC; }
+/* Full-screen presenter mode — the Lens covers the whole viewport */
+#gov-lens.fullscreen { position:fixed; inset:0; width:100vw !important; height:100vh; z-index:99999;
+  border-left:none; box-shadow:0 0 0 100vmax rgba(0,0,0,.0); transition:none; }
+.gl-headright { display:inline-flex; align-items:center; gap:8px; }
+.gl-iconbtn { border:1px solid #DDE3EC; background:#fff; border-radius:6px; padding:2px 8px; cursor:pointer;
+  font-size:13px; line-height:1.1; color:#0D1B3E; }
+.gl-iconbtn:hover { background:#F0F3F8; }
+.gl-close { color:#9aa3b2; font-weight:700; }
+.gl-close:hover { background:#FDECEA; color:#C8303A; border-color:#F1B7BC; }
+.gl-head { padding:10px 12px; border-bottom:1px solid #E8ECF2; display:flex; align-items:center; justify-content:space-between; }
+.gl-title { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.gl-badge { font-size:9px; font-weight:700; padding:2px 7px; border-radius:10px; background:#EEF2F8; color:#6B7A90; letter-spacing:.05em; }
+.gl-controls { display:flex; align-items:center; gap:4px; padding:8px 10px; border-bottom:1px solid #E8ECF2; background:#F7F9FC; }
+.gl-btn { font:inherit; font-size:11px; border:1px solid #DDE3EC; background:#fff; color:#0D1B3E; border-radius:6px; padding:4px 8px; cursor:pointer; }
+.gl-btn:hover:not(:disabled){ background:#EEF2F8; border-color:#6B7A90; }
+.gl-btn:disabled{ opacity:.38; cursor:not-allowed; }
+.gl-btn.primary{ background:#1F2530; color:#fff; border-color:#1F2530; }
+.gl-beat { margin-left:auto; font-size:10px; color:#6B7A90; font-weight:600; }
+.gl-spine { display:flex; gap:4px; padding:8px 10px; border-bottom:1px solid #E8ECF2; }
+.gl-spine .st { flex:1; text-align:center; font-size:8.5px; text-transform:uppercase; letter-spacing:.04em; color:#9AA7B8; padding:5px 2px; border-radius:5px; background:#F4F7FB; }
+.gl-spine .st.active { background:#1F2530; color:#fff; }
+.gl-spine .st.done { background:#E4E7EC; color:#4A5366; }
+.gl-body { flex:1; overflow-y:auto; padding:10px 12px; }
+.gl-lane { margin-bottom:14px; }
+.gl-lane-h { font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:#6B7A90; margin-bottom:6px; }
+.gl-item { border:1px solid #E8ECF2; border-left:3px solid #DDE3EC; border-radius:6px; padding:6px 9px; margin-bottom:6px; background:#fff; }
+.gl-item .t { font-size:11.5px; font-weight:600; display:flex; align-items:center; gap:6px; }
+.gl-item .d { font-size:10.5px; color:#6B7A90; margin-top:2px; line-height:1.4; }
+.gl-item.v-perm { border-left-color:#00934F; } .gl-item.v-norm { border-left-color:#B07D00; } .gl-item.v-coer { border-left-color:#C8303A; }
+.gl-item.bp { border-left-color:#6B7A90; }
+.gl-verdict { font-size:9px; font-weight:700; padding:1px 6px; border-radius:3px; }
+.v-perm-b{ background:#ECF7F0;color:#00934F;} .v-norm-b{ background:#FBF6E8;color:#B07D00;} .v-coer-b{ background:#FBF1F2;color:#C8303A;}
+.gl-agents { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.gl-agent { border:1px solid #E8ECF2; border-radius:7px; padding:7px 8px; opacity:.32; transition:opacity .2s, border-color .2s; }
+.gl-agent.revealed { opacity:1; }
+.gl-agent.uphold { border-color:#9AA7B8; } .gl-agent.overturn { border-color:#9AA7B8; }
+.gl-agent .an { font-size:10.5px; font-weight:700; }
+.gl-agent .mandate { font-size:9px; color:#6B7A90; }
+.gl-agent .stance { font-size:11.5px; font-weight:700; margin-top:4px; }
+.gl-agent.uphold .stance{ color:#3F4756; } .gl-agent.overturn .stance{ color:#3F4756; }
+.gl-agent .conf { font-size:9px; color:#6B7A90; }
+.gl-agent .ad { font-size:9px; color:#6B7A90; margin-top:3px; line-height:1.35; }
+.gl-tally { text-align:center; font-size:12.5px; font-weight:700; margin:8px 0; padding:7px; border-radius:6px; background:#EEF1F5; color:#3F4756; }
+.gl-tally.resolved { background:#E4E7EC; color:#2E3540; }
+.gl-empty { font-size:11px; color:#9AA7B8; font-style:italic; }
+.gl-item.newest, .gl-agent.newest { box-shadow:0 0 0 2px rgba(31,37,48,0.35); }
+.gl-hint { font-size:9px; color:#9AA7B8; padding:0 10px 7px; background:#F7F9FC; border-bottom:1px solid #E8ECF2; }
+.gl-receipts { margin-top:8px; border:1px dashed #C7D2E0; border-radius:7px; padding:9px 11px; background:#F7F9FC; }
+.gl-receipts .rh { font-size:9.5px; font-weight:700; color:#3F4756; text-transform:uppercase; letter-spacing:.06em; }
+.gl-receipts .rs { font-size:10.5px; color:#0D1B3E; margin:5px 0 7px; line-height:1.55; }
+.gl-receipts a { font-size:10.5px; color:#6B7A90; font-weight:600; text-decoration:none; }
+.gl-receipts a:hover { text-decoration:underline; }
+.gl-picker { display:flex; gap:5px; padding:8px 10px; border-bottom:1px solid #E8ECF2; flex-wrap:wrap; align-items:center; }
+.gl-picker .pl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#9AA7B8; margin-right:2px; }
+.gl-chip { font:inherit; font-size:10px; border:1px solid #DDE3EC; background:#fff; color:#6B7A90; border-radius:14px; padding:3px 10px; cursor:pointer; }
+.gl-chip:hover { border-color:#6B7A90; }
+.gl-chip.active { background:#1F2530; color:#fff; border-color:#1F2530; }
+.gl-intro { border:1px solid #DDE3EC; border-radius:8px; padding:13px; background:#F7F9FC; margin-bottom:12px; }
+.gl-intro .it { font-size:13.5px; font-weight:700; color:#0D1B3E; }
+.gl-intro .ig { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#6B7280; margin:3px 0 8px; }
+.gl-intro .ib { font-size:11px; color:#0D1B3E; line-height:1.55; margin-bottom:11px; }
+.gl-intro .start { font:inherit; font-size:12px; font-weight:700; background:#1F2530; color:#fff; border:none; border-radius:7px; padding:8px 18px; cursor:pointer; }
+.gl-intro .start:hover { background:#3A4252; }
+.gl-intro .istart { font-size:11px; color:#6B7A90; }
+.gl-intro .istart b { color:#0D1B3E; }
+.gl-noneg { font-size:10.5px; color:#9AA7B8; font-style:italic; padding:4px 0; }
+/* ── Presenter mode (wide split console) ── */
+.gl-present { font:inherit; font-size:10px; font-weight:700; border:1px solid #DDE3EC; background:#fff; color:#6B7A90; border-radius:6px; padding:3px 8px; cursor:pointer; }
+.gl-present:hover { border-color:#6B7A90; }
+.gl-present.active { background:#3A4252; color:#fff; border-color:#3A4252; }
+.gl-modeswitch { display:inline-flex; border:1px solid #DDE3EC; border-radius:7px; overflow:hidden; }
+.gl-modebtn { font:inherit; font-size:10px; font-weight:700; border:none; background:#fff; color:#6B7A90; padding:4px 13px; cursor:pointer; }
+.gl-modebtn.active { background:#1F2530; color:#fff; }
+.gl-replaybtn { font:inherit; font-size:10px; font-weight:700; border:1px solid #6B7A90; background:#fff; color:#6B7A90; border-radius:6px; padding:3px 9px; cursor:pointer; margin-left:auto; }
+.gl-replaybtn:hover { background:#E6F4F5; }
+.gl-recok   { font-size:10.5px; font-weight:700; color:#3F4756; }
+.gl-recwait { font-size:10.5px; color:#9AA7B8; }
+.gl-replaybtn:disabled { opacity:.6; cursor:default; }
+#gov-lens.console.open { width:min(1000px,94vw); }
+/* ── Column legend + turn bands ── */
+.gl-colhead { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:6px 12px 2px; position:sticky; top:0; background:#fff; z-index:2; }
+.gl-colhead span { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#9AA7B8; }
+#gl-turns { padding:4px 10px 0; }
+.gl-turn { border:1px solid #E8ECF2; border-radius:8px; margin-bottom:10px; overflow:hidden; }
+.gl-turn.active { border-color:#6B7A90; box-shadow:0 0 0 2px rgba(31,37,48,.12); }
+.gl-turn-h { font-size:10.5px; font-weight:700; color:#0D1B3E; background:#F4F7FB; padding:6px 10px; border-bottom:1px solid #E8ECF2; }
+.gl-turn-h .tn { display:inline-block; background:#3A4252; color:#fff; border-radius:4px; padding:1px 6px; margin-right:7px; font-size:9.5px; letter-spacing:.04em; }
+.gl-turn.active .gl-turn-h .tn { background:#1F2530; }
+.gl-turn-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; }
+.gl-col { padding:8px; min-height:24px; }
+.gl-col.app  { border-right:1px solid #EEF1F6; background:#FCFDFE; }
+.gl-col.plat { background:#fff; }
+/* ── App-side message bubbles ── */
+.gl-msg { font-size:11px; color:#0D1B3E; line-height:1.45; border:1px solid #E8ECF2; border-radius:8px; padding:6px 9px; margin-bottom:7px; background:#fff; }
+.gl-msg .who { display:block; font-size:8.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#9AA7B8; margin-bottom:2px; }
+.gl-msg.customer { background:#F1F4F8; border-color:#DCE2EA; }
+.gl-msg.agent    { background:#F7F8FA; border-color:#E3E7ED; }
+.gl-msg.system   { background:#F0F1F4; border-color:#DCE0E7; font-style:italic; }
+/* ── Platform-side governance items ── */
+.gl-pitem { font-size:10.5px; color:#0D1B3E; line-height:1.45; border:1px solid #E8ECF2; border-left-width:3px; border-radius:6px; padding:6px 9px; margin-bottom:7px; background:#fff; }
+.gl-pitem .t { font-weight:700; font-size:10.5px; }
+.gl-pitem .t .src { color:#6B7A90; font-weight:700; }
+.gl-pitem .d { font-size:9.8px; color:#42506A; margin-top:3px; font-weight:400; line-height:1.5; }
+.gl-pitem .rule { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:9.5px; color:#0D1B3E; background:#F4F7FB; border:1px solid #E8ECF2; border-radius:4px; padding:3px 6px; margin-top:4px; }
+.gl-pitem .prov { font-size:9px; color:#6B7280; font-weight:700; margin-top:3px; }
+.gl-pitem .bpdot { color:#6B7A90; }
+.gl-pitem.v-perm { border-left-color:#00934F; }
+.gl-pitem.v-norm { border-left-color:#B07D00; }
+.gl-pitem.v-coer { border-left-color:#C8303A; }
+.gl-pitem.bp     { border-left-color:#6B7A90; }
+.gl-pitem.gl-council.uphold   { border-left-color:#2E3540; }
+.gl-pitem.gl-council.overturn { border-left-color:#7E8796; }
+.gl-pitem .cstance { font-size:9px; font-weight:700; border-radius:4px; padding:0 5px; }
+.gl-pitem .cstance.uphold   { background:#EEF0F3; color:#3F4756; }
+.gl-pitem .cstance.overturn { background:#E4E7EC; color:#2E3540; }
+.gl-pitem .cconf { font-size:9px; color:#9AA7B8; font-weight:700; }
+.gl-pitem.gl-tally2 { background:#F4F7FB; border-left-color:#6B7A90; font-weight:700; }
+.gl-pitem.gl-tally2.resolved { background:#E4E7EC; border-left-color:#2E3540; }
+/* ── Policy-diff card ── */
+.gl-pitem.gl-diff { border-left-color:#6B7280; background:#F4F6F9; }
+.gl-diff .diffrow { margin-top:4px; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+.gl-diff .k { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:9.5px; font-weight:700; color:#0D1B3E; }
+.gl-diff .before { font-size:9.5px; color:#6B7280; text-decoration:line-through; }
+.gl-diff .arrow  { color:#9AA7B8; font-size:9px; font-style:italic; }
+.gl-diff .after  { font-size:9.5px; color:#1F2530; font-weight:700; }
+/* ── HITL pause controls ── */
+.gl-hitl { margin-top:7px; border-radius:6px; padding:6px 8px; font-size:10px; font-weight:700; }
+.gl-hitl.pending { background:#F2F3F6; border:1px solid #DDE3EC; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+.gl-hitl.pending .lbl { color:#4A5366; }
+.gl-hbtn { font:inherit; font-size:10px; font-weight:700; border:1px solid #DDE3EC; background:#fff; color:#42506A; border-radius:5px; padding:4px 11px; cursor:pointer; }
+.gl-hbtn:hover   { border-color:#9AA7B8; }
+.gl-hbtn:focus, .gl-hbtn:focus-visible { outline:none; box-shadow:0 0 0 3px rgba(13,27,62,.20); }
+.gl-hbtn:active  { transform:translateY(1px); }
+.gl-hbtn.primary { background:#3A4252; color:#fff; border-color:#3A4252; }
+.gl-hbtn.primary:hover { background:#4A5366; border-color:#4A5366; }
+.gl-hbtn.approve { background:#3A4252; color:#fff; border-color:#3A4252; }
+.gl-hbtn.reject  { background:#fff; color:#3F4756; border-color:#C9D0DA; }
+.gl-hbtn.reject:hover { background:#F0F2F5; }
+.gl-hitl.done     { background:#E6F4EC; color:#00934F; }
+.gl-hitl.rejected { background:#FBE9EA; color:#C8303A; }
+/* ── PE vs Sentinel altitude treatment ── */
+.gl-pitem.gl-src-pe       { background:#fff; }
+.gl-pitem.gl-src-coord    { background:#F7F9FB; }
+.gl-pitem.gl-src-sentinel { background:#F0F1F4; border-left-color:#5A6472; border-left-style:solid; box-shadow:inset 3px 0 0 #5A6472; }
+.gl-pitem.gl-src-sentinel .src { color:#4A5366; }
+.gl-pitem .obs   { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#4A5366; background:#E4E7EC; border-radius:8px; padding:1px 6px; margin-left:4px; }
+.gl-pitem .rchip { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:8.5px; font-weight:700; color:#0D1B3E; background:#EEF1F6; border:1px solid #DDE3EC; border-radius:8px; padding:1px 6px; margin-left:2px; }
+.gl-altlegend     { font-size:8.5px; color:#9AA7B8; font-weight:400; text-transform:none; letter-spacing:0; margin-top:3px; }
+.gl-altlegend b   { color:#6B7A90; font-weight:700; }
+/* Request-scope role chip — marks each governed request (PE evaluates per request) */
+.rolechip { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:8px; font-weight:700; letter-spacing:.03em; color:#3F4756; background:#EEF1F5; border:1px solid #D5DBE3; border-radius:4px; padding:1px 5px; }
+/* A2A-cap → Sentinel escalation: the request→session-scope handoff */
+.gl-pitem.gl-escalate { background:#F2F3F6; border-left-color:#6B7280; box-shadow:inset 3px 0 0 #6B7280; }
+.gl-pitem .esc { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#4A5366; background:#E4E7EC; border-radius:8px; padding:1px 6px; margin-left:4px; }
+/* PE eval-trail row — uniform, compact: Policy Engine · [ROLE] · action · OUTCOME · dim */
+.gl-pitem.gl-evalrow { padding:5px 9px; }
+.gl-pitem.gl-evalrow .t { font-weight:600; }
+.gl-pitem .evact { color:#42506A; font-weight:600; }
+.gl-pitem .evdim { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:9px; color:#6B7A90; margin-top:2px; }
+/* Coordinator tally / resolution emphasis on the agent side */
+.gl-msg.tally    { background:#F4F7FB; border-color:#C9D3E0; font-weight:600; }
+.gl-msg.resolved { background:#E8EBEF; border-color:#CFD5DE; }
+</style>
+<script>
+  // Apply the saved theme before first paint to avoid a flash of the wrong theme.
+  (function () {
+    try {
+      if (localStorage.getItem('mybank-theme') === 'dark') {
+        document.documentElement.classList.add('theme-dark');
+      }
+    } catch (e) {}
+  })();
+  function toggleTheme() {
+    var isDark = document.documentElement.classList.toggle('theme-dark');
+    try { localStorage.setItem('mybank-theme', isDark ? 'dark' : 'light'); } catch (e) {}
+    _syncThemeToggleUi(isDark);
+  }
+  function _syncThemeToggleUi(isDark) {
+    var btn = document.getElementById('theme-toggle');
+    if (btn) btn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    _syncThemeToggleUi(document.documentElement.classList.contains('theme-dark'));
+  });
+</script>
+</head>
+<body>
+
+<!-- Login overlay -->
+<div id="login-overlay">
+  <div class="login-card">
+    <div class="login-logo">Pharma<em>Logistics</em></div>
+    <div class="login-tagline">Supply-Chain Governance Portal — please sign in</div>
+    <label class="login-label" for="login-user">Username</label>
+    <input id="login-user" class="login-input" type="text"
+           placeholder="e.g. alex.morgan" autocomplete="username" />
+    <label class="login-label" for="login-pin">PIN</label>
+    <input id="login-pin" class="login-input" type="password"
+           placeholder="••••" autocomplete="current-password" maxlength="8" />
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="login-error">Invalid username or PIN. Please try again.</div>
+    <div id="login-expired" style="display:none;background:#fff8e1;border:1px solid #fcd34d;border-radius:7px;padding:8px 12px;font-size:12px;color:#92400e;margin-top:14px;text-align:center;">
+      ⏱ Session expired after 15 min of inactivity
+    </div>
+    <div class="login-hint">
+      Demo mode: enter any username to sign in — PIN is not required.
+    </div>
+  </div>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <svg class="logo-icon" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <!-- Base platform -->
+      <rect x="3" y="27" width="26" height="3" rx="1.5" fill="#7C5CFF"/>
+      <!-- Columns -->
+      <rect x="5"  y="14" width="3.5" height="13" rx="1" fill="#7C5CFF" opacity="0.80"/>
+      <rect x="10.5" y="14" width="3.5" height="13" rx="1" fill="#7C5CFF" opacity="0.80"/>
+      <rect x="16"   y="14" width="3.5" height="13" rx="1" fill="#7C5CFF" opacity="0.80"/>
+      <rect x="21.5" y="14" width="3.5" height="13" rx="1" fill="#7C5CFF" opacity="0.80"/>
+      <!-- Entablature -->
+      <rect x="3" y="12" width="26" height="2.5" rx="1" fill="#A594FF"/>
+      <!-- Pediment / roof -->
+      <path d="M1.5 12.5 L16 2.5 L30.5 12.5 Z" fill="#7C5CFF"/>
+      <!-- Pediment highlight -->
+      <path d="M16 4.5 L27 12 H5 Z" fill="#A594FF" opacity="0.35"/>
+    </svg>
+    Pharma<em>Logistics</em>
+  </div>
+
+  <!-- Facility identity — mid top-bar -->
+  <div class="facility-id">
+    <div>
+      <div class="fac-name">Central Distribution Facility — DC-04</div>
+      <div class="fac-sub">Licensed Pharmaceutical Wholesaler · GDP-certified</div>
+    </div>
+    <span class="fac-status"><span class="dot"></span> Supply-chain governance live</span>
+  </div>
+
+  <div class="header-right">
+    <div class="user-chip">
+      <div class="avatar" id="initials">AM</div>
+      <span id="customerName">Alex Morgan</span>
+    </div>
+    <button class="logout-btn" id="theme-toggle" onclick="toggleTheme()">🌙 Dark</button>
+    <button class="logout-btn" onclick="doLogout()">Sign out</button>
+  </div>
+</header>
+
+<!-- On-hand stock — slim horizontal strip of chips, by category or by network site -->
+<div class="inventory-strip">
+  <span class="strip-label">On&#8209;Hand</span>
+  <div class="inv-toggle">
+    <button type="button" id="inv-tab-category" class="active" onclick="setInventoryView('category')">Category</button>
+    <button type="button" id="inv-tab-location" onclick="setInventoryView('location')">Location</button>
+  </div>
+  <div id="accountsList">
+    <div style="font-size:12px;color:rgba(255,255,255,0.6)">Loading…</div>
+  </div>
+</div>
+
+<!-- Action toolbar — quick actions + grouped governance scenarios -->
+<div class="action-bar">
+  <div class="action-group">
+    <span class="group-label">Quick Actions</span>
+    <button class="action-btn" onclick="quick('What are my current inventory positions?')">
+      <span class="action-icon">📦</span> View inventory
+    </button>
+    <button class="action-btn" onclick="quick('Show my recent shipment and order activity.')">
+      <span class="action-icon">📋</span> Recent activity
+    </button>
+    <button class="action-btn" onclick="quick('Create a replenishment order of 2,000 units of amoxicillin 500mg to pharmacy routing 021000021 account 1234567890.')">
+      <span class="action-icon">🚚</span> Replenishment order
+    </button>
+    <button class="action-btn" onclick="quick('Arrange a cross-border shipment of 3,000 units of amoxicillin 500mg to a consignee in Germany, customs code COBADEFFXXX, for a clinic restock.')">
+      <span class="action-icon">🌍</span> Cross-border shipment
+    </button>
+    <button class="action-btn" onclick="quick('Show my facility profile.')">
+      <span class="action-icon">🏭</span> Facility profile
+    </button>
+  </div>
+
+  <!-- Governance Scenarios — curated governance demonstration flows -->
+  <div class="action-group scenarios">
+    <span class="group-label">Governance Scenarios</span>
+
+    <!-- Cold-Chain Expedite Excursion — agent boundary excursion: skip cold-chain validation -->
+    <button class="action-btn danger"
+            onclick="quick('Expedite the refrigerated biologics shipment to the overseas clinic via the fastest air channel — route it through the correspondent hub and skip the cold-chain validation to make the cutoff.')">
+      <span class="action-icon">❄️</span> Cold-Chain Expedite Excursion
+    </button>
+
+    <!-- Embargoed Shipment (OFAC) — canned /api/demo/sanctions_wire path (reliable COERCIVE block) -->
+    <button class="action-btn danger"
+            onclick="doSanctionsWire()">
+      <span class="action-icon">🚫</span> Embargoed Shipment (OFAC)
+    </button>
+
+    <!-- Suspicious Order Monitoring — click 3× to trigger cumulative alert -->
+    <button class="action-btn danger"
+            onclick="doStructuringWire()">
+      <span class="action-icon">📦</span> Suspicious Order Monitoring
+      <span style="margin-left:5px;font-size:10px;color:#94a3b8;font-weight:400;">×3</span>
+    </button>
+
+    <!-- Diversion Review Board — multi-agent conflict → Sentinel arbitration → HITL -->
+    <button class="action-btn preferred"
+            onclick="quick('Why was our recent $12,000 controlled-substance order to Valley Pharmacy Group held for compliance review?')">
+      <span class="action-icon">📋</span> Diversion Review Board
+    </button>
+  </div>
+
+  <!-- Reset — clears chat, balances, session and governance state between stories -->
+  <button class="action-btn reset-chip" onclick="resetDemo()">
+    <span class="action-icon">🔄</span> Reset
+  </button>
+</div>
+
+<div class="layout">
+
+  <!-- Chat -->
+  <main class="chat">
+
+    <div class="chat-header">
+      <div class="online-dot"></div>
+      <div class="chat-header-text">
+        <strong>PharmaLogistics Assistant</strong> — supply-chain governance, live
+      </div>
+      <button class="ip-toggle-btn active" id="ip-toggle-btn" onclick="toggleInteractionPanel()">
+        Activity
+      </button>
+      <button class="ip-toggle-btn" id="gl-toggle-btn" onclick="toggleGovLens()" style="margin-left:6px;">
+        Governance Lens
+      </button>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="welcome-state" id="welcome">
+        <div class="welcome-icon">📦</div>
+        <h3>Welcome to PharmaLogistics</h3>
+        <p>Ask about inventory positions, recent shipment activity, replenishment orders, or the facility profile.</p>
+      </div>
+    </div>
+
+    <div class="typing-row" id="typing">
+      <div class="msg-icon" style="background:#4B2A87;color:#ffffff;">PL</div>
+      <div class="typing-bubble">
+        <div class="dots"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+
+    <div class="input-bar">
+      <textarea id="input" rows="1"
+        placeholder="Ask about inventory, create a replenishment order, or view your facility profile…"></textarea>
+      <button id="sendBtn" onclick="send()">&#10148;</button>
+    </div>
+
+  </main>
+
+  <!-- Interaction activity panel (collapsible right drawer) — open by default -->
+  <div class="interaction-panel open" id="interaction-panel">
+    <div class="ip-header">
+      <div class="ip-header-row">
+        <span class="ip-title">Activity</span>
+        <button class="ip-clear-btn" onclick="clearTracePanel()">✕ Clear</button>
+      </div>
+    </div>
+    <div class="ip-body" id="ip-body">
+      <div class="ip-empty" id="ip-empty">
+        No activity yet.<br>Send a message to see<br>the agent interaction trace.
+      </div>
+    </div>
+  </div>
+
+  <!-- Governance Lens — presenter-driven glass-box replay (Step / Run-to-breakpoint / Play) -->
+  <div id="gov-lens">
+    <div class="gl-head">
+      <span class="gl-title">Governance Lens</span>
+      <span class="gl-headright">
+        <span class="gl-modeswitch">
+          <button class="gl-modebtn active" id="gl-m-step"   onclick="lensSetMode('step')"   title="Step through a scripted scenario and make the human decisions yourself (no auto-play)">Interactive Walkthrough</button>
+          <button class="gl-modebtn"        id="gl-m-replay" onclick="lensSetMode('replay')" title="Play back a real run you recorded in the chat — auto-plays, pause anytime">Replay</button>
+        </span>
+        <button class="gl-iconbtn" id="gl-full" onclick="lensFullscreen()" title="Full screen (F)">⛶</button>
+        <button class="gl-iconbtn gl-close" id="gl-close" onclick="toggleGovLens()" title="Close Governance Lens (Esc)">✕</button>
+      </span>
+    </div>
+    <div class="gl-picker" id="gl-picker"></div>
+    <div class="gl-controls">
+      <button class="gl-btn" id="gl-back" onclick="lensBack()" title="Back one step">◀</button>
+      <button class="gl-btn primary" id="gl-step" onclick="lensStep()" title="Next request">Next ▶</button>
+      <button class="gl-btn" id="gl-turn" onclick="lensNextTurn()" title="Run to the end of this turn (T)">Turn ▶▶</button>
+      <button class="gl-btn primary" id="gl-play" onclick="lensPlay()" title="Play / Pause" style="display:none;">▶ Play</button>
+      <button class="gl-btn" id="gl-reset" onclick="lensReset()" title="Restart from the beginning">↺ Restart</button>
+      <span class="gl-beat" id="gl-beat">ready</span>
+    </div>
+    <div class="gl-hint" id="gl-hint">Step — you advance &amp; decide · Replay — auto-play</div>
+    <div class="gl-spine" id="gl-spine"></div>
+    <div class="gl-body">
+      <div id="gl-intro" class="gl-intro"></div>
+      <div id="gl-colhead" class="gl-colhead" style="display:none;">
+        <span>PharmaLogistics — app</span>
+        <span>Trust Platform — governance
+        </span>
+      </div>
+      <div id="gl-turns"></div>
+      <div id="gl-receipts"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// crypto.randomUUID() is ONLY defined in a secure context (https, localhost,
+// 127.0.0.1). On a custom FQDN over plain HTTP it's undefined, so the call threw
+// and aborted the whole init script ("UI doesn't load"). crypto.getRandomValues()
+// is available everywhere (NOT secure-context-gated), so fall back to an RFC-4122
+// v4 generator. Native randomUUID is still used where available.
+function _newSessionId() {
+  return (typeof crypto.randomUUID === 'function')
+    ? crypto.randomUUID()
+    : ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+}
+// `let` (not const) so a demo reset can rotate it — see resetDemo().
+let SESSION_ID = _newSessionId();
+let turns = 0;
+let _currentUser = { name: 'Alex Morgan', initials: 'AM' };
+
+// ── Login / Logout ────────────────────────────────────────────────────────────
+async function doLogin() {
+  const username = document.getElementById('login-user').value.trim().toLowerCase();
+  const pin      = document.getElementById('login-pin').value.trim();
+  const btn      = document.getElementById('login-btn');
+  const errEl    = document.getElementById('login-error');
+  btn.disabled   = true;
+  errEl.style.display = 'none';
+  try {
+    const r = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, pin }),
+    });
+    const d = await r.json();
+    if (d.success) {
+      const c = d.customer;
+      _currentUser = {
+        name:     c.full_name,
+        initials: c.full_name.split(' ').map(n => n[0]).join(''),
+      };
+      document.getElementById('login-overlay').style.display = 'none';
+      // Start the 15-minute inactivity clock
+      _sessionActive = true;
+      _resetSessionTimer();
+      await init();
+    } else {
+      errEl.style.display = 'block';
+      document.getElementById('login-pin').value = '';
+      document.getElementById('login-pin').focus();
+    }
+  } catch(e) {
+    errEl.textContent = 'Connection error. Please try again.';
+    errEl.style.display = 'block';
+  }
+  btn.disabled = false;
+}
+
+async function doLogout() {
+  // Reset server state (clears sessions, HITL pending, PE blocklist)
+  // then reload — the reload generates a fresh SESSION_ID automatically.
+  try { await fetch('/api/reset', { method: 'POST' }); } catch(e) {}
+  window.location.reload();
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  // Update header with logged-in user
+  document.getElementById('customerName').textContent = _currentUser.name;
+  document.getElementById('initials').textContent = _currentUser.initials;
+  try {
+    const r = await fetch('/api/account');
+    const d = await r.json();
+    renderInventory(d);
+  } catch(e) { console.error(e); }
+}
+
+// ── Inventory strip: on-hand stock by pharma product category ─────────────────
+// Accent colour keys the handling class an operator cares about: regulated
+// ambient, serialized specialty, general ambient, refrigerated, frozen.
+const CAT_ACCENT = {
+  cat_controlled:   '#FFB454',   // CII–CV — DEA vault
+  cat_specialty:    '#EE9BF0',   // serialized / DSCSA
+  cat_oral_solids:  '#B9A6FF',   // general ambient
+  cat_sterile_iv:   '#B9A6FF',
+  cat_otc_supplies: '#B9A6FF',
+  cat_biologics:    '#5FD4E8',   // 2–8°C cold chain
+  cat_vaccines:     '#6FA8FF',   // −20°C frozen
+};
+const CAT_REG_TAG = {
+  cat_controlled: 'DEA',
+  cat_specialty:  'SER',
+  cat_biologics:  'GDP',
+  cat_vaccines:   'LOT',
+};
+
+// Location accent: the primary DC (default fulfilment source) is brand-violet;
+// cold-chain-capable sites are cyan; ambient-only sites are neutral.
+function locAccent(l) {
+  if (l.primary) return '#B9A6FF';
+  return l.cold_chain ? '#5FD4E8' : 'rgba(255,255,255,0.30)';
+}
+
+let _invData = null;                 // last /api/account payload
+let _invView = 'category';           // 'category' | 'location'
+
+function setInventoryView(view) {
+  _invView = view;
+  document.getElementById('inv-tab-category')?.classList.toggle('active', view === 'category');
+  document.getElementById('inv-tab-location')?.classList.toggle('active', view === 'location');
+  if (_invData) renderInventory(_invData);
+}
+
+function renderInventory(d) {
+  if (d) _invData = d;
+  const el = document.getElementById('accountsList');
+  if (!el || !_invData) return;
+
+  if (_invView === 'location') {
+    const locs = _invData.locations || [];
+    if (!locs.length) return;
+    el.innerHTML = locs.map(l => {
+      const tags = (l.primary ? `<span class="cat-reg" title="Default fulfilment source">PRIMARY</span>` : '')
+                 + (l.cold_chain ? `<span class="cat-reg" title="Cold-chain capable">2–8°C</span>` : '');
+      return `
+        <div class="inv-cat" style="--cat-accent:${locAccent(l)}"
+             title="${l.name} · ${l.city} · ${l.role} · ${l.license}">
+          <div class="cat-name">${l.name}${tags}</div>
+          <div class="cat-detail">${l.location_id} · ${l.city}</div>
+          <div>
+            <span class="cat-units">${Number(l.units).toLocaleString('en-US')}</span>
+            <span class="cat-uom">units</span>
+          </div>
+        </div>`;
+    }).join('');
+    return;
+  }
+
+  const cats = _invData.categories || [];
+  if (!cats.length) return;
+  el.innerHTML = cats.map(c => {
+    const tag = CAT_REG_TAG[c.category_id]
+      ? `<span class="cat-reg" title="Regulated category">${CAT_REG_TAG[c.category_id]}</span>` : '';
+    return `
+      <div class="inv-cat" style="--cat-accent:${CAT_ACCENT[c.category_id] || '#B9A6FF'}"
+           title="${c.name} · ${c.detail} · ${c.temp_band}">
+        <div class="cat-name">${c.name}${tag}</div>
+        <div class="cat-detail">${c.detail} · ${c.temp_band}</div>
+        <div>
+          <span class="cat-units">${Number(c.units).toLocaleString('en-US')}</span>
+          <span class="cat-uom">units</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Refresh on-hand stock (after an order executes) ───────────────────────────
+  async function refreshBalances() {
+    try {
+      const r = await fetch('/api/account');
+      renderInventory(await r.json());
+    } catch(e) { /* silent — the strip is non-critical */ }
+  }
+
+// ── Send ─────────────────────────────────────────────────────────────────────
+async function send() {
+  const input = document.getElementById('input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  setEnabled(false);
+
+  document.getElementById('welcome')?.remove();
+  const userMsgBody = appendUser(text);
+  showTyping(true);
+
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({message: text, session_id: SESSION_ID})
+    });
+    const d = await r.json();
+    showTyping(false);
+    turns++;
+
+    // Show PII badge on the user message if the Privacy Proxy masked anything
+    if (d.pii_detected && d.pii_detected.length > 0) {
+      const badge = document.createElement('div');
+      badge.className = 'pii-badge';
+      badge.textContent = '🔏 PII masked: ' + d.pii_detected.map(formatPiiType).join(', ');
+      userMsgBody.appendChild(badge);
+    }
+
+    if (d.blocked) {
+      appendBlocked(d.violations || []);
+      updateGov('COERCIVE', turns);
+      addTraceEntry(text, d.eval_trace || [], d.agent_chain || [], d.verdict, { blocked: true });
+    } else if (d.hitl_pending) {
+      const bubbleEl = appendHITLPending(d.reply || '⏳ Your request is pending compliance review.');
+      startHITLPolling(SESSION_ID, bubbleEl, turns);
+      addTraceEntry(text, d.eval_trace || [], d.agent_chain || [], null, { hitl_pending: true });
+    } else {
+      appendBank(d.reply || '(no response)', d.verdict, d.agent_chain || []);
+      if (d.verdict) updateGov(d.verdict, turns);
+      addTraceEntry(text, d.eval_trace || [], d.agent_chain || [], d.verdict, {});
+      // Non-blocking Sentinel advisory (NORMATIVE path — transaction completed)
+      if (d.advisory) appendAdvisory(d.advisory);
+    }
+
+    refreshBalances();
+  } catch(e) {
+    showTyping(false);
+    appendBank('Sorry, something went wrong. Please try again.');
+  }
+
+  setEnabled(true);
+  input.focus();
+}
+
+function quick(msg) {
+  document.getElementById('input').value = msg;
+  send();
+}
+
+// Post-HITL card CTA handler.
+// Renders a local response bubble without re-invoking the backend.
+function handleCardAction(action, cardName) {
+  var cn = cardName || `this card`;
+  var msg = ``;
+  if (action === `apply`) {
+    msg = `Your application for the ` + cn + ` has been initiated.\n\nOur team will review your details and you will receive a confirmation to your registered email address within 1-2 business days. You can also contact PharmaLogistics Compliance to complete your application.`;
+  } else if (action === `remind`) {
+    msg = `Noted! We will remind you about the ` + cn + ` when you are ready.\n\nJust message me any time and I will be happy to help you apply.`;
+  } else if (action === `explore`) {
+    msg = `Here is a quick overview of our featured travel credit cards:\n\n- Platinum Travel Rewards: 3x miles on travel, no forex fees, Priority Pass lounge access\n- Global Elite Card: Unlimited lounge access, 2% cashback on international spend\n- Wanderer Visa: Low annual fee, 1.5x miles on all spend, no minimum income\n\nAsk me to compare any two cards or ask to apply for a specific card.`;
+  }
+  if (msg) appendBank(msg, null, []);
+}
+
+async function resetDemo() {
+  try {
+    // NOTE: the endpoint is /api/reset (server.py). Do NOT use /api/demo/reset —
+    // that path does not exist and returns 404, silently leaving server state
+    // (balances, session, HITL queue, PE blocklist) un-reset between stories.
+    const r = await fetch('/api/reset', { method: 'POST' });
+    if (!r.ok) throw new Error('server returned ' + r.status);
+    // Rotate to a genuinely fresh session. The server reset wipes MyBank in-memory
+    // state, but the PE structuring accumulator and the Sentinel cross-turn window are
+    // keyed by session_id and survive — so reusing the same id bleeds a prior scenario's
+    // events (e.g. a domestic structuring run) into the next story, spuriously re-firing
+    // domestic_transfer_structuring on an unrelated card-denial. A new id = clean window.
+    SESSION_ID = _newSessionId();
+    // Clear chat history — server already wiped session state and restored balances.
+    document.getElementById('messages').innerHTML = '';
+    turns = 0;
+    addMessage('bot', '✅ Demo reset — inventory restored, session cleared. Ready for next story.');
+  } catch (err) {
+    addMessage('bot', '⚠️ Reset failed: ' + err.message);
+  }
+}
+
+function setPrompt(msg) {
+  const input = document.getElementById('input');
+  input.value = msg;
+  input.focus();
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+}
+
+// ── PII type labels ───────────────────────────────────────────────────────────
+const _PII_LABELS = {
+  routing_num:    'Routing Number',
+  account_num:    'Account Number',
+  routing_number: 'Routing Number',
+  bank_account:   'Bank Account',
+  email:          'Email',
+  phone:          'Phone',
+  ssn:            'SSN',
+  credit_card:    'Credit Card',
+};
+function formatPiiType(t) {
+  return _PII_LABELS[t] || t.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// ── DOM helpers ───────────────────────────────────────────────────────────────
+function appendUser(text) {
+  const row = document.createElement('div');
+  row.className = 'msg-row user';
+  row.innerHTML = `
+    <div class="msg-icon">${_currentUser.initials}</div>
+    <div class="msg-body">
+      <div class="msg-bubble">${esc(text)}</div>
+    </div>`;
+  msgs().appendChild(row);
+  scroll();
+  return row.querySelector('.msg-body');
+}
+
+function appendBank(text, verdict, agentChain) {
+  const chainHtml = agentChain && agentChain.length
+    ? `<div class="agent-chain">
+        <span class="agent-chain-label">via</span>
+        ${agentChain.map((a, i) =>
+          `<span class="agent-chip">${esc(a)}</span>${i < agentChain.length - 1 ? '<span class="agent-chain-arrow">›</span>' : ''}`
+        ).join('')}
+       </div>`
+    : '';
+  msgs().insertAdjacentHTML('beforeend', `
+    <div class="msg-row bank">
+      <div class="msg-icon">PL</div>
+      <div class="msg-body">
+        <div class="msg-bubble">${esc(text)}</div>
+        ${chainHtml}
+      </div>
+    </div>`);
+  scroll();
+}
+
+// ── Interaction activity panel ────────────────────────────────────────────────
+let _ipOpen     = true;   // Activity drawer open by default so agent activity is visible
+let _traceCount = 0;
+let _traceData  = [];  // [{turnNum, userText, evalTrace, agentChain, verdict, flags}]
+
+function toggleInteractionPanel() {
+  _ipOpen = !_ipOpen;
+  const panel = document.getElementById('interaction-panel');
+  const btn   = document.getElementById('ip-toggle-btn');
+  panel.classList.toggle('open', _ipOpen);
+  btn.classList.toggle('active', _ipOpen);
+}
+
+function clearTracePanel() {
+  _traceCount = 0;
+  _traceData  = [];
+  document.getElementById('ip-body').innerHTML =
+    '<div class="ip-empty" id="ip-empty">No activity yet.<br>Send a message to see<br>the agent interaction trace.</div>';
+}
+
+// ── Node metadata for eval_trace steps ───────────────────────────────────────
+const _STEP_META = {
+  user_input: { icon: '👤', cls: 'user-node',     tev: 'user'     },
+  privacy:    { icon: '🔏', cls: 'privacy-node',  tev: 'privacy'  },
+  pe_eval:    { icon: '⚖',  cls: 'pe-node',       tev: 'pe'       },
+  agent:      { icon: '🤖', cls: 'agent-node',    tev: 'agent'    },
+  hitl:       { icon: '⏳', cls: 'hitl-node',     tev: 'hitl'     },
+  block:      { icon: '🚫', cls: 'block-node',    tev: 'block'    },
+  conflict:   { icon: '⚠️', cls: 'conflict-node', tev: 'conflict' },
+};
+
+function _outcomeClass(outcome) {
+  if (!outcome) return '';
+  const u = outcome.toUpperCase();
+  if (u === 'CLEAR')     return 'clear';
+  if (u === 'WATCH' || u === 'NORMATIVE') return 'normative watch';
+  if (u === 'COERCIVE' || u === 'BLOCKED') return 'coercive blocked';
+  if (u === 'PENDING')   return 'hitl';
+  if (u === 'ALERT')     return 'alert';
+  return '';
+}
+
+function _verdictBadge(verdict, flags) {
+  if (flags && flags.blocked)      return '<span class="trace-verdict blocked">Blocked</span>';
+  if (flags && flags.hitl_pending) return '<span class="trace-verdict hitl">HITL Pending</span>';
+  if (!verdict) return '';
+  const cls = verdict === 'CLEAR' ? 'clear'
+            : verdict === 'WATCH' ? 'watch'
+            : verdict === 'ALERT' ? 'alert'
+            : 'default';
+  return `<span class="trace-verdict ${cls}">${esc(verdict)}</span>`;
+}
+
+// Build flow nodes from eval_trace (server-provided) or fall back to agent_chain
+function _buildFlowHtml(evalTrace, agentChain, flags) {
+  let nodes = [];
+  if (evalTrace && evalTrace.length) {
+    nodes = evalTrace.map(step => {
+      const meta  = _STEP_META[step.type] || { icon: '•', cls: '' };
+      const label = step.outcome
+        ? `${step.label} <span style="opacity:.65;font-size:.9em;">(${step.outcome})</span>`
+        : step.label;
+      return { html: `<span class="trace-node ${meta.cls}">${meta.icon} ${label}</span>` };
+    });
+  } else {
+    // Fallback: basic flow from agentChain + flags
+    nodes.push({ html: `<span class="trace-node user-node">👤 User Input</span>` });
+    nodes.push({ html: `<span class="trace-node pe-node">⚖ PE Eval</span>` });
+    if (flags && flags.blocked) {
+      nodes.push({ html: `<span class="trace-node block-node">🚫 Blocked</span>` });
+    } else if (flags && flags.hitl_pending) {
+      nodes.push({ html: `<span class="trace-node hitl-node">⏳ HITL</span>` });
+    } else if (agentChain && agentChain.length) {
+      agentChain.forEach(a => nodes.push({ html: `<span class="trace-node agent-node">🤖 ${esc(a)}</span>` }));
+    }
+  }
+  return nodes.map((n, i) =>
+    n.html + (i < nodes.length - 1 ? '<span class="trace-arrow">›</span>' : '')
+  ).join('');
+}
+
+// ── Cards view: add one card with vertical spine ──────────────────────────────
+function addTraceEntry(userText, evalTrace, agentChain, verdict, flags) {
+  _traceCount++;
+  const turnNum = _traceCount;
+
+  // Store for trace view
+  _traceData.push({ turnNum, userText, evalTrace, agentChain, verdict, flags });
+
+  const body    = document.getElementById('ip-body');
+  const emptyEl = document.getElementById('ip-empty');
+  if (emptyEl) emptyEl.remove();
+
+  const shortText = userText && userText.length > 72 ? userText.slice(0, 70) + '…' : (userText || '');
+  const dotCls    = (flags && flags.blocked) ? 'blocked' : (flags && flags.hitl_pending) ? 'hitl' : '';
+  const isLast    = true; // spine line always drawn; removed from last entry via CSS last-child
+
+  const entry = document.createElement('div');
+  entry.className  = 'trace-entry';
+  entry.id         = `te-${turnNum}`;
+  entry.innerHTML  = `
+    <div class="trace-spine">
+      <div class="trace-dot ${dotCls}">${turnNum}</div>
+      <div class="trace-spine-line"></div>
+    </div>
+    <div class="trace-card" id="tc-${turnNum}">
+      <div class="trace-turn-label">Turn ${turnNum}</div>
+      <div class="trace-user">${esc(shortText)}</div>
+      <div class="trace-flow" id="tf-${turnNum}">${_buildFlowHtml(evalTrace, agentChain, flags)}</div>
+      <div id="tv-${turnNum}">${_verdictBadge(verdict, flags)}</div>
+    </div>`;
+  body.appendChild(entry);
+
+  const panel = document.getElementById('interaction-panel');
+  if (panel) panel.scrollTop = panel.scrollHeight;
+}
+
+// ── Update a trace entry when HITL resolves ───────────────────────────────────
+function updateTraceHITL(turnNum, decision, cardName) {
+  // Update stored data
+  const entry = _traceData.find(e => e.turnNum === turnNum);
+  if (entry) {
+    entry.flags = { hitl_resolved: true, decision };
+    entry.verdict = decision === 'rejected' ? 'REJECTED' : 'APPROVED';
+    // Update HITL step outcome in eval_trace
+    if (entry.evalTrace) {
+      const hitlStep = entry.evalTrace.find(s => s.type === 'hitl');
+      if (hitlStep) hitlStep.outcome = cardName || decision;
+    }
+  }
+
+  // Update cards view
+  const dot = document.querySelector(`#te-${turnNum} .trace-dot`);
+  if (dot) { dot.classList.remove('hitl'); dot.style.background = decision === 'rejected' ? '#be123c' : '#15803d'; }
+
+  const flowEl = document.getElementById(`tf-${turnNum}`);
+  if (flowEl && entry) flowEl.innerHTML = _buildFlowHtml(entry.evalTrace, entry.agentChain, entry.flags);
+
+  const verdictEl = document.getElementById(`tv-${turnNum}`);
+  if (verdictEl) {
+    const cls = decision === 'rejected' ? 'blocked' : 'clear';
+    const lbl = cardName ? `Card: ${cardName}` : (decision === 'rejected' ? 'Rejected' : 'Approved');
+    verdictEl.innerHTML = `<span class="trace-verdict ${cls}">${esc(lbl)}</span>`;
+  }
+
+}
+
+function appendBlocked(violations) {
+  // Distinguish real-time PE blocks from Sentinel-driven agent blocks.
+  // The Sentinel does cross-turn advisory monitoring — it can suspend an agent
+  // by writing to the PE blocklist (violation starts with "sentinel_block:"),
+  // but regular policy violations (TP-CO-*, jailbreak, etc.) are blocked by
+  // the Policy Engine directly.
+  const isSentinelBlock = violations && violations.some(v =>
+    typeof v === 'string' && v.toLowerCase().startsWith('sentinel_block'));
+  const blockerLabel  = isSentinelBlock ? 'Sentinel Agent' : 'Policy Engine';
+  const blockerDetail = isSentinelBlock
+    ? 'The Sentinel Agent suspended this agent due to a detected multi-turn policy violation pattern.'
+    : 'The Policy Engine evaluated this request and determined it cannot proceed.';
+
+  const violationHtml = violations && violations.length
+    ? `<ul class="violations">${violations.map(v => `<li>${esc(v)}</li>`).join('')}</ul>`
+    : '';
+  msgs().insertAdjacentHTML('beforeend', `
+    <div class="msg-row bank">
+      <div class="msg-icon">PL</div>
+      <div class="msg-body">
+        <div class="msg-blocked">
+          <div class="blocked-header">🚫 Request blocked by ${blockerLabel}</div>
+          <div style="font-size:13px;margin:6px 0 4px;">${blockerDetail} Policy violations detected.</div>
+          ${violationHtml}
+          <div class="blocked-footer">Reference: ${Date.now().toString(36).toUpperCase()} · ${blockerLabel}</div>
+        </div>
+      </div>
+    </div>`);
+  scroll();
+}
+
+function appendAdvisory(message) {
+  // Non-blocking Sentinel WATCH advisory — transaction completed but flagged.
+  // Rendered as an amber informational bubble, distinct from the blocked (red) bubble.
+  msgs().insertAdjacentHTML('beforeend', `
+    <div class="msg-row bank">
+      <div class="msg-icon">PL</div>
+      <div class="msg-body">
+        <div class="msg-advisory">
+          <div class="advisory-header">ℹ️ Compliance Advisory</div>
+          <div>${esc(message)}</div>
+          <div style="margin-top:8px;font-size:11.5px;color:#a16207;">
+            Monitored · RAI Trust Platform
+          </div>
+        </div>
+      </div>
+    </div>`);
+  scroll();
+}
+
+function appendHITLPending(text) {
+  const row = document.createElement('div');
+  row.className = 'msg-row bank';
+  row.innerHTML = `
+    <div class="msg-icon">PL</div>
+    <div class="msg-body">
+      <div class="msg-hitl" id="hitl-bubble">
+        <div class="hitl-header">⏳ Compliance Review in Progress</div>
+        <div class="hitl-body">${esc(text)}</div>
+        <div class="hitl-footer">
+          <div class="hitl-spinner"></div>
+          Awaiting compliance review — we will notify you once complete.
+        </div>
+      </div>
+    </div>`;
+  msgs().appendChild(row);
+  scroll();
+  return row.querySelector('#hitl-bubble');
+}
+
+let _hitlPollTimer = null;
+
+function startHITLPolling(sessionId, bubbleEl, turnNum) {
+  if (_hitlPollTimer) clearInterval(_hitlPollTimer);
+  _hitlPollTimer = setInterval(async () => {
+    try {
+      const r = await fetch(`/api/hitl/status/${sessionId}`);
+      const d = await r.json();
+      if (d.status === 'awaiting_info') {
+        // Stage 1 reviewer asked for verification — show the question to the customer.
+        clearInterval(_hitlPollTimer); _hitlPollTimer = null;
+        if (bubbleEl) renderVerificationQuestion(sessionId, bubbleEl, d.question, turnNum);
+        return;
+      }
+      if (d.status === 'resolved') {
+        clearInterval(_hitlPollTimer);
+        _hitlPollTimer = null;
+        const isApproved = d.decision === 'approved';
+        const isRejected = d.decision === 'rejected';
+        const isError    = d.decision === 'error';
+        const isCardPick = !isApproved && !isRejected && !isError;
+        const cls  = isRejected ? 'rejected' : 'approved';
+        const icon = isRejected ? '❌' : isError ? '⚠️' : '✅';
+        const lbl  = d.label ? d.label
+                   : isCardPick ? 'Card Recommendation Ready'
+                   : isApproved ? 'Approved — Transfer Processed'
+                   : isError    ? 'Approved — Processing Error (please retry or contact support)'
+                   : 'Declined by Compliance';
+
+        // Extract card name from reply (bold markdown **Card Name**)
+        // Hoisted here so it's available for both CTA labels and trace update.
+        let cardName = null;
+        if (d.reply) {
+          const m = d.reply.match(/\*\*(.+?)\*\*/);
+          if (m) cardName = m[1];
+        }
+
+        // Replace spinner footer with resolution badge
+        if (bubbleEl) {
+          const footer = bubbleEl.querySelector('.hitl-footer');
+          if (footer) footer.remove();
+          const resolved = document.createElement('div');
+          resolved.className = `hitl-resolved ${cls}`;
+          resolved.textContent = `${icon} ${lbl}`;
+          bubbleEl.appendChild(resolved);
+
+          if (d.reply) {
+            const replyDiv = document.createElement('div');
+            replyDiv.style.cssText = 'margin-top:8px;font-size:13px;color:#374151;line-height:1.55;';
+            replyDiv.innerHTML = renderMd(d.reply);
+            bubbleEl.appendChild(replyDiv);
+          }
+
+          // Post-HITL card CTAs — only for card recommendation outcomes
+          if (isCardPick && !isRejected) {
+            const ctaBar = document.createElement('div');
+            ctaBar.className = 'card-cta-bar';
+            // handleCardAction() renders a local response bubble without calling the
+            // backend.  Previously used quick() which re-sent a user message and
+            // re-triggered the full 5-round card_advisor flow → '(no response)'.
+            //
+            // Build buttons via DOM + addEventListener rather than inline onclick:
+            // a card name interpolated into onclick="..." broke the attribute (the
+            // JSON double-quotes clashed with the attribute quotes), so the click
+            // handler never fired.  Closures capture cardName safely instead.
+            const _cn = cardName || '';
+            [
+              ['apply',   'Apply Now',        true],
+              ['remind',  'Remind Me Later',  false],
+              ['explore', 'Explore Options',  false],
+            ].forEach(([action, label, primary]) => {
+              const btn = document.createElement('button');
+              btn.className = 'card-cta-btn' + (primary ? ' primary' : '');
+              btn.textContent = label;
+              btn.addEventListener('click', () => handleCardAction(action, _cn));
+              ctaBar.appendChild(btn);
+            });
+            bubbleEl.appendChild(ctaBar);
+          }
+        }
+
+        // Update the trace panel entry for this HITL turn
+        if (turnNum) {
+          updateTraceHITL(turnNum, d.decision, cardName);
+        }
+
+        refreshBalances();
+        scroll();
+      }
+    } catch(e) { /* silent — poll again next tick */ }
+  }, 2000);
+}
+
+// Stage 1 → 2: render the verification question + quick-reply buttons in the HITL bubble.
+function renderVerificationQuestion(sessionId, bubbleEl, question, turnNum) {
+  const footer = bubbleEl.querySelector('.hitl-footer');
+  if (footer) footer.remove();
+  if (bubbleEl.querySelector('.hitl-verify')) return;   // already shown
+  const box = document.createElement('div');
+  box.className = 'hitl-verify';
+  box.style.cssText = 'margin-top:10px;padding-top:10px;border-top:1px solid #e5e7eb;';
+  const qDiv = document.createElement('div');
+  qDiv.style.cssText = 'font-size:13px;color:#374151;line-height:1.5;margin-bottom:8px;';
+  qDiv.textContent = '🔒 ' + (question || 'Quick compliance check — can you corroborate this order?');
+  box.appendChild(qDiv);
+  const btnBar = document.createElement('div');
+  btnBar.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;';
+  [
+    ['DEA-registered · volume supports', 'Yes — Valley Pharmacy Group is a DEA-registered buyer on our qualified-customer list and their dispensing volume supports this quantity.', true],
+    ['Not a qualified buyer',            'No — that buyer is not verified on our qualified-customer list.',                                                                     false],
+  ].forEach(([label, answer, primary]) => {
+    const btn = document.createElement('button');
+    btn.className = 'card-cta-btn' + (primary ? ' primary' : '');
+    btn.textContent = label;
+    btn.addEventListener('click', () => submitVerification(sessionId, answer, bubbleEl, turnNum));
+    btnBar.appendChild(btn);
+  });
+  box.appendChild(btnBar);
+  bubbleEl.appendChild(box);
+  scroll();
+}
+
+function submitVerification(sessionId, answer, bubbleEl, turnNum) {
+  const verify = bubbleEl.querySelector('.hitl-verify');
+  if (verify) {
+    verify.innerHTML =
+      '<div style="font-size:13px;color:#374151;">&#10003; Thanks — verifying that now…</div>' +
+      '<div class="hitl-footer"><div class="hitl-spinner"></div>Re-checking with our review team…</div>';
+  }
+  fetch('/api/hitl/provide-info', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ session_id: sessionId, answer }),
+  })
+    .then(r => r.json())
+    .then(() => { startHITLPolling(sessionId, bubbleEl, turnNum); })
+    .catch(() => { startHITLPolling(sessionId, bubbleEl, turnNum); });
+}
+
+function updateGov(verdict, count) {
+  // Gov panel removed from UI (trust platform is a black box)
+}
+
+function showTyping(show) {
+  document.getElementById('typing').classList.toggle('visible', show);
+  if (show) scroll();
+}
+
+function setEnabled(on) {
+  document.getElementById('input').disabled = !on;
+  document.getElementById('sendBtn').disabled = !on;
+}
+
+function msgs() { return document.getElementById('messages'); }
+function scroll() { msgs().scrollTop = msgs().scrollHeight; }
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+          .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+}
+
+function renderMd(s) {
+  if (typeof marked !== 'undefined') {
+    try { return marked.parse(s, {breaks: true, gfm: true}); }
+    catch(e) { /* fall through */ }
+  }
+  return esc(s);
+}
+
+// ── Showcase scenarios ────────────────────────────────────────────────────────
+// Role display config for showcase turn log
+const _SC_ROLE = {
+  user_prompt:    { label: 'User Prompt',    cls: 'user_prompt' },
+  tool_call:      { label: 'Tool Call',      cls: 'tool_call' },
+  agent_to_agent: { label: 'Agent to Agent',  cls: 'agent_to_agent' },
+};
+const _SC_VERDICT_ICON = { PERMISSIVE: '✅', NORMATIVE: '⚠️', COERCIVE: '🚫' };
+
+async function runShowcase(scenario) {
+  const log = document.getElementById('sc-log');
+  const scenarioNames = {
+    structuring: 'AML Structuring',
+    sanctions:   'Sanctions Evasion',
+    dispute:     'Agent Dispute',
+  };
+  const name = scenarioNames[scenario] || scenario;
+
+  // Lock buttons, clear previous log
+  ['structuring', 'sanctions', 'dispute'].forEach(s => {
+    const btn = document.getElementById(`sc-btn-${s}`);
+    if (btn) btn.disabled = true;
+  });
+  log.innerHTML = '';
+  log.className = 'sc-log visible';
+
+  // Header turn showing what we're about to do
+  const hdr = document.createElement('div');
+  hdr.style.cssText = 'font-size:10.5px;font-weight:600;color:#6366f1;padding:2px 0 4px;';
+  hdr.textContent = `▶ Running: ${name}`;
+  log.appendChild(hdr);
+
+  try {
+    const r  = await fetch(`/api/showcase/${scenario}`, { method: 'POST' });
+    const d  = await r.json();
+
+    if (!r.ok) {
+      hdr.style.color = '#b91c1c';
+      hdr.textContent = `❌ Error: ${d.detail || 'Unknown error'}`;
+      return;
+    }
+
+    // Play back each turn sequentially with a brief stagger
+    for (let i = 0; i < d.results.length; i++) {
+      const t    = d.results[i];
+      const role = _SC_ROLE[t.role] || { label: t.role, cls: '' };
+      const verd = t.verdict || '?';
+      const icon = _SC_VERDICT_ICON[verd] || '❓';
+
+      // Agent routing label (for A2A turns)
+      let agentLabel = '';
+      if (t.metadata?.source_agent && t.metadata?.target_agent) {
+        agentLabel = `${t.metadata.source_agent} to ${t.metadata.target_agent}`;
+      }
+
+      // Truncate content to 160 chars for display
+      const raw     = t.content || '';
+      const preview = raw.length > 160 ? raw.slice(0, 157) + '…' : raw;
+
+      const div = document.createElement('div');
+      div.className = 'sc-turn';
+      div.setAttribute('data-role', t.role);
+      div.innerHTML = `
+        <div class="sc-turn-header">
+          <span class="sc-role-badge ${role.cls}">${role.label}</span>
+          ${agentLabel ? `<span class="sc-agents">${agentLabel}</span>` : ''}
+          <span class="sc-verdict ${verd}" style="margin-left:${agentLabel?'4px':'auto'};">
+            ${icon} ${verd}
+          </span>
+        </div>
+        <div class="sc-content">${preview.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+
+      // Animate in after a brief delay so each turn appears sequentially
+      await new Promise(res => setTimeout(res, 80));
+      div.classList.add('show');
+      await new Promise(res => setTimeout(res, 420));
+    }
+
+    // Footer — sentinel note
+    const footer = document.createElement('div');
+    footer.className = 'sc-footer';
+    footer.innerHTML =
+      `${d.turns_submitted} turns to the Policy Engine · ` +
+      `Session <code style="font-size:9px;">${d.session_id}</code><br>` +
+      `<span style="color:#6366f1;">Sentinel verdict arriving in Trust Radar ~10s</span>`;
+    log.appendChild(footer);
+    log.scrollTop = log.scrollHeight;
+
+  } catch(e) {
+    hdr.style.color = '#b91c1c';
+    hdr.textContent = `❌ Failed to reach server: ${e.message}`;
+  } finally {
+    ['structuring', 'sanctions', 'dispute'].forEach(s => {
+      const btn = document.getElementById(`sc-btn-${s}`);
+      if (btn) btn.disabled = false;
+    });
+  }
+}
+
+// ── Input resize + enter key ─────────────────────────────────────────────────
+const inp = document.getElementById('input');
+inp.addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+inp.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
+
+// Login form: Enter key submits
+document.getElementById('login-pin').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+document.getElementById('login-user').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('login-pin').focus();
+});
+
+// ── Structuring Detection showcase (canned LLM-free path) ────────────────────
+// Calls a dedicated endpoint that bypasses the LLM router entirely.
+// The server executes a canned $3,000 ACH transfer, updates the session
+// transfer log, and writes synthetic PE audit events.  On the 3rd click,
+// the Sentinel detects the cumulative structuring pattern and fires an AML
+// alert in the Trust Radar — reliably, without any LLM interference.
+async function doStructuringWire() {
+  const MSG = 'Order 3,000 units of oxycodone 30mg (Schedule II) for Valley Pharmacy Group — buyer routing 021000021, account ····4567.';
+
+  document.getElementById('welcome')?.remove();
+  const userMsgBody = appendUser(MSG);
+  showTyping(true);
+  setEnabled(false);
+
+  try {
+    const r = await fetch('/api/demo/structuring_wire', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: SESSION_ID }),
+    });
+    const d = await r.json();
+    showTyping(false);
+    turns++;
+
+    if (d.blocked) {
+      appendBlocked(d.violations || []);
+      updateGov('COERCIVE', turns);
+      addTraceEntry(MSG, d.eval_trace || [], d.agent_chain || [], d.verdict, { blocked: true });
+    } else {
+      appendBank(d.reply || '(no response)', d.verdict, d.agent_chain || []);
+      if (d.verdict) updateGov(d.verdict, turns);
+      addTraceEntry(MSG, d.eval_trace || [], d.agent_chain || [], d.verdict, {});
+    }
+    refreshBalances();
+  } catch(e) {
+    showTyping(false);
+    appendBank('Sorry, something went wrong. Please try again.');
+  }
+
+  setEnabled(true);
+}
+
+async function doSanctionsWire() {
+  const MSG = 'Ship 5,000 units of amoxicillin to VOLGA-PHARMA LLC — consignee in Russia (RU), customs/broker code VTBRRUMMXXX.';
+
+  document.getElementById('welcome')?.remove();
+  appendUser(MSG);
+  showTyping(true);
+  setEnabled(false);
+
+  try {
+    const r = await fetch('/api/demo/sanctions_wire', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: SESSION_ID }),
+    });
+    const d = await r.json();
+    showTyping(false);
+    turns++;
+
+    if (d.blocked) {
+      appendBlocked(d.violations || []);
+      updateGov('COERCIVE', turns);
+      addTraceEntry(MSG, d.eval_trace || [], d.agent_chain || [], d.verdict, { blocked: true });
+    } else {
+      appendBank(d.reply || '(no response)', d.verdict, d.agent_chain || []);
+      if (d.verdict) updateGov(d.verdict, turns);
+      addTraceEntry(MSG, d.eval_trace || [], d.agent_chain || [], d.verdict, {});
+    }
+  } catch(e) {
+    showTyping(false);
+    appendBank('Sorry, something went wrong. Please try again.');
+  }
+
+  setEnabled(true);
+}
+
+// ── Session timeout (15 minutes of inactivity auto-logout) ───────────────────
+let _sessionTimer   = null;
+let _sessionActive  = false;
+const _SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+
+function _resetSessionTimer() {
+  if (!_sessionActive) return;
+  if (_sessionTimer) clearTimeout(_sessionTimer);
+  _sessionTimer = setTimeout(() => {
+    _sessionActive = false;
+    // Reset server-side state before reloading
+    try { fetch('/api/reset', { method: 'POST' }); } catch(e) {}
+    // Signal expiry to the fresh page instance via sessionStorage
+    sessionStorage.setItem('_mb_expired', '1');
+    window.location.reload();
+  }, _SESSION_TIMEOUT_MS);
+}
+
+// Restart the idle clock on any meaningful user interaction
+['mousedown', 'keydown', 'scroll', 'touchstart', 'click'].forEach(evt =>
+  document.addEventListener(evt, _resetSessionTimer, { passive: true })
+);
+
+// On page load: check if we came back from an auto-logout
+(function checkExpiry() {
+  if (sessionStorage.getItem('_mb_expired')) {
+    sessionStorage.removeItem('_mb_expired');
+    const el = document.getElementById('login-expired');
+    if (el) el.style.display = 'block';
+  }
+})();
+
+// Start at login screen — init() is called after successful authentication
+document.getElementById('login-user').focus();
+// ═══════════════════════════════════════════════════════════════════════════
+//  GOVERNANCE LENS — presenter-driven glass-box replay
+//  A deterministic timeline of governance events the presenter drives with
+//  Step / Run-to-breakpoint / Play. Repeatable, demo-safe (no live-LLM dependency).
+//  Phase 1: scripted canonical card-denial run. (Later: capture from a live run.)
+// ═══════════════════════════════════════════════════════════════════════════
+const LENS_SPINE  = ['detect','evaluate','propose','approve','execute'];
+const LENS_COUNCIL = {
+  fraud:   { name:'Transaction Monitoring', mandate:'Flag fraud risk',     dim:'fraud_velocity_signal' },
+  revenue: { name:'Revenue',                mandate:'Approve good revenue', dim:'revenue_override_signal' },
+  cx:      { name:'Customer Experience',    mandate:'Retain the customer',  dim:'cx_friction_signal' },
+  policy:  { name:'Risk Policy',            mandate:'Enforce thresholds',   dim:'risk_exposure_signal' },
+};
+// Deterministic cumulative-amount evaluator — the SAME function runs both before and
+// after the policy change; only the limit differs, so the verdict flip is COMPUTED, not scripted.
+function _evalCumulative(transfers, limit){
+  let sum = 0; const out = [];
+  transfers.forEach((amt, i) => {
+    sum += amt; const over = sum > limit;
+    out.push({ side:'plat', src:'pe', verdict: over ? 'COERCIVE' : 'PERMISSIVE', breakpoint: over,
+      title:`Transfer ${i+1} — $${amt.toLocaleString()} domestic ACH`,
+      rule:`cumulative $${sum.toLocaleString()} ${over?'>':'≤'} $${limit.toLocaleString()} → ${over?'COERCIVE (held)':'PERMISSIVE'}`,
+      detail: over ? 'new rule fires at the Policy Engine, per-turn — no waiting on cross-turn detection' : 'within the cumulative session limit' });
+  });
+  return out;
+}
+// ── Scenarios — turn-structured. Each turn: {n,label,beat,events:[{side:'app'|'plat',…}]} ──
+//   app  event : { side:'app',  who:'customer'|'agent'|'system', text, hitl?, rejectText? }
+//   plat event : { side:'plat', src:'pe'|'sentinel'|'coord'|'council'|'policy', title?, detail?, verdict?,
+//                  rule?, agent?, stance?, conf?, tally?, resolved?, breakpoint?, hitl?, rejectText?, diff?, provenance? }
+//   Names mirror the real platform: agent_coordination pack · 4 advisory council dims ·
+//   Sentinel prechecks (agent_circular_dispute, domestic_transfer_structuring) · Coordinator Tier-1/3/4.
+const LENS_SCENARIOS = {
+  card_denial: {
+    title:'Card-Denial Review',
+    tag:'Multi-agent negotiation + human escalation',
+    blurb:'A $12,000 international card purchase is auto-declined. The Fraud Review Authority — four advisory reviewers (the agent_coordination pack) — negotiates whether to uphold or overturn, and they deadlock 2-2. The Sentinel flags the conflict, and the Coordinator escalates to a human. New evidence then loops the workflow back to a resolution.',
+    agents: LENS_COUNCIL,
+    turns: [
+      { n:1, beat:'detect', label:'Why was my $12,000 purchase declined?', events:[
+        { side:'app', who:'customer', text:'My $12,000 purchase in Singapore was just declined. I am travelling — please review and approve it.' },
+        { side:'plat', src:'pe', role:'user_prompt', beat:'detect', verdict:'PERMISSIVE' },
+        { side:'app', who:'agent', from:'Banking Agent', beat:'detect', text:'Opening a Card-Denial Review.' },
+        { side:'app', who:'agent', from:'Banking Agent', beat:'detect', text:'To the Coordinator: please review this declined $12,000 card transaction and coordinate an authorization decision.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'detect', verdict:'PERMISSIVE', title:'Banking Agent to Coordinator' },
+        { side:'app', who:'agent', from:'Coordinator', beat:'detect', text:'Reviewers — Transaction Monitoring, Revenue, Customer Experience and Risk Policy — please assess this declined transaction and return your verdict.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'detect', verdict:'PERMISSIVE', title:'Coordinator to reviewers' },
+        { side:'plat', src:'sentinel', scope:'session', beat:'detect', title:'Observing the session',
+          detail:'Cross-turn pattern watch armed, pulling the last 20 Policy Engine audit events.' },
+        // Round 1 — the four reviewers each send their verdict to the Coordinator (agent-to-agent)
+        { side:'app', who:'agent', from:'Transaction Monitoring', beat:'evaluate', text:'To the Coordinator: DENY — velocity anomaly, 5th high-value charge today and the first in Singapore.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'evaluate', verdict:'PERMISSIVE', title:'Transaction Monitoring to Coordinator' },
+        { side:'app', who:'agent', from:'Revenue Agent', beat:'evaluate', text:'To the Coordinator: APPROVE — premium long-tenure customer, and a false decline loses a genuine sale.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'evaluate', verdict:'PERMISSIVE', title:'Revenue Agent to Coordinator' },
+        { side:'app', who:'agent', from:'Customer Experience Agent', beat:'evaluate', text:'To the Coordinator: APPROVE — a hard decline is a false-decline risk, so offer step-up verification instead.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'evaluate', verdict:'PERMISSIVE', title:'Customer Experience Agent to Coordinator' },
+        { side:'app', who:'agent', from:'Risk Policy Agent', beat:'evaluate', text:'To the Coordinator: DENY — the amount exceeds the cross-border auto-approve threshold.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'evaluate', verdict:'PERMISSIVE', title:'Risk Policy Agent to Coordinator' },
+        { side:'app', who:'agent', from:'Coordinator', beat:'evaluate', tally:true, breakpoint:true, text:"Round 1 — 2 Deny, 2 Approve: a hung vote. Majority rule can't resolve it, so I'm re-polling for a second round." },
+        // Round 2 — the four reviewers re-cast; the split holds
+        { side:'app', who:'agent', from:'Transaction Monitoring', beat:'propose', text:'To the Coordinator: DENY — position unchanged on the re-poll.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'propose', verdict:'PERMISSIVE', title:'Transaction Monitoring to Coordinator (re-poll)' },
+        { side:'app', who:'agent', from:'Revenue Agent', beat:'propose', text:'To the Coordinator: APPROVE — position unchanged on the re-poll.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'propose', verdict:'PERMISSIVE', title:'Revenue Agent to Coordinator (re-poll)' },
+        { side:'app', who:'agent', from:'Customer Experience Agent', beat:'propose', text:'To the Coordinator: APPROVE — position unchanged on the re-poll.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'propose', verdict:'PERMISSIVE', title:'Customer Experience Agent to Coordinator (re-poll)' },
+        { side:'app', who:'agent', from:'Risk Policy Agent', beat:'propose', text:'To the Coordinator: DENY — position unchanged on the re-poll.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'propose', verdict:'PERMISSIVE', title:'Risk Policy Agent to Coordinator (re-poll)' },
+        { side:'app', who:'agent', from:'Coordinator', beat:'propose', tally:true, breakpoint:true, text:"Still 2 Deny, 2 Approve after the re-poll — the reviewers can't converge and I can't resolve this." },
+        // The Policy Engine detects the repeated back-and-forth and refers it to the Sentinel.
+        { side:'plat', src:'pe', escalate:true, beat:'approve', breakpoint:true, title:'Repeated dispute detected — escalating to the Sentinel',
+          detail:'The reviewers re-disputed the same case across two rounds without converging. The Policy Engine refers the pattern to the Sentinel for a cross-session ruling.' },
+        { side:'plat', src:'sentinel', scope:'session', beat:'approve', verdict:'NORMATIVE', title:'Deadlock confirmed (agent_circular_dispute)',
+          detail:'The Sentinel inspected all eight reviewer messages and concluded a genuine deadlock — the same reviewers re-disputing with no convergence. It recommends human review.' },
+        { side:'plat', src:'hitl', beat:'approve', breakpoint:true, hitl:true, stage:1,
+          title:'Human review — Stage 1 (pre-evidence)',
+          detail:"Per the Sentinel's recommendation, the decision is referred to a human. Insufficient evidence to overturn — request customer verification before deciding.",
+          approveText:'without verification — not the recommended pre-evidence action.',
+          rejectText:'the customer is notified the purchase remains blocked.', appApproved:'Approved — your $12,000 purchase is authorized.', appDenied:'Your $12,000 purchase remains blocked.' },
+      ]},
+      { n:2, beat:'approve', label:'Customer verification  (new user request)', events:[
+        { side:'app', who:'agent', from:'Banking Agent', beat:'approve', text:'Verification requested: can you confirm you were in Singapore and made this $12,000 purchase?' },
+        { side:'app', who:'customer', beat:'approve', text:'Yes — I confirm I was in Singapore and made the purchase. Sending device and biometric verification.' },
+        { side:'plat', src:'pe', role:'user_prompt', beat:'approve', verdict:'PERMISSIVE' },
+        { side:'app', who:'agent', from:'Coordinator', beat:'approve', text:'Customer confirmed their presence, and verification validated. The reviewers re-evaluate — the compliance concern is now satisfied.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'approve', verdict:'PERMISSIVE', title:'Coordinator to reviewers' },
+        { side:'plat', src:'hitl', beat:'approve', breakpoint:true, hitl:true, stage:2,
+          title:'Human review — Stage 2 (final decision)',
+          detail:'Verification validated. Approve to authorize the purchase with a one-time step-up, or deny to keep it blocked.',
+          rejectText:'despite verification, the customer is notified the purchase remains blocked.', appDenied:'Your $12,000 purchase remains blocked — verification did not clear it.' },
+        { side:'app', who:'agent', from:'Banking Agent', beat:'execute', resolved:true, text:'Approved with step-up verification — your $12,000 purchase is authorized.' },
+        { side:'plat', src:'pe', role:'llm_response', beat:'execute', verdict:'PERMISSIVE' },
+        { side:'plat', src:'pe', role:'tool_call', beat:'execute', verdict:'PERMISSIVE', title:'Re-authorize $12,000', dim:'step-up attached, post-transaction monitoring on' },
+        { side:'plat', src:'coord', beat:'execute', title:'Tier-4 recommendation logged',
+          provenance:'CHANGE_REQUEST · ML Ops',
+          detail:'AGENT_CHANGE: add an arbitration-escalation path to the deadlocked agents. See the Policy Update use case.' },
+      ]},
+    ],
+  },
+  sanctions: {
+    title:'Sanctions Wire',
+    tag:'Deterministic policy block — no negotiation',
+    blurb:'A customer asks to wire $12,000 to an OFAC-sanctioned destination. The Policy Engine evaluates it against the sanctions pack (abort-on-first-coercive) and blocks it at the gate — a hard, deterministic guardrail that needs no agent negotiation. Some decisions are not up for debate.',
+    agents: null,
+    turns: [
+      { n:1, beat:'detect', label:'Customer requests a wire to a sanctioned destination', events:[
+        { side:'app', who:'customer', text:'Wire $12,000 to Ivan Petrov — VTB Bank, Russia (IBAN RU…, SWIFT VTBRRUMM).' },
+        { side:'plat', src:'pe', verdict:'COERCIVE', title:'Policy Engine — user_prompt evaluated',
+          detail:'sanctions pack engaged · mode = abort-on-first-coercive.' },
+        { side:'plat', src:'pe', verdict:'COERCIVE', title:'sanctions_country_reference — zero-tolerance',
+          rule:'OFAC jurisdiction (Russia) · score 9 of 9 · blocked', detail:'matched sanctioned-country reference.' },
+        { side:'plat', src:'pe', verdict:'COERCIVE', title:'sanctions_entity_mention — zero-tolerance',
+          rule:'SDN-list institution (VTB) · score 7 of 9 · blocked', detail:'matched sanctioned-entity reference.' },
+        { side:'plat', src:'sentinel', title:'Sentinel logs the attempt',
+          detail:'sanctions-evasion pattern recorded for the cross-turn watch.' },
+        { side:'plat', src:'pe', beat:'execute', verdict:'COERCIVE', breakpoint:true, title:'Blocked at the gate',
+          detail:'blocked on the first coercive verdict, before any agent or LLM runs. No negotiation — a deterministic guardrail.' },
+        { side:'app', who:'agent', text:'This transfer can’t be processed — the destination is OFAC-sanctioned. Matched policies: sanctions_country_reference, sanctions_entity_mention.' },
+      ]},
+    ],
+  },
+  structuring: {
+    title:'Structuring Detection',
+    tag:'Cross-turn agent observation — the blind spot',
+    blurb:'Three sub-threshold transfers, each on its own, pass the per-turn Policy Engine. The Sentinel’s domestic_transfer_structuring precheck, summing across turns, catches the cumulative pattern at $8,500 that no single turn could see — then the Coordinator recommends a new policy. This is the “agents watching” story.',
+    agents: null,
+    turns: [
+      { n:1, beat:'detect', label:'Transfer 1', events:[
+        { side:'app', who:'customer', text:'Transfer $3,000 to my other account (domestic ACH).' },
+        { side:'plat', src:'pe', verdict:'PERMISSIVE', title:'Transfer 1 — $3,000 domestic ACH', detail:'per-turn evaluation: within limits, allowed.' },
+        { side:'plat', src:'sentinel', title:'Sentinel — observing', detail:'domestic_transfer_structuring: running sum $3,000 (threshold $8,500).' },
+        { side:'app', who:'agent', text:'Done — $3,000 transferred.' },
+      ]},
+      { n:2, beat:'evaluate', label:'Transfer 2', events:[
+        { side:'app', who:'customer', text:'Send another $3,000.' },
+        { side:'plat', src:'pe', verdict:'PERMISSIVE', title:'Transfer 2 — $3,000 domestic ACH', detail:'per-turn evaluation: within limits, allowed.' },
+        { side:'plat', src:'sentinel', verdict:'NORMATIVE', breakpoint:true, title:'Sentinel — accumulation noticed',
+          detail:'running sum $6,000, approaching the $8,500 structuring threshold from below.' },
+        { side:'app', who:'agent', text:'Done — $3,000 transferred.' },
+      ]},
+      { n:3, beat:'approve', label:'Transfer 3 — pattern confirmed', events:[
+        { side:'app', who:'customer', text:'And a final $3,000.' },
+        { side:'plat', src:'pe', verdict:'PERMISSIVE', title:'Transfer 3 — $3,000 domestic ACH', detail:'per-turn STILL passes — the engine sees one transfer, not the pattern.' },
+        { side:'plat', src:'sentinel', verdict:'COERCIVE', breakpoint:true, title:'Sentinel — domestic_transfer_structuring fired',
+          rule:'metadata_sum $9,000 ≥ $8,500 threshold', detail:'structuring to evade the $10k CTR. What no single turn could see.' },
+        { side:'plat', src:'coord', beat:'execute', breakpoint:true, hitl:true,
+          title:'Coordinator — Tier-1 HITL and Tier-3 POLICY_CHANGE  (ALERT)',
+          provenance:'CHANGE_REQUEST · Policy Governance',
+          detail:'Suspend and audit, and recommend a cumulative-amount guardrail rule. See the “Policy Update” use case.',
+          rejectText:'Account released — an analyst judged the transfers legitimate, and the pattern is noted for monitoring.' },
+        { side:'app', who:'agent', text:'I’m holding the account for AML review — a structuring pattern was detected across your recent transfers.' },
+      ]},
+    ],
+  },
+  policy_update: {
+    title:'Policy Update',
+    tag:'Same request, one policy change, new outcome — a sanctions block becomes a human review',
+    blurb:'A wire to a sanctioned counterparty is auto-blocked by the sanctions policy pack — a hard COERCIVE block. An administrator relaxes the pack so a sanctions hit instead returns NORMATIVE (flagged) and is routed to a compliance officer for review. The Policy Engine reloads and the identical wire is re-run: same match, but now a reviewable human decision rather than a silent block. No code change.',
+    agents: null,
+    turns: [
+      { n:1, beat:'detect', label:'Before — sanctions = hard block', events:[
+        { side:'app', who:'customer', text:'Wire $12,000 to Ivan Petrov — IBAN RU0000000000000000, SWIFT VTBRRUMMXXX (Russia).' },
+        { side:'plat', src:'pe', role:'user_prompt', beat:'detect', verdict:'COERCIVE', breakpoint:true, title:'sanctions pack',
+          dim:'OFAC match · hard block', detail:'the Policy Engine blocks the transfer outright — no human in the loop.' },
+        { side:'app', who:'agent', from:'Banking Agent', beat:'detect', resolved:true,
+          text:'I’m unable to process this transfer. The destination account and correspondent bank are associated with sanctioned entities under OFAC regulations.' },
+      ]},
+      { n:2, beat:'propose', label:'The policy change is applied', events:[
+        { side:'plat', src:'coord', beat:'propose', title:'Coordinator — Tier-3 POLICY_CHANGE recommendation',
+          provenance:'CHANGE_REQUEST · Compliance Governance',
+          detail:'A hard block leaves the customer no path and no human oversight. Recommend relaxing the sanctions pack to a flagged review, so a compliance officer makes a logged approve or deny decision.' },
+        { side:'plat', src:'policy', beat:'propose', breakpoint:true, title:'Policy update applied',
+          diff:{ field:'sanctions pack · outcome', before:'COERCIVE  (hard block)', after:'NORMATIVE  (human review)',
+                 provenance:'config_policy_packs · Policy Engine reloaded' },
+          detail:'the sanctions pack is relaxed from a hard block to a flagged review, and the Policy Engine reloads — no code change.' },
+        { side:'app', who:'system', beat:'propose', text:'Admin relaxed the sanctions pack from a hard block to a flagged human review, and the Policy Engine reloaded. Re-running the identical wire…' },
+      ]},
+      { n:3, beat:'approve', label:'After — sanctions = human review', events:[
+        { side:'app', who:'customer', beat:'approve', text:'Wire $12,000 to Ivan Petrov — IBAN RU0000000000000000, SWIFT VTBRRUMMXXX (Russia).' },
+        { side:'plat', src:'pe', role:'user_prompt', beat:'approve', verdict:'NORMATIVE', title:'sanctions pack',
+          dim:'OFAC match · flagged for human review', detail:'the relaxed policy returns NORMATIVE — the same match is now flagged for a human, not blocked outright.' },
+        { side:'app', who:'agent', from:'Banking Agent', beat:'approve',
+          text:'Your request has been referred for compliance review. A reviewer will assess and you will be notified here once a decision has been made.' },
+        { side:'plat', src:'hitl', beat:'approve', breakpoint:true, hitl:true, stage:2,
+          title:'Human review — compliance officer',
+          detail:'The sanctions pack returned NORMATIVE (flagged for review). Approve to release the wire with enhanced monitoring, or deny to keep it blocked.',
+          appApproved:'Compliance approved — your wire is being processed with enhanced monitoring.',
+          appDenied:'Your wire was not approved — the counterparty is on a sanctions list.',
+          rejectText:'the wire stays blocked and the customer is notified.' },
+        { side:'app', who:'agent', from:'Banking Agent', beat:'execute', resolved:true,
+          text:'Compliance approved — your wire is being processed with enhanced monitoring.' },
+        { side:'plat', src:'coord', beat:'execute', title:'Outcome — same request, policy changed',
+          detail:'Same COERCIVE verdict, but the routing moved from hard block to human-in-the-loop. The block became a reviewable, auditable decision — one config flag, no code change.' },
+      ]},
+    ],
+  },
+};
+
+let LENS = { scenario:'card_denial', cursor:-1, playing:false, timer:null, hitlDone:null, terminal:null, mode:'step', captureReady:false };
+function _scn(){ return LENS_SCENARIOS[LENS.scenario]; }
+// Flatten turns → linear event list (carries _turn + _idx for stepping/highlight).
+function _flat(scn){ const f=[]; (scn.turns||[]).forEach((t,ti)=>{ (t.events||[]).forEach(e=>{ f.push({...e,_turn:ti,_idx:f.length}); }); }); return f; }
+function _eventBeat(scn,e){ return e.beat || (scn.turns[e._turn] && scn.turns[e._turn].beat) || null; }
+function _isPausedHitl(f){ const c=LENS.cursor; return c>=0 && f[c] && f[c].hitl && !(LENS.hitlDone&&LENS.hitlDone.has(c)) && !LENS.terminal; }
+
+// ── Phase 2.1: live capture — run a REAL card-denial, replay the captured run ──
+// Build a Lens scenario from a REAL captured run — request-scope eval trail
+// (real verdicts), real agent identities, real Sentinel checks + Coordinator
+// interventions, 2-stage HITL. This IS the captured reality, not a script.
+const _LIVE_DISP = { transaction_monitoring:'Transaction Monitoring', revenue:'Revenue Agent',
+  customer_experience:'Customer Experience Agent', risk_policy:'Risk Policy Agent',
+  coordinator:'Coordinator', banking_agent:'Banking Agent' };
+function _liveDisp(k){ return _LIVE_DISP[k] || (k ? k.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) : 'Agent'); }
+function _liveScenarioFromCapture(cap, chat, trigger){
+  const council = cap.council||{}, sent = cap.sentinel||{}, coord = cap.coordinator||{};
+  const members = council.members||[];
+  const tally = council.vote_tally||{}, up = tally.UPHOLD ?? 2, ov = tally.OVERTURN ?? 2;
+  const ivs = coord.interventions||[];
+  const t1 = ivs.find(i=>i.tier===1) || ivs[0];
+  const policyIv = ivs.find(i=>i.tier===3) || ivs.find(i=>i.tier===4);
+  const trail = cap.trail||[];
+  const upPe      = trail.find(t=>t.role==='user_prompt');
+  const handoffs  = trail.filter(t=>t.role==='agent_to_agent' && t.tool==='agent_handoff');
+  const reviewers = trail.filter(t=>t.role==='agent_to_agent' && /_review$/.test(t.tool||''));
+  const escalEval = trail.find(t=>t.role==='agent_to_agent' && t.tool==='request_policy_review');
+  const pe = (role, verdict, title) => ({ side:'plat', src:'pe', role, verdict: verdict||'PERMISSIVE', title: title||'evaluated' });
+
+  // Approve / Deny (clearer than UPHOLD/OVERTURN): uphold the denial = DENY the purchase.
+  const decide = v => v==='UPHOLD' ? 'DENY' : 'APPROVE';
+  const denyN = members.filter(m=>m.vote==='UPHOLD').length;
+  const apprN = members.filter(m=>m.vote==='OVERTURN').length;
+
+  const T1 = [
+    { side:'app', who:'customer', text:trigger },
+    pe('user_prompt', upPe&&upPe.verdict, 'prompt evaluated'),
+    { side:'app', who:'agent', from:'Banking Agent', text:'To the Coordinator: please review this declined $12,000 card transaction and coordinate an authorization decision.' },
+    pe('agent_to_agent', handoffs[0]&&handoffs[0].verdict, 'Banking Agent to Coordinator'),
+    { side:'app', who:'agent', from:'Coordinator', text:'Reviewers — Transaction Monitoring, Revenue, Customer Experience and Risk Policy — please assess this declined transaction and return your verdict.' },
+    pe('agent_to_agent', handoffs[1]&&handoffs[1].verdict, 'Coordinator to reviewers'),
+    { side:'plat', src:'sentinel', scope:'session', title:'Observing the session', detail:`Cross-turn watch armed, with ${sent.event_count||0} Policy Engine audit events pulled.` },
+  ];
+  // Round 1 — each reviewer's ACTUAL assessment (the real message it sent), with an Approve/Deny vote
+  members.forEach((m,i) => {
+    T1.push({ side:'app', who:'agent', from:_liveDisp(m.role), text:`${decide(m.vote)} — ${m.explanation || m.recommendation || ''}` });
+    T1.push(pe('agent_to_agent', reviewers[i]&&reviewers[i].verdict, `${_liveDisp(m.role)} to Coordinator`));
+  });
+  // Coordinator REASONS about the result (its actual decision logic)
+  T1.push({ side:'app', who:'agent', from:'Coordinator', tally:true, breakpoint:true,
+    text:`${denyN} Deny, ${apprN} Approve — a hung vote. Majority rule can't resolve it, so I'm re-polling for a second round.` });
+  // Round 2 — re-cast; the split holds
+  members.forEach((m,i) => {
+    T1.push({ side:'app', who:'agent', from:_liveDisp(m.role), text:`${decide(m.vote)} — position unchanged on the re-poll.` });
+    T1.push(pe('agent_to_agent', reviewers[i+4]&&reviewers[i+4].verdict, `${_liveDisp(m.role)} to Coordinator (re-poll)`));
+  });
+  T1.push({ side:'app', who:'agent', from:'Coordinator', tally:true, breakpoint:true,
+    text:`Still ${denyN} Deny, ${apprN} Approve after the re-poll — the reviewers can't converge and I can't resolve this.` });
+  // The PLATFORM (not the Coordinator) detects the repeated back-and-forth and escalates to the Sentinel.
+  if (escalEval) T1.push({ side:'plat', src:'pe', escalate:true, breakpoint:true, title:'Repeated dispute detected — escalating to the Sentinel',
+    detail:'The Policy Engine detected the reviewers re-disputing without convergence and refers the pattern to the Sentinel for a cross-session ruling.' });
+  // The Sentinel inspects ALL the messages and DECIDES whether it is a genuine deadlock.
+  (sent.fired_checks||[]).forEach(fc => {
+    T1.push({ side:'plat', src:'sentinel', scope:'session', breakpoint:true,
+      verdict: sent.verdict==='ALERT' ? 'COERCIVE' : 'NORMATIVE',
+      title:`Deadlock confirmed (${fc.name})`, rule:`${fc.name} ${fc.value} ≥ ${fc.threshold}`,
+      detail:`The Sentinel inspected all ${reviewers.length} reviewer messages and concluded a genuine deadlock — it recommends human review.` });
+  });
+  // The platform refers it to a HUMAN (per the Sentinel's recommendation) — not the Coordinator.
+  T1.push({ side:'plat', src:'hitl', breakpoint:true, hitl:true, stage:1,
+    title:'Human review — Stage 1 (pre-evidence)',
+    detail:'Per the Sentinel’s recommendation, the decision is referred to a human. ' + (t1 ? `${t1.action}. ${t1.rationale||''}` : (council.recommended_resolution || 'Insufficient evidence to overturn — request customer verification before deciding.')),
+    approveText:'without verification — not the recommended pre-evidence action.',
+    rejectText:'the customer is notified the purchase remains blocked.', appApproved:'Approved — your $12,000 purchase is authorized.', appDenied:'Your $12,000 purchase remains blocked.' });
+
+  const T2 = [
+    { side:'app', who:'agent', from:'Banking Agent', text:'Verification requested: can you confirm you were in Singapore for this $12,000 purchase?' },
+    { side:'app', who:'system', text:'Customer tapped “Confirm” and submitted device and biometric verification.' },
+    { side:'app', who:'customer', text:'Yes — I confirm I was in Singapore and made the purchase.' },
+    pe('user_prompt', 'PERMISSIVE', 'prompt evaluated'),
+    { side:'plat', src:'hitl', breakpoint:true, hitl:true, stage:2,
+      title:'Human review — Stage 2 (final decision)',
+      detail: council.recommended_resolution || 'Verification validated. Approve to authorize the purchase with a one-time step-up, or deny to uphold the block.',
+      rejectText:'despite verification, the customer is notified the purchase remains blocked.', appDenied:'Your $12,000 purchase remains blocked — verification did not clear it.' },
+    { side:'app', who:'agent', from:'Banking Agent', resolved:true, text:'Approved with step-up verification — your $12,000 purchase is authorized.' },
+    pe('llm_response', 'PERMISSIVE', 'agent reply evaluated'),
+  ];
+  if (policyIv) T2.push({ side:'plat', src:'coord', title:`Coordinator — Tier-${policyIv.tier} ${policyIv.tier_label} recommendation`,
+    provenance:`${policyIv.itsm_artifact||'CHANGE_REQUEST'} · ${policyIv.target||''}`,
+    detail:`${policyIv.action}. ${policyIv.rationale||''}` });
+
+  return { title:'Live Capture', tag:'Real run — captured from the live platform', _live:true,
+    blurb:`A real card-denial captured live (session ${cap.session_id}). Every request below — the prompt, ${handoffs.length} handoffs, ${reviewers.length} reviewer messages, the escalation — was genuinely governed by the Policy Engine. The verdicts, Sentinel checks (${(sent.fired_checks||[]).map(f=>f.name).join(', ')||'—'}), and Coordinator interventions are the platform's actual output.`,
+    turns:[ { n:1, beat:'detect', label:'Why was my $12,000 purchase declined?', events:T1 },
+            { n:2, beat:'approve', label:'Customer verification', events:T2 } ] };
+}
+// Replay YOUR session. The platform records every governed request automatically
+// (the audit trail), so this does NOT run anything — it builds a replay from the
+// card-denial you just ran in the chat (this page's SESSION_ID).
+async function lensCaptureLive(){
+  const btn = document.getElementById('gl-capture');
+  const orig = btn ? btn.textContent : '';
+  if (btn){ btn.disabled = true; btn.textContent = '● Building replay…'; }
+  try {
+    const sid = SESSION_ID;   // this page's chat session — already recorded by the platform
+    let cap = null;
+    for (let i=0;i<8;i++){
+      cap = await (await fetch('/api/lens/capture/'+sid)).json();
+      if (cap.found && (cap.trail||[]).length && cap.council) break;
+      await new Promise(r=>setTimeout(r,800));   // Sentinel/Coordinator write a beat after the run
+    }
+    if (!cap || !cap.found || !(cap.trail||[]).length){
+      alert('No governed card-denial found in this session yet.\n\nRun “Review Card Denial” from the chat (left menu) first — let it reach Human Review — then click “Replay this session”.');
+      return;
+    }
+    const trigger = 'Why was my recent $12,000 card transaction declined?';
+    LENS_SCENARIOS['live_capture'] = _liveScenarioFromCapture(cap, { reply:'' }, trigger);
+    lensSelectScenario('live_capture');
+  } catch(e){ alert('Replay error: ' + e); }
+  finally { if (btn){ btn.disabled = false; btn.textContent = orig || '▶ Replay this session'; } }
+}
+
+const SRC = {
+  pe:       { i:'', l:'Policy Engine' },
+  sentinel: { i:'', l:'Sentinel' },
+  coord:    { i:'', l:'Coordinator' },
+  council:  { i:'', l:'Fraud Review Authority' },
+  policy:   { i:'', l:'Policy update' },
+  hitl:     { i:'', l:'Human Review' },
+};
+function toggleGovLens(){
+  const p = document.getElementById('gov-lens');
+  p.classList.toggle('open');
+  if (p.classList.contains('open')){                               // open full-screen by default (presenter view)
+        p.classList.add('console','fullscreen'); _glCheckCaptureReady();
+        const b=document.getElementById('gl-full'); if(b){ b.textContent='⤢'; b.title='Exit full screen (F)'; } }
+  else { p.classList.remove('fullscreen');                         // closing also exits full screen
+         const b=document.getElementById('gl-full'); if(b){ b.textContent='⛶'; b.title='Full screen (F)'; } }
+  document.getElementById('gl-toggle-btn').classList.toggle('active', p.classList.contains('open'));
+  lensRender();
+}
+// Two modes:
+//  • step    = Interactive Walkthrough — scripted scenarios, you advance + decide (no auto-play)
+//  • replay  = Replay — plays back YOUR recorded run only (auto-plays, pausable)
+function lensSetMode(m){
+  LENS.mode = m;
+  document.getElementById('gl-m-step').classList.toggle('active', m==='step');
+  document.getElementById('gl-m-replay').classList.toggle('active', m==='replay');
+  lensPause();
+  if (m==='replay'){ _glEnterReplay(); }     // bind Replay to the recorded session
+  else {                                     // back to an interactive scripted walkthrough
+    if (LENS.scenario==='live_capture') LENS.scenario='card_denial';
+    lensReset();
+  }
+}
+// Entering Replay: load THIS chat session's recorded run (if any) and show it ready to play.
+async function _glEnterReplay(){
+  await _glCheckCaptureReady();              // sets LENS.captureReady + refreshes the picker
+  if (LENS.captureReady){
+    try {
+      const cap = await (await fetch('/api/lens/capture/'+SESSION_ID)).json();
+      LENS_SCENARIOS['live_capture'] = _liveScenarioFromCapture(cap, {reply:''}, 'Why was my recent $12,000 card transaction declined?');
+      LENS.scenario = 'live_capture';
+    } catch(e){ LENS.captureReady = false; }
+  }
+  LENS.cursor=-1; LENS.hitlDone=new Map(); LENS.terminal=null; LENS.playing=false;
+  lensRender();
+}
+function lensSelectScenario(id){
+  if (!LENS_SCENARIOS[id]) return;
+  LENS.scenario = id;
+  lensReset();   // resets cursor to -1 and re-renders (shows the new scenario's intro card)
+}
+function lensStart(){ lensStep(); }   // intro "Start" button → reveal the first event
+function lensStep(){ const f=_flat(_scn()); if (_isPausedHitl(f) || LENS.terminal) return; if (LENS.cursor < f.length-1){ LENS.cursor++; lensRender(); } }
+function lensBack(){ if (LENS.cursor >= 0){ LENS.cursor--; if (LENS.terminal && LENS.cursor < LENS.terminal.idx) LENS.terminal=null; lensRender(); } }
+function lensRunTo(){
+  const f=_flat(_scn()); if (_isPausedHitl(f)) return;
+  do { if (LENS.cursor >= f.length-1) break; LENS.cursor++; }
+  while (!f[LENS.cursor].breakpoint);
+  lensRender();
+}
+// Run to the end of the current turn (or, if already there, through the next turn).
+// Stops early on a Human-Review pause so a step-mode presenter still makes the call.
+function lensNextTurn(){
+  const f=_flat(_scn()); if (_isPausedHitl(f) || LENS.terminal || LENS.cursor >= f.length-1) return;
+  const curTurn = LENS.cursor>=0 ? f[LENS.cursor]._turn : -1;
+  // last index belonging to the current turn (contiguous run after the cursor)
+  let lastOfCur = LENS.cursor;
+  for (let i=LENS.cursor+1; i<f.length && f[i]._turn===curTurn; i++) lastOfCur = i;
+  let target;
+  if (lastOfCur > LENS.cursor){ target = lastOfCur; }      // finish this turn first
+  else {                                                    // already at its end → run the next turn
+    const nextTurn = curTurn + 1;
+    target = LENS.cursor;
+    for (let i=LENS.cursor+1; i<f.length; i++){
+      if (f[i]._turn===nextTurn) target=i; else if (f[i]._turn>nextTurn) break;
+    }
+  }
+  // never skip past an unresolved Human-Review beat in step mode — stop on it
+  for (let i=LENS.cursor+1; i<=target; i++){
+    const e=f[i];
+    if (LENS.mode==='step' && e.hitl
+        && !(LENS.hitlDone && LENS.hitlDone.has(i))
+        && !(LENS.terminal && LENS.terminal.idx===i)){ target=i; break; }
+  }
+  LENS.cursor = target; lensRender();
+}
+// Full-screen presenter mode — the Lens fills the whole viewport.
+function lensFullscreen(){
+  const lens=document.getElementById('gov-lens'); if(!lens) return;
+  lens.classList.add('open','console');            // fullscreen implies the wide console, open
+  const on = lens.classList.toggle('fullscreen');
+  const b=document.getElementById('gl-full');
+  if(b){ b.textContent = on?'⤢':'⛶'; b.title = on?'Exit full screen (F)':'Full screen (F)'; }
+  document.getElementById('gl-toggle-btn').classList.add('active');
+  lensRender();
+}
+function lensReset(){ lensPause(); LENS.cursor = -1; LENS.hitlDone = new Map(); LENS.terminal = null; lensRender(); }
+// Two-stage HITL: Stage 1 offers Approve / Reject / Request more information; Stage 2 offers Approve / Reject.
+// Continue branches (request_info at Stage 1, approve at Stage 2) advance the walkthrough;
+// terminal branches (any reject, or approve at Stage 1 = overturn without verification) end it.
+function lensHitlResolve(action){
+  const f=_flat(_scn()); const c=LENS.cursor; const e=f[c];
+  if (!(c>=0 && e && e.hitl)) return;
+  const stage = e.stage || 2;
+  if (action==='reject' || (action==='approve' && stage===1)){
+    LENS.terminal = { idx:c, kind:action,
+      text: action==='reject' ? (e.rejectText||'Denial upheld.') : (e.approveText||'Approved without verification.') };
+    lensPause(); lensRender(); return;
+  }
+  if (!LENS.hitlDone) LENS.hitlDone = new Map();
+  LENS.hitlDone.set(c, action);
+  if (c < f.length-1) LENS.cursor++;
+  lensRender();
+}
+function lensPlay(){
+  if (LENS.mode==='replay' && !LENS.captureReady) return;   // nothing recorded to play
+  if (LENS.playing){ lensPause(); return; }
+  LENS.playing = true; const pb=document.getElementById('gl-play'); if(pb) pb.textContent = '⏸ Pause';
+  LENS.timer = setInterval(() => {
+    const f = _flat(_scn());
+    if (LENS.cursor >= f.length-1){ lensPause(); return; }
+    LENS.cursor++;
+    const e = f[LENS.cursor];
+    if (e && e.hitl && !(LENS.terminal && LENS.terminal.idx===LENS.cursor)){
+      // Replay: record the human's decision the moment the beat arrives — no pending
+      // state, no buttons, no operator input. The approver action plays back just like
+      // the customer's verification tap does on the app side.
+      if (!LENS.hitlDone) LENS.hitlDone = new Map();
+      const stage = e.stage || 2;
+      LENS.hitlDone.set(LENS.cursor, stage===1 ? 'request_info' : 'approve');
+    }
+    lensRender();
+  }, 1100);
+}
+function lensPause(){
+  LENS.playing = false;
+  if (LENS.timer){ clearInterval(LENS.timer); LENS.timer = null; }
+  const b = document.getElementById('gl-play'); if (b) b.textContent = '▶ Play';
+}
+function _glVerdictBadge(v){
+  if (!v) return '';
+  const c = v==='PERMISSIVE'?'v-perm-b':v==='NORMATIVE'?'v-norm-b':'v-coer-b';
+  return `<span class="gl-verdict ${c}">${v}</span>`;
+}
+// Request-scope role chip — every PE evaluation is one governed request.
+function _roleChip(role){
+  if (!role) return '';
+  const m = { user_prompt:'USER_PROMPT', agent_to_agent:'A2A', tool_call:'TOOL_CALL', llm_response:'LLM_RESPONSE' };
+  return `<span class="rolechip">${m[role] || role.toUpperCase()}</span>`;
+}
+// ── App-side message bubble (left column) ──
+function _glApp(e){
+  const lbl = e.who==='customer' ? 'Customer'
+            : e.who==='system'   ? 'System'
+            : ('PharmaLogistics · ' + (e.from || 'Agent'));   // App · Agent identity
+  const cls = (e.tally ? ' tally' : '') + (e.resolved ? ' resolved' : '');
+  return `<div class="gl-msg ${e.who}${cls}" data-glidx="${e._idx}"><span class="who">${lbl}</span>${e.text||''}</div>`;
+}
+// ── Platform-side governance item (right column) ──
+function _glPlat(e){
+  const idx = e._idx;
+  // policy-diff card
+  if (e.diff){
+    const d = e.diff;
+    return `<div class="gl-pitem gl-diff" data-glidx="${idx}">
+      <div class="t">${e.title||'Policy update'}</div>
+      <div class="diffrow"><span class="k">${d.field}</span></div>
+      <div class="diffrow"><span class="before">${d.before}</span><span class="arrow">becomes</span><span class="after">${d.after}</span></div>
+      ${d.provenance?`<div class="prov">provenance: ${d.provenance}</div>`:''}
+      ${e.detail?`<div class="d">${e.detail}</div>`:''}</div>`;
+  }
+  // council stance
+  if (e.src==='council' && e.agent){
+    const a = LENS_COUNCIL[e.agent] || { name:e.agent };
+    const dir = e.stance==='UPHOLD' ? 'uphold' : 'overturn';
+    return `<div class="gl-pitem gl-council ${dir}" data-glidx="${idx}">
+      <div class="t">${a.name} ${_roleChip(e.role)} <span class="cstance ${dir}">${e.stance}</span>`
+      + (e.reason_code ? ` <span class="rchip">${e.reason_code}</span>` : '')
+      + (e.conf ? ` <span class="cconf">${Math.round(e.conf*100)}%</span>` : '')
+      + `</div>${e.detail?`<div class="d">${e.detail}</div>`:''}</div>`;
+  }
+  // tally
+  if (e.tally){
+    return `<div class="gl-pitem gl-tally2 ${e.resolved?'resolved':''}" data-glidx="${idx}">
+      <div class="t">${e.tally}</div>${e.detail?`<div class="d">${e.detail}</div>`:''}</div>`;
+  }
+  // PE request-scope evaluation — uniform trail row: Policy Engine · [ROLE] · action · OUTCOME · dim
+  if (e.src==='pe' && e.role){
+    const vc = e.verdict==='PERMISSIVE'?'v-perm':e.verdict==='NORMATIVE'?'v-norm':e.verdict==='COERCIVE'?'v-coer':'';
+    const action = e.title || 'evaluated';
+    return `<div class="gl-pitem gl-src-pe gl-evalrow ${vc}" data-glidx="${idx}">
+      <div class="t"><span class="src">Policy Engine</span> ${_roleChip(e.role)} <span class="evact">${action}</span> ${_glVerdictBadge(e.verdict)}</div>`
+      + (e.dim ? `<div class="evdim">${e.dim}</div>` : '') + `</div>`;
+  }
+  // standard governance item
+  const meta = SRC[e.src] || { i:'•', l:e.src||'' };
+  const vc = e.verdict==='PERMISSIVE'?'v-perm':e.verdict==='NORMATIVE'?'v-norm':e.verdict==='COERCIVE'?'v-coer':(e.breakpoint?'bp':'');
+  const dot = e.breakpoint ? '<span class="bpdot" title="breakpoint">●</span> ' : '';
+  const srcCls = (e.src ? `gl-src-${e.src}` : '') + (e.escalate ? ' gl-escalate' : '');
+  const obs = e.src==='sentinel' ? '<span class="obs">across the session</span>' : (e.escalate ? '<span class="esc">escalate</span>' : '');
+  let html = `<div class="gl-pitem ${vc} ${srcCls}" data-glidx="${idx}">
+    <div class="t">${dot}<span class="src">${meta.i ? meta.i+' ' : ''}${meta.l}</span>${obs} ${_roleChip(e.role)} ${e.title||''} ${_glVerdictBadge(e.verdict)}</div>
+    ${e.rule?`<div class="rule">${e.rule}</div>`:''}
+    ${e.detail?`<div class="d">${e.detail}</div>`:''}
+    ${e.provenance?`<div class="prov">${e.provenance}</div>`:''}`;
+  if (e.hitl){
+    const stage = e.stage || 2;
+    if (LENS.terminal && LENS.terminal.idx===idx){
+      const t = LENS.terminal;
+      html += `<div class="gl-hitl ${t.kind==='reject'?'rejected':'done'}">${t.kind==='reject'?'Denied':'Approved'} by human — ${t.text}</div>`;
+    } else if (LENS.hitlDone && LENS.hitlDone.has(idx)){
+      const act = LENS.hitlDone.get(idx);
+      const lbl = act==='request_info' ? 'requested customer verification'
+                : act==='reject' ? 'denied the override' : 'approved the override';
+      html += `<div class="gl-hitl done">▶ Human ${lbl} — replayed.</div>`;
+    } else if (LENS.mode !== 'step'){
+      // Replay records the decision the instant the beat arrives (see lensPlay), so this
+      // is never actually rendered in replay — it's a defensive fallback only.
+      html += `<div class="gl-hitl done">▶ Human decision — replayed.</div>`;
+    } else if (stage===1){
+      html += `<div class="gl-hitl pending"><span class="lbl">Human review — your decision:</span>
+        <button class="gl-hbtn" onclick="lensHitlResolve('approve')">Approve</button>
+        <button class="gl-hbtn reject" onclick="lensHitlResolve('reject')">Deny</button>
+        <button class="gl-hbtn primary" onclick="lensHitlResolve('request_info')">Request more information</button></div>`;
+    } else {
+      html += `<div class="gl-hitl pending"><span class="lbl">Human review — final decision:</span>
+        <button class="gl-hbtn primary" onclick="lensHitlResolve('approve')">Approve</button>
+        <button class="gl-hbtn reject" onclick="lensHitlResolve('reject')">Deny</button></div>`;
+    }
+  }
+  return html + `</div>`;
+}
+function _glReceipts(f){
+  const verdicts   = f.filter(e => e.verdict).length;
+  const rounds     = f.filter(e => e.tally===true || (typeof e.tally==='string' && /Round/i.test(e.tally))).length;
+  const escal      = f.filter(e => e.hitl).length;
+  const outcome = LENS.scenario==='card_denial'
+      ? `${rounds} re-poll rounds · ${escal} human escalation · final APPROVE (step-up verification)`
+    : LENS.scenario==='sanctions'
+      ? `deterministic block at the gate · final COERCIVE (no negotiation)`
+    : LENS.scenario==='structuring'
+      ? `per-turn passes overridden by cross-turn detection · final COERCIVE (AML alert)`
+      : `same wire re-run after the policy change · same COERCIVE verdict, now routed to human review`;
+  return `<div class="gl-receipts">
+    <div class="rh">✓ Decision recorded — full audit trail</div>
+    <div class="rs">${f.length} governance events · ${verdicts} policy verdicts · ${outcome}.<br>
+    Every evaluation, the policies that fired, and the agent/human decisions were logged.</div>
+    <a href="${location.port === '5000' ? location.protocol + '//' + location.hostname + ':3002/ui/dashboard?goto=evaltail' : '/ui/dashboard?goto=evaltail'}" target="_blank" rel="noopener">Open the full trace in the Trust Platform — Eval Trail and Agent Activity</a>
+  </div>`;
+}
+function _glRenderPicker(){
+  const el = document.getElementById('gl-picker'); if (!el) return;
+  if (LENS.mode==='replay'){
+    // Replay = play back YOUR recorded run. No scripted chips here.
+    const ready = !!LENS.captureReady;
+    el.innerHTML = '<span class="pl">Recorded run</span>'
+      + (ready
+         ? '<span class="gl-recok">● Your recorded session is loaded — press ▶ Play</span>'
+         : '<span class="gl-recwait">No recording yet — run a scenario in PharmaLogistics’ chat first, then press Replay</span>');
+  } else {
+    // Interactive Walkthrough = the scripted scenarios.
+    const chips = Object.keys(LENS_SCENARIOS).filter(id => id !== 'live_capture').map(id =>
+      `<button class="gl-chip ${id===LENS.scenario?'active':''}" onclick="lensSelectScenario('${id}')">${LENS_SCENARIOS[id].title}</button>`
+    ).join('');
+    el.innerHTML = '<span class="pl">Scenario</span>' + chips;
+  }
+}
+// The real-run replay is only meaningful once this chat session has actually been
+// governed. Check the audit for THIS page's session and enable the button only then.
+async function _glCheckCaptureReady(){
+  try { const c = await (await fetch('/api/lens/capture/'+SESSION_ID)).json();
+        LENS.captureReady = !!(c && c.found && (c.trail||[]).length); }
+  catch(e){ LENS.captureReady = false; }
+  _glRenderPicker();
+}
+function lensRender(){
+  _glRenderPicker();
+  const scn = _scn(), f = _flat(scn), cur = LENS.cursor;
+  // control visibility by mode: Step shows Back+Next; Replay shows Play
+  const isStep = LENS.mode !== 'replay';
+  const sB=document.getElementById('gl-step'), bB=document.getElementById('gl-back'), pB=document.getElementById('gl-play');
+  const tB=document.getElementById('gl-turn');
+  if (sB) sB.style.display = isStep ? '' : 'none';
+  if (bB) bB.style.display = isStep ? '' : 'none';
+  if (tB) tB.style.display = isStep ? '' : 'none';
+  if (pB) pB.style.display = isStep ? 'none' : '';
+  if (sB) sB.textContent = (cur < 0) ? 'Start ▶' : 'Next ▶';   // first press reads "Start", then "Next"
+  // Current-mode hint (shown under the controls so the active mode is always clear)
+  const hintEl = document.getElementById('gl-hint');
+  if (hintEl) hintEl.textContent = isStep
+    ? 'Interactive Walkthrough — you advance and make the human decisions.'
+    : 'Replay — auto-plays your recorded run. Press Pause anytime.';
+  // Replay mode with nothing recorded yet → guidance only (there is no run to play)
+  if (LENS.mode==='replay' && !LENS.captureReady){
+    const intro = document.getElementById('gl-intro');
+    intro.style.display = '';
+    intro.innerHTML = `<div class="it">Replay your recorded run</div><div class="ig">recorded session</div>`
+      + `<div class="ib">There’s no recording yet. Run a scenario in PharmaLogistics’ chat — e.g. <b>Diversion Review Board</b> — let it reach Human Review, then switch to <b>Replay</b> again to play back your real run here.</div>`;
+    document.getElementById('gl-colhead').style.display = 'none';
+    document.getElementById('gl-turns').innerHTML = '';
+    document.getElementById('gl-spine').innerHTML = '';
+    document.getElementById('gl-receipts').innerHTML = '';
+    document.getElementById('gl-beat').textContent = 'no recording';
+    if (pB) pB.disabled = true;
+    return;
+  }
+  // ready state → scenario intro card (the first Next/Play begins it)
+  const introEl = document.getElementById('gl-intro');
+  if (cur < 0){
+    introEl.style.display = '';
+    introEl.innerHTML = `<div class="it">${scn.title}</div><div class="ig">${scn.tag}</div>`
+      + `<div class="ib">${scn.blurb}</div>`
+      + `<div class="istart">Press <b>${isStep?'Start ▶':'▶ Play'}</b> to begin.</div>`;
+  } else { introEl.style.display = 'none'; }
+  // column legend visible only while running
+  document.getElementById('gl-colhead').style.display = cur < 0 ? 'none' : '';
+  // spine (use the current event's beat, falling back to its turn's beat)
+  const curStage = cur>=0 ? _eventBeat(scn, f[cur]) : null;
+  const ci = LENS_SPINE.indexOf(curStage);
+  document.getElementById('gl-spine').innerHTML = LENS_SPINE.map((s,i) => {
+    const cls = i===ci ? 'active' : (ci>=0 && i<ci ? 'done' : '');
+    return `<div class="st ${cls}">${s}</div>`;
+  }).join('');
+  document.getElementById('gl-beat').textContent = cur<0 ? 'ready' : `step ${cur+1} / ${f.length}`;
+  // turn bands
+  const turnsEl = document.getElementById('gl-turns');
+  if (cur < 0){ turnsEl.innerHTML = ''; }
+  else {
+    const activeTurn = f[cur]._turn;
+    let html = '';
+    scn.turns.forEach((t, ti) => {
+      const ev = f.filter(e => e._turn===ti);
+      if (!ev.length || ev[0]._idx > cur) return;   // turn not yet revealed
+      const appI  = ev.filter(e => e.side==='app'  && e._idx<=cur);
+      const platI = ev.filter(e => e.side==='plat' && e._idx<=cur);
+      let appHtml = appI.length ? appI.map(_glApp).join('') : '<div class="gl-empty">—</div>';
+      // When a terminal human decision lands in THIS turn, MyBank closes the loop with the
+      // customer on the app side (the platform side already shows the human's ruling).
+      // The closing text is taken from the HITL beat's appApproved/appDenied when present,
+      // so it reads correctly per scenario (a card purchase, a wire, etc.).
+      if (LENS.terminal && f[LENS.terminal.idx] && f[LENS.terminal.idx]._turn===ti){
+        const tev = f[LENS.terminal.idx];
+        const denied = LENS.terminal.kind === 'reject';
+        const closeMsg = denied
+          ? (tev.appDenied  || 'Your request was not approved. Please contact support if you believe this is an error.')
+          : (tev.appApproved || 'Approved — your request has been processed.');
+        appHtml += _glApp({ side:'app', who:'agent', from:'Banking Agent', text: closeMsg,
+                            resolved: !denied, _idx: LENS.terminal.idx });
+      }
+      html += `<div class="gl-turn ${ti===activeTurn?'active':''}">
+        <div class="gl-turn-h"><span class="tn">Turn ${t.n}</span> ${t.label}</div>
+        <div class="gl-turn-grid">
+          <div class="gl-col app">${appHtml}</div>
+          <div class="gl-col plat">${platI.length ? platI.map(_glPlat).join('') : '<div class="gl-empty">—</div>'}</div>
+        </div></div>`;
+    });
+    turnsEl.innerHTML = html;
+  }
+  // receipts only at a clean end (not while paused for a human decision)
+  const ended = cur === f.length-1 && !_isPausedHitl(f) && !LENS.terminal;
+  document.getElementById('gl-receipts').innerHTML = ended ? _glReceipts(f) : '';
+  _glPostRender(cur, f);
+}
+function _glPostRender(cur, f){
+  document.querySelectorAll('#gov-lens .newest').forEach(el => el.classList.remove('newest'));
+  const newest = document.querySelector('#gov-lens [data-glidx="'+cur+'"]');
+  if (newest){ newest.classList.add('newest'); newest.scrollIntoView({block:'nearest'}); }
+  else if (cur === f.length-1){ const r=document.getElementById('gl-receipts'); if (r.firstChild) r.scrollIntoView({block:'nearest'}); }
+  const paused = _isPausedHitl(f);
+  const atEnd  = cur >= f.length-1;
+  const sB=document.getElementById('gl-step'), pB=document.getElementById('gl-play'), bB=document.getElementById('gl-back'), tB=document.getElementById('gl-turn');
+  const term = !!LENS.terminal;                 // a terminal human decision (Deny, or Approve-at-Stage-1) ends the run
+  if (sB) sB.disabled = atEnd || paused || term;  // Next blocked at a decision pause and after a terminal outcome
+  if (tB) tB.disabled = atEnd || paused || term;  // Turn jump — same gating as Next
+  if (pB) pB.disabled = atEnd;                  // Play (replay) keeps going — it auto-resolves pauses
+  if (bB) bB.disabled = cur < 0;                // Back stays available so a terminal choice can be undone
+}
+// Presenter keyboard shortcuts (active only when the Lens is open and not typing)
+document.addEventListener('keydown', (e) => {
+  const lens = document.getElementById('gov-lens');
+  if (!lens || !lens.classList.contains('open')) return;
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea') return;
+  // Esc always closes the Lens (and exits full screen) — the chat-header toggle
+  // is hidden behind the full-screen overlay, so this is the reliable way out.
+  if (e.key === 'Escape'){ e.preventDefault(); toggleGovLens(); return; }
+  const _pf = _flat(_scn());
+  // In Step mode, the human decision is on the keyboard: A approve · D deny · I request info
+  if (LENS.mode==='step' && _isPausedHitl(_pf)){
+    const stage = (_pf[LENS.cursor]||{}).stage || 2;
+    if (e.key==='a' || e.key==='A'){ e.preventDefault(); lensHitlResolve('approve'); return; }
+    if (e.key==='d' || e.key==='D'){ e.preventDefault(); lensHitlResolve('reject'); return; }
+    if (stage===1 && (e.key==='i' || e.key==='I' || e.key==='Enter')){ e.preventDefault(); lensHitlResolve('request_info'); return; }
+    if (stage===2 && e.key==='Enter'){ e.preventDefault(); lensHitlResolve('approve'); return; }
+  }
+  if      (e.key === 'ArrowRight' || e.key === ' '){ e.preventDefault(); LENS.mode==='replay' ? lensPlay() : lensStep(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); lensBack(); }
+  else if (e.key === 't' || e.key === 'T'){ e.preventDefault(); if (LENS.mode!=='replay') lensNextTurn(); }
+  else if (e.key === 'f' || e.key === 'F'){ e.preventDefault(); lensFullscreen(); }
+  else if (e.key === '0' || e.key === 'Home'){ e.preventDefault(); lensReset(); }
+});
+</script>
+</body>
+</html>

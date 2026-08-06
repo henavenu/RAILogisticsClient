@@ -1,0 +1,10 @@
+schedule:
+  snapshot_interval_minutes: 2   # collect every 2 min (demo) — increase for production
+  drift_consecutive_runs: 3      # signal after 3 runs in same direction (~6 min demo)
+  retention_days: 7
+
+llm:
+  timeout_seconds: 120
+  max_tokens: 2048
+  temperature: 0.2
+  context_runs: 4                # historical snapshots fed to LLM per run

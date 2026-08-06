@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
+# Pre-commit hook: keep pap.seed.db (the shipped policy snapshot) up to date.
+#
+# Regenerates the config-only seed DB from the live pap.db whenever the live DB
+# has changed, and stages the result — so a policy change you made locally is
+# always reflected in the seed the Docker image ships, without you remembering to
+# run the tool. No-ops cleanly when there is nothing to do.
+#
+# Enable once per clone:   git config core.hooksPath .githooks
+# (documented in docs/DEPLOY_GCP_CloudRun.md)
+# ─────────────────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+SRC="$ROOT/pap/config/pap.db"
+SEED="$ROOT/pap/config/pap.seed.db"
+TOOL="$ROOT/tools/make_seed_db.py"
+
+# Clean checkout / CI: the dev pap.db is gitignored and may not exist. Nothing to
+# regenerate from — leave the committed seed as-is.
+if [ ! -f "$SRC" ]; then
+  exit 0
+fi
+
+# Skip if the seed is already at least as new as the source (no policy change).
+if [ -f "$SEED" ] && [ "$SEED" -nt "$SRC" ]; then
+  exit 0
+fi
+
+# Pick an interpreter (Git Bash on Windows usually exposes `python`).
+PY=""
+for cand in python python3 py; do
+  if command -v "$cand" >/dev/null 2>&1; then PY="$cand"; break; fi
+done
+if [ -z "$PY" ]; then
+  echo "[pre-commit] WARNING: no python found — skipping pap.seed.db regeneration." >&2
+  echo "[pre-commit] Run 'python tools/make_seed_db.py' manually before deploying." >&2
+  exit 0
+fi
+
+echo "[pre-commit] pap.db changed — regenerating config-only pap.seed.db…"
+if ! "$PY" "$TOOL"; then
+  echo "[pre-commit] ERROR: make_seed_db.py failed. Commit aborted." >&2
+  echo "[pre-commit] Fix the error, or commit with --no-verify to bypass." >&2
+  exit 1
+fi
+
+git add "$SEED"
+echo "[pre-commit] staged pap/config/pap.seed.db"

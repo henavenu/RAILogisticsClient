@@ -1,0 +1,175 @@
+# ============================================================
+#  RAI Trust Platform — .gitignore
+#  Covers: Python services, SDK examples, future React UI
+# ============================================================
+
+
+# ── Python virtual environments ──────────────────────────────
+venv/
+.venv/
+env/
+ENV/
+*/venv/
+*/venv/**
+*/.venv/
+*/.venv/**
+
+
+# ── Python bytecode & cache ───────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.Python
+
+
+# ── Package / distribution artifacts ─────────────────────────
+*.egg-info/
+*.egg
+dist/
+build/
+wheels/
+pip-wheel-metadata/
+.installed.cfg
+MANIFEST
+
+
+# ── Environment files (secrets — never commit) ───────────────
+# Keep .env.example files — they document required variables
+.env
+.env.local
+.env.*.local
+!.env.example
+!**/.env.example
+
+
+# ── Databases ─────────────────────────────────────────────────
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+
+# ── Log files & runtime data ──────────────────────────────────
+logs/
+*.log
+*.log.*
+
+# Audit JSONL — runtime-generated, can be large
+policy-engine/logs/audit.jsonl
+# Keep the logs directory itself so services can write to it
+!policy-engine/logs/.gitkeep
+!pap/logs/.gitkeep
+!guardrail-service/logs/.gitkeep
+
+
+# ── Policy Engine runtime state ───────────────────────────────
+policy-engine/data/app_trust_scores.json
+policy-engine/sessions/
+
+
+# ── PAP config / generated ───────────────────────────────────
+pap/config/*.db
+pap/config/*.db-wal
+pap/config/*.db-shm
+# Local marker: which snapshot hash is materialised in pap.db (tools/seed_local.py).
+# Per-machine state — NEVER commit (a pulled marker would suppress a needed re-seed).
+pap/config/.pap_seed_applied
+# EXCEPTION: track the config-only seed DB (~600 KB) — the policy snapshot the
+# deployment image ships. Take a new snapshot manually: python tools/make_seed_db.py
+# (or snapshot.bat). Decoupled from git commit.
+!pap/config/pap.seed.db
+# Keep the backup of the legacy UI
+!pap/ui/index.html.bak
+
+
+# ── Node.js (future React UI) ─────────────────────────────────
+node_modules/
+*/node_modules/
+ui-react/dist/
+ui-react/.vite/
+ui-react/build/
+*.tsbuildinfo
+.npm
+.yarn/
+
+
+# ── Testing ───────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+nosetests.xml
+test-results/
+
+
+# ── IDE & editor ──────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+*.iml
+
+
+# ── OS generated ──────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+
+# ── Claude Code project settings ─────────────────────────────
+# Uncomment if you don't want Claude settings in the repo
+# .claude/
+
+
+# ── Misc runtime / temp ───────────────────────────────────────
+*.pid
+*.seed
+*.tmp
+*.temp
+.cache/
+tmp/
+temp/
+
+
+# ── Runtime restart logs (accidentally committed in RO; never useful) ──
+# Generated when services are launched with redirected stdout/stderr.
+# Big (~MB each), machine-specific, regenerated on every boot.
+*.err
+logs_*_restart.err
+logs_*_restart.out
+*_restart.err
+*_restart.out
+_boot.err
+
+
+# ── Runtime trace files ──────────────────────────────────────
+# SDK OTel trace dumps — regenerated on every run, no value in source control.
+traces.jsonl
+*.jsonl
+# Keep audit.jsonl rule from above (already ignored via policy-engine/logs/audit.jsonl)
+# Explicit re-allow for any tracked JSONL fixtures:
+!**/test_data/*.jsonl
+!**/fixtures/*.jsonl
+
+
+# ── Local merge scratch space (proto-only) ───────────────────
+# Holds merge-cycle backups, hash diffs, byte verifications, ad-hoc analysis
+# outputs. Large, machine-specific, never useful to a teammate.
+.launch-logs/
+
+
+# ── Proto dev tool (top-level DB inspector) ──────────────────
+# Local script for poking pap.db. Not part of the platform.
+_inspect_db.py

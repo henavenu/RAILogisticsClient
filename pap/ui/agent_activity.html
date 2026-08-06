@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agent Activity</title>
+<style>
+  :root{
+    --bg:#070a10; --panel:#0b1018; --card:#0d1622; --line:#16273d;
+    --txt:#cdd9ec; --mut:#6a86a4; --cyan:#22d3ee; --green:#2ecc71;
+    --amber:#f1c40f; --red:#e74c3c; --base:#2a3e5a;
+  }
+  /* ── Light theme (shares the dashboard's pap-theme via localStorage) ──────── */
+  html.theme-light{
+    --bg:#F0F2F7; --panel:#FFFFFF; --card:#FFFFFF; --line:#DDE3EC;
+    --txt:#0D1B3E; --mut:#6B7A90; --cyan:#007A82; --green:#00934F;
+    --amber:#B07D00; --red:#C8303A; --base:#C2CCDA;
+  }
+  html.theme-light .topo-title{ color:#0D1B3E; }
+  html.theme-light .topo-title .app{ color:#007A82; }
+  html.theme-light .node-name{ fill:#0D1B3E; }
+  html.theme-light .node-card{ fill:#FFFFFF !important; }
+  /* node governance-card icons (Sentinel purple / advisor green / mybank blue) hardcode
+     dark fills that read as black squares in light mode → lighten to a matching tint.
+     :not(.node-card) so the main white card (which can share the #191430 fill) is left alone. */
+  html.theme-light rect[fill="#191430"]:not(.node-card){ fill:#EDE9FE !important; }
+  html.theme-light rect[fill="#0d1f16"]{ fill:#E6F7EF !important; }
+  html.theme-light rect[fill="#0f1d33"]{ fill:#EAF1FB !important; }
+  html.theme-light #edge-layer path{ stroke:#C2CCDA !important; }
+  html.theme-light #topo marker path{ fill:#9AA7B8 !important; }
+  html.theme-light .vtype{ background:#FDECEA; color:#C8303A; border-color:#F3C7C7; }
+  html.theme-light .vsub{ color:#2E3A4E; }
+  html.theme-light .vsnip{ background:#F7F9FC; border:1px solid #DDE3EC; color:#2E3A4E; }
+  html.theme-light .vitem{ border-bottom:1px solid #EEF1F6; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; background:var(--bg); color:var(--txt);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  .topo-hd{ display:flex; align-items:center; gap:14px; padding:12px 18px;
+    border-bottom:1px solid var(--line); background:var(--panel); }
+  .topo-title{ font-size:1.0rem; font-weight:700; color:#e6edf8; }
+  .topo-title .app{ color:#6ea8fe; }
+  .topo-sub{ font-size:.66rem; color:var(--mut); text-transform:uppercase; letter-spacing:.08em; }
+  .live{ display:flex; align-items:center; gap:6px; font-size:.72rem; color:var(--mut); margin-left:auto; }
+  .live-dot{ width:9px; height:9px; border-radius:50%; background:#46566e; }
+  .live-dot.on{ background:var(--green); box-shadow:0 0 0 0 rgba(46,204,113,.6); animation:pulse 2s infinite; }
+  .live-dot.err{ background:var(--red); }
+  @keyframes pulse{ 0%{box-shadow:0 0 0 0 rgba(46,204,113,.55);} 70%{box-shadow:0 0 0 7px rgba(46,204,113,0);} 100%{box-shadow:0 0 0 0 rgba(46,204,113,0);} }
+  .legend{ display:flex; gap:14px; font-size:.62rem; color:var(--mut); flex-wrap:wrap; }
+  .legend i{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:4px; vertical-align:middle; }
+  .tg{ display:flex; align-items:center; gap:5px; margin-left:14px; }
+  .tg-lbl{ font-size:.62rem; color:var(--mut); }
+  .tg-btn{ font:inherit; font-size:.62rem; font-weight:700; border:1px solid var(--line); background:transparent;
+    color:var(--mut); border-radius:6px; padding:3px 9px; cursor:pointer; }
+  .tg-btn.on{ background:#1a2740; color:#cfe0f5; border-color:#34507a; }
+  html.theme-light .tg-btn.on{ background:#E6EEFF; color:#0D1B3E; border-color:#9AB6E8; }
+  .wrap{ position:relative; height:calc(100vh - 58px); overflow:hidden; }
+  #topo{ width:100%; height:100%; display:block; }
+  .node-grp{ cursor:pointer; }
+  .node-card{ transition:stroke .15s, filter .15s; }
+  .node-grp:hover .node-card{ filter:brightness(1.18); }
+  .node-name{ font-size:13px; font-weight:600; fill:#dde7f5; }
+  .node-meta{ font-size:10px; fill:var(--mut); font-family:ui-monospace,monospace; }
+  .badge-txt{ font-size:12px; font-weight:700; fill:#fff; font-family:ui-monospace,monospace; }
+  .vpill-txt{ font-size:9.5px; font-weight:700; letter-spacing:.04em; }
+  /* violations slide-in panel */
+  .vpanel{ position:absolute; top:0; right:0; width:340px; height:100%;
+    background:var(--panel); border-left:1px solid var(--line);
+    transform:translateX(100%); transition:transform .2s ease; overflow-y:auto; z-index:5; }
+  .vpanel.open{ transform:translateX(0); }
+  .vpanel-hd{ display:flex; align-items:center; justify-content:space-between;
+    padding:12px 14px; border-bottom:1px solid var(--line); }
+  .vpanel-hd .nm{ font-size:.9rem; font-weight:700; color:#e6edf8; }
+  .vpanel-hd .id{ font-size:.62rem; font-family:ui-monospace,monospace; color:var(--mut); }
+  .vp-x{ background:none; border:none; color:var(--mut); font-size:1.1rem; cursor:pointer; }
+  .vitem{ padding:9px 14px; border-bottom:1px solid #0f1828; }
+  .vitem-top{ display:flex; align-items:center; gap:7px; }
+  .vtype{ font-size:.6rem; font-weight:700; border-radius:4px; padding:1px 6px; background:#3a0f0f; color:#ff9a8a; border:1px solid #5a1a1a; }
+  .vsub{ font-size:.66rem; color:#9ab0cc; font-family:ui-monospace,monospace; }
+  .vat{ font-size:.58rem; color:var(--mut); margin-left:auto; white-space:nowrap; }
+  .vsnip{ font-size:.64rem; color:#8aa0bc; margin-top:4px; line-height:1.35;
+    background:#0a121e; border:1px solid #14233a; border-radius:5px; padding:5px 7px;
+    white-space:pre-wrap; word-break:break-word; max-height:90px; overflow:auto; }
+  .vempty{ padding:18px 14px; font-size:.72rem; color:#5a8a6a; }
+  .vp-trail{ display:block; margin:12px 14px; padding:8px 11px; text-align:center;
+    font-size:.7rem; font-weight:600; color:#6ea8fe; text-decoration:none;
+    background:rgba(110,168,254,.08); border:1px solid #3d5a80; border-radius:6px;
+    transition:background .13s; }
+  .vp-trail:hover{ background:rgba(110,168,254,.18); }
+
+  /* ── Live-activity animation (media mode, ?live=1) ─────────────────────────
+     A node pulses + glows when its evaluation count rose since the last refresh,
+     and the arrows into it "flow" — so the board visibly lights up while agents
+     are interacting, and is calm when idle. */
+  @keyframes aa-cardPulse {
+    0%,100% { filter: drop-shadow(0 0 3px rgba(34,211,238,.5)); }
+    50%     { filter: drop-shadow(0 0 13px rgba(34,211,238,.95)); }
+  }
+  .node-grp.active .node-card {
+    animation: aa-cardPulse 1.1s ease-in-out infinite;
+    stroke:#22d3ee !important; stroke-width:3 !important;
+  }
+  @keyframes aa-edgeFlow { to { stroke-dashoffset: -24; } }
+  #edge-layer path.active {
+    stroke:#22d3ee !important; stroke-width:3 !important; opacity:1 !important;
+    stroke-dasharray:6 6; animation: aa-edgeFlow .6s linear infinite;
+  }
+  .tg-btn.on#tg-live { background:#0e3a44; border-color:#22d3ee; color:#7fe9f5; }
+  @media (prefers-reduced-motion: reduce) {
+    .node-grp.active .node-card { animation:none; filter:drop-shadow(0 0 9px rgba(34,211,238,.8)); }
+    #edge-layer path.active { animation:none; }
+  }
+</style>
+<script>
+  // Share the dashboard's theme. Default to LIGHT — browsers BLOCK localStorage for
+  // embedded/partitioned frames, so we must NOT let that decide the default; only go
+  // dark on an explicit ?theme=dark param or a readable pap-theme==='dark'. The parent
+  // pushes live toggles via postMessage (storage events don't fire in a partitioned frame).
+  (function(){
+    function apply(light){
+      if (light === undefined) {
+        var dark = false;
+        try { dark = new URLSearchParams(location.search).get('theme')==='dark'; } catch(e){}
+        if(!dark){ try { dark = localStorage.getItem('pap-theme')==='dark'; } catch(e){} }
+        light = !dark;
+      }
+      document.documentElement.classList.toggle('theme-light', !!light);
+    }
+    apply();
+    window.addEventListener('message', function(e){
+      if(e && e.data && e.data.type==='pap-theme'){ apply(!!e.data.light); try{ if(window._topoPoll) window._topoPoll(); }catch(_){} }
+    });
+    window.addEventListener('storage', function(e){
+      if(e.key==='pap-theme'){ apply(); try{ if(window._topoPoll) window._topoPoll(); }catch(_){} }
+    });
+  })();
+</script>
+</head>
+<body>
+  <div class="topo-hd">
+    <div>
+      <div class="topo-title">Agent Activity ·
+        <select id="app-select" title="Governed application"
+                style="background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;
+                       padding:2px 8px;font-size:1.0rem;font-weight:700;font-family:inherit;cursor:pointer;"></select>
+        <span id="topo-window" style="font-size:0.74rem;font-weight:400;color:var(--txt2,#8aa0c0);margin-left:8px;"></span>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i style="background:#2ecc71"></i>Permissive</span>
+      <span><i style="background:#f1c40f"></i>Normative</span>
+      <span><i style="background:#e74c3c"></i>Coercive</span>
+    </div>
+    <div class="tg">
+      <span class="tg-lbl">Show:</span>
+      <button id="tg-all"  class="tg-btn on" onclick="_toggleShowAll(true)">All evaluations</button>
+      <button id="tg-viol" class="tg-btn"    onclick="_toggleShowAll(false)">Violations only</button>
+    </div>
+    <div class="live" style="margin-left:auto;">
+      <span class="live-dot" id="live-dot"></span>
+      <span id="live-txt">connecting…</span>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <svg id="topo" viewBox="0 0 1000 720" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="vpanel" id="vpanel">
+      <div class="vpanel-hd">
+        <div><div class="nm" id="vp-name">—</div><div class="id" id="vp-id"></div></div>
+        <button class="vp-x" onclick="closePanel()">✕</button>
+      </div>
+      <div id="vp-body"></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  // ── URL params (defaults: mybank / 15) ───────────────────────────────────
+  const qs = new URLSearchParams(location.search);
+  const APP_ID  = qs.get('app_id') || 'mybank';
+  const WINDOW  = parseInt(qs.get('window_min') || '15', 10) || 15;
+  // Live/media mode is the ONLY mode — nodes & arrows animate as agents interact.
+  // Always on (the manual toggle was removed; "Live" is shown permanently).
+  const LIVE    = true;
+  let _prevSpan = {};        // id -> span_count from the previous poll
+  let _seededSpan = false;   // skip animation on the first poll (avoid all-pulse)
+  let _activeUntil = {};     // id -> epoch ms until which the node stays "lit" (~6s decay)
+  // App selector (#13) — was hard-coded to mybank. Reloads the widget on change.
+  // Show the activity window (#5).
+  (function _initWindowLabel(){
+    const w = document.getElementById('topo-window');
+    if (w) w.textContent = `· activity in the last ${WINDOW} min`;
+  })();
+  (function _initAppSelect(){
+    const sel = document.getElementById('app-select');
+    if (!sel) return;
+    // Platform Agents view shows platform agents ONLY — no app switching (#4).
+    if (APP_ID === 'trust-platform') {
+      const lbl = document.createElement('span');
+      lbl.textContent = 'Platform Agents';
+      lbl.style.cssText = 'font-size:1.0rem;font-weight:700;';
+      sel.replaceWith(lbl);
+      return;
+    }
+    sel.innerHTML = `<option value="${APP_ID}">${APP_ID}</option>`;   // seed immediately
+    sel.addEventListener('change', () => {
+      const p = new URLSearchParams(location.search);
+      p.set('app_id', sel.value);
+      location.search = p.toString();
+    });
+    fetch('/v1/app-configs', { cache:'no-store' }).then(r=>r.json()).then(d=>{
+      const list = Array.isArray(d) ? d : (d.apps || d.configs || d.app_configs || []);
+      const apps = list.map(a => (a && (a.app_id || a.id)) || a).filter(Boolean);
+      const set  = Array.from(new Set([APP_ID, ...apps]));
+      sel.innerHTML = set.map(a => `<option value="${a}"${a===APP_ID?' selected':''}>${a}</option>`).join('');
+    }).catch(()=>{});
+  })();
+
+  // ── DYNAMIC topology — nodes & edges come straight from the live snapshot ──
+  // No hard-coded agent list (that's what went stale). Pretty labels for known
+  // agents; anything else is humanised from its id.
+  // Governance plane — platform infrastructure, identical for every app.
+  const DISPLAY_PLATFORM = {
+    user:'User', sentinel:'Sentinel',
+    gate:'Policy Engine', 'structuring-detector':'Structuring Detector',
+    'collusion-detector':'Collusion Detector', 'conflict-detector':'Conflict Detector',
+    'policy-reviewer':'Policy Reviewer',
+  };
+
+  // Application plane — the SDK reports generic node ids (router/account/
+  // intl_wire_agent/...) that every instrumented app shares, so the pretty label
+  // has to be scoped per app_id. Without this, PharmaLogistics rendered MyBank's
+  // banking labels ("Intl Wire", "Card Advisor") for its own supply-chain nodes.
+  const DISPLAY_BY_APP = {
+    mybank: {
+      router:'Router', account:'Account', profile:'Profile',
+      transaction_monitoring:'Transaction Monitoring',
+      revenue_agent:'Revenue', cx_agent:'Customer Experience', risk_policy_agent:'Risk Policy',
+      intl_wire_agent:'Intl Wire', preferred_wire_agent:'Preferred Wire',
+      card_advisor:'Card Advisor', card_researcher:'Card Researcher',
+      banking_agent:'Banking Agent',
+      coordinator:'Fraud Review Coordinator',
+    },
+    pharmalogistics: {
+      router:'Order Intake', account:'Inventory Agent', profile:'Facility Desk',
+      fallback:'General Assistant',
+      transfer_router:'Shipment Router',
+      domestic_agent:'Route Optimizer', intl_wire_agent:'Cross-Border Logistics',
+      preferred_wire_agent:'Expedited Freight',
+      transaction_monitoring:'Order Monitoring Agent',
+      revenue_agent:'Supply Continuity Reviewer', cx_agent:'Patient Access Reviewer',
+      risk_policy_agent:'Regulatory Compliance Reviewer',
+      payment_council:'Diversion Review Board', policy_council:'Diversion Review Board',
+      card_advisor:'Sourcing Advisor', card_researcher:'Sourcing Researcher',
+      risk_advisor:'Qualified-Supplier Reviewer',
+      banking_agent:'Logistics Agent',
+      coordinator:'Supply Chain Coordinator',
+    },
+  };
+
+  // Governance-plane scope flag — declared up here because label() below keys off it.
+  const IS_PLATFORM = (APP_ID === 'trust-platform');
+  // Unknown app_id → fall back to MyBank's map (the reference app's naming).
+  const DISPLAY_APP = DISPLAY_BY_APP[APP_ID] || DISPLAY_BY_APP.mybank;
+  const DISPLAY = { ...DISPLAY_APP, ...DISPLAY_PLATFORM };
+
+  // Authoritative labels: the Agent Registry's own display names for THIS app_id
+  // (/v1/agent-cards). Populated on load and layered over DISPLAY, so a re-themed
+  // app never has to be mirrored into the static map above to render correctly.
+  // The static map remains the fallback for nodes with no registered card.
+  const REGISTRY_LABEL = {};
+  const registryReady = fetch(`/v1/agent-cards?app_id=${encodeURIComponent(APP_ID)}`, { cache:'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+      (d && d.cards || []).forEach(c => {
+        if (c && c.agent_id && c.name) REGISTRY_LABEL[c.agent_id] = c.name;
+      });
+    })
+    .catch(() => {});   // registry unreachable → static map carries the labels
+
+  // 'coordinator' is overloaded: in an app's lens it's that app's review-council
+  // coordinator (Fraud Review Coordinator / Supply Chain Coordinator); in the
+  // platform lens it's the Mitigation Advisor (a platform agent). Disambiguate by
+  // scope so the Agent Activity and Platform Agents tabs never show each other's.
+  const label = id =>
+    (id === 'coordinator' && IS_PLATFORM)
+      ? 'Mitigation Advisor'
+      : (REGISTRY_LABEL[id] || DISPLAY[id] ||
+         (String(id||'').replace(/_/g,' ').replace(/\bagent\b/ig,'').trim()
+           .replace(/\b\w/g,c=>c.toUpperCase()) || id));
+
+  // Governance-plane scope. PLATFORM_COMPONENTS are infrastructure (the PE gate),
+  // NOT agents — they render with a distinct dashed-indigo treatment + a "⚙ PLATFORM"
+  // tag so the viewer can tell a platform component apart from the agentic nodes
+  // (Sentinel, the detectors, the policy reviewer, the coordinator). IS_PLATFORM is
+  // declared above (label() depends on it).
+  const PLATFORM_COMPONENTS = new Set(['gate']);
+
+  const CW = 178, CH = 82;            // card width / height
+  // Consistent platform verdict palette: Permissive=green, Normative=amber, Coercive=red
+  // (was Permissive=cyan / Normative=green — two greens, inconsistent with every other tab).
+  const VCOL = { PERMISSIVE:'#2ecc71', NORMATIVE:'#f1c40f', COERCIVE:'#e74c3c' };
+
+  const svg = document.getElementById('topo');
+  let _byId = {};        // node id -> snapshot agent
+  let _pos = {};         // node id -> {x,y}  (auto-computed each poll)
+  let _edges = [];       // [[src,tgt], …]    (from the snapshot)
+  let _selected = null;
+  let _showAll = true;   // badge shows ALL evaluations by default (toggle → violations)
+
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function stateOf(a){
+    // Emergent-risk OUTCOME tile (alert|watch|clear) takes precedence — it is the
+    // agent's own determination (platform graph), not the guardrail verdict.
+    const oc = (a && a.outcome || '').toLowerCase();
+    if (oc === 'alert') return 'critical';
+    if (oc === 'watch') return 'warning';
+    if (oc === 'clear') return 'base';
+    const v = (a && a.live_verdict || '').toUpperCase();
+    const c = a ? (a.violation_count||0) : 0;
+    if (v === 'COERCIVE' || c >= 5) return 'critical';
+    if (v === 'NORMATIVE' || c >= 1) return 'warning';
+    return 'base';
+  }
+  // Trust-Radar outcome tiers → pill label + colour.
+  const OUTCOME_PILL = { alert:{t:'ALERT', c:'#e74c3c'}, watch:{t:'WATCH', c:'#f1c40f'}, clear:{t:'CLEAR', c:'#22d3ee'} };
+  const STATE_BORDER = { base:'#2a3e5a', warning:'#f1c40f', critical:'#e74c3c' };
+  const STATE_GLOW   = { base:'none', warning:'drop-shadow(0 0 5px rgba(241,196,15,.45))', critical:'drop-shadow(0 0 7px rgba(231,76,60,.55))' };
+  const BADGE_BG     = { base:'#1a2740', warning:'#caa12a', critical:'#e74c3c' };
+
+  // ── auto-layout: BFS-layer the agents left→right from the source node(s) ────
+  function layout(nodes, edges){
+    const W=1000, H=720, padX=130, padY=80, pos={};
+    if(!nodes.length) return pos;
+    const out={}, indeg={};
+    nodes.forEach(n=>{ out[n]=[]; indeg[n]=0; });
+    edges.forEach(([s,t])=>{ if(out[s] && (t in indeg)){ out[s].push(t); indeg[t]++; } });
+    let roots = nodes.filter(n=>indeg[n]===0);
+    if(!roots.length) roots=[nodes[0]];
+    const layer={}; const q=[...roots]; roots.forEach(r=>layer[r]=0);
+    while(q.length){ const u=q.shift(); (out[u]||[]).forEach(v=>{
+      if(layer[v]===undefined || layer[v]<layer[u]+1){ layer[v]=layer[u]+1; q.push(v); } }); }
+    nodes.forEach(n=>{ if(layer[n]===undefined) layer[n]=0; });
+    const cols={}; nodes.forEach(n=>{ (cols[layer[n]]=cols[layer[n]]||[]).push(n); });
+    const ls=Object.keys(cols).map(Number).sort((a,b)=>a-b);
+    const maxL=ls[ls.length-1]||0, colW = maxL>0 ? (W-2*padX)/maxL : 0;
+    ls.forEach(l=>{
+      const arr=cols[l], n=arr.length, x=padX + l*colW;
+      arr.forEach((id,i)=>{ const y = n===1 ? H/2 : padY + i*((H-2*padY)/(n-1)); pos[id]={x,y}; });
+    });
+    return pos;
+  }
+
+  // Edge from source-right-edge to target-left-edge. startY lets a hub fan its
+  // arrows from distinct points so they don't bunch at one spot; both ends keep a
+  // horizontal tangent for a clean, consistent curve. ty aligns to target centre.
+  function edgePath(s, t, startY){
+    const a=_pos[s], b=_pos[t]; if(!a||!b) return '';
+    const sx=a.x+CW/2, sy=(startY==null?a.y:startY), tx=b.x-CW/2, ty=b.y;
+    const mx=sx+(tx-sx)*0.5;
+    return `M${sx},${sy} C${mx},${sy} ${mx},${ty} ${tx},${ty}`;
+  }
+  function render(){
+    let h = `<defs>
+      <marker id="topo-arrow" markerWidth="11" markerHeight="11" refX="10" refY="5" orient="auto"
+              markerUnits="userSpaceOnUse">
+        <path d="M0,0 L10,5 L0,10 Z" fill="#34507a"/></marker>
+    </defs><g id="edge-layer">`;
+    // Group outgoing edges by source so a hub's arrows leave from evenly-spread
+    // points on its right edge (sorted by target height) — cleanly aligned, not
+    // all stacked on one point.
+    const bySrc = {};
+    _edges.forEach(([s,t])=>{ (bySrc[s]=bySrc[s]||[]).push(t); });
+    Object.keys(bySrc).forEach(s=>{
+      const a=_pos[s]; if(!a) return;
+      const tgts = bySrc[s].filter(t=>_pos[t]).sort((p,q)=>_pos[p].y-_pos[q].y);
+      const n = tgts.length;
+      const spread = n>1 ? Math.min(CH-22, (n-1)*15) : 0;   // vertical fan on the box edge
+      tgts.forEach((t,i)=>{
+        const startY = n>1 ? a.y - spread/2 + i*(spread/(n-1)) : a.y;
+        const d = edgePath(s,t,startY);
+        if(d) h += `<path data-edge="${esc(s)}|${esc(t)}" d="${d}" fill="none" stroke="#22344e" stroke-width="2"
+                      marker-end="url(#topo-arrow)" opacity="0.8"/>`;
+      });
+    });
+    h += `</g><g id="node-layer"></g>`;
+    svg.innerHTML = h;
+    renderNodes();
+  }
+
+  function renderNodes(){
+    const layer = svg.querySelector('#node-layer');
+    if(!layer) return;
+    let h = '';
+    Object.keys(_pos).forEach(id=>{
+      const a = _byId[id] || { violation_count:0, span_count:0, live_verdict:null };
+      const st = stateOf(a);
+      const x = _pos[id].x - CW/2, y = _pos[id].y - CH/2;
+      const border = STATE_BORDER[st], glow = STATE_GLOW[st];
+      const sel = (_selected===id) ? 'stroke="#6ea8fe" stroke-width="3"' : `stroke="${border}" stroke-width="2"`;
+      // Pill: prefer the emergent-risk outcome tile; else fall back to the verdict.
+      const _oc = (a.outcome||'').toLowerCase();
+      let vcol, vlabel;
+      if (OUTCOME_PILL[_oc]) { vlabel = OUTCOME_PILL[_oc].t; vcol = OUTCOME_PILL[_oc].c; }
+      else {
+        const vtxt = (a.live_verdict||'').toUpperCase();
+        vcol = VCOL[vtxt] || '#46566e';
+        vlabel = vtxt ? (vtxt==='NORMATIVE'?'NORM':vtxt) : 'IDLE';
+      }
+      const cnt = _showAll ? (a.span_count||0) : (a.violation_count||0);
+      // (#12) full words, not "evals"/"viol".
+      const _ev = a.span_count||0, _vi = a.violation_count||0;
+      const meta = `${_ev} evaluation${_ev===1?'':'s'}${_vi?` · ${_vi} violation${_vi===1?'':'s'}`:''}`;
+      // (#11) truncate long names so they never run under the count badge (top-right).
+      const _nm = label(id); const nmShort = _nm.length > 15 ? _nm.slice(0,14)+'…' : _nm;
+      const bbg = BADGE_BG[st];
+      // Platform component (infrastructure) vs agent: distinct card + corner mark.
+      const isPlat   = PLATFORM_COMPONENTS.has(id);
+      const cardFill = isPlat ? '#191430' : '#0d1622';
+      const cardStroke = (isPlat && _selected!==id)
+        ? 'stroke="#8b7cf6" stroke-width="1.8" stroke-dasharray="6 4"' : sel;
+      // Corner mark: platform components get a "⚙ PLATFORM" tag; business-app agents
+      // get the clickable governance-card icon; platform AGENTS get nothing (no card).
+      const cornerMark = isPlat
+        ? `<g style="pointer-events:none;"><title>Platform component — governance infrastructure</title>
+             <rect x="${CW-80}" y="${CH-26}" width="66" height="15" rx="7.5" fill="#8b7cf61f" stroke="#8b7cf6"/>
+             <text x="${CW-47}" y="${CH-15}" text-anchor="middle" font-size="9" fill="#a99cff" letter-spacing=".5">⚙ PLATFORM</text>
+           </g>`
+        : (IS_PLATFORM
+            // Platform lens: Sentinel (the governance hub) and the Advisory/Coordinator
+            // node carry a synthetic governance card; other platform nodes have none.
+            ? (id === 'sentinel'
+                ? `<g class="node-cardbtn" data-id="${id}" style="cursor:pointer;">
+                     <title>View Sentinel governance card</title>
+                     <rect x="${CW-36}" y="${CH-28}" width="23" height="18" rx="3.5"
+                           fill="#191430" stroke="#8b7cf6" stroke-width="1.2"/>
+                     <text x="${CW-24.5}" y="${CH-14.5}" text-anchor="middle" font-size="11">🛡</text>
+                   </g>`
+                : (id === 'coordinator'
+                    ? `<g class="node-cardbtn" data-id="${id}" style="cursor:pointer;">
+                         <title>View Mitigation Advisor card</title>
+                         <rect x="${CW-36}" y="${CH-28}" width="23" height="18" rx="3.5"
+                               fill="#0d1f16" stroke="#2ecc71" stroke-width="1.2"/>
+                         <circle cx="${CW-30}" cy="${CH-19}" r="2.4" fill="#5fd99a"/>
+                         <rect x="${CW-25}" y="${CH-22}" width="9" height="2" rx="1" fill="#5fd99a"/>
+                         <rect x="${CW-25}" y="${CH-18}" width="9" height="2" rx="1" fill="#5fd99a"/>
+                       </g>`
+                    : ''))
+            : `<g class="node-cardbtn" data-id="${id}" style="cursor:pointer;">
+             <title>View agent card</title>
+             <rect x="${CW-36}" y="${CH-28}" width="23" height="18" rx="3.5"
+                   fill="#0f1d33" stroke="#3b82f6" stroke-width="1.2"/>
+             <circle cx="${CW-30}" cy="${CH-19}" r="2.4" fill="#7fb0ff"/>
+             <rect x="${CW-25}" y="${CH-22}" width="9" height="2" rx="1" fill="#7fb0ff"/>
+             <rect x="${CW-25}" y="${CH-18}" width="9" height="2" rx="1" fill="#7fb0ff"/>
+           </g>`);
+      h += `<g class="node-grp" data-id="${id}" transform="translate(${x},${y})">
+        <rect class="node-card" width="${CW}" height="${CH}" rx="11" ry="11"
+              fill="${cardFill}" ${cardStroke} style="filter:${glow}"/>
+        <text class="node-name" x="14" y="25">${esc(nmShort)}</text>
+        <text class="node-meta" x="14" y="45">${meta}</text>
+        <rect x="14" y="${CH-26}" width="${vlabel.length*7+16}" height="16" rx="8"
+              fill="${vcol}22" stroke="${vcol}" />
+        <text class="vpill-txt" x="${14+(vlabel.length*7+16)/2}" y="${CH-15}"
+              text-anchor="middle" fill="${vcol}">${vlabel}</text>
+        <circle cx="${CW-24}" cy="24" r="14" fill="${bbg}" stroke="#070a10" stroke-width="2"/>
+        <text class="badge-txt" x="${CW-24}" y="28" text-anchor="middle">${cnt}</text>
+        ${cornerMark}
+      </g>`;
+    });
+    layer.innerHTML = h;
+    layer.querySelectorAll('.node-grp').forEach(g=>{
+      g.addEventListener('click', ()=>openPanel(g.getAttribute('data-id')));
+    });
+    // Card icon → open the agent's governance card (stop the node-panel click).
+    layer.querySelectorAll('.node-cardbtn').forEach(b=>{
+      b.addEventListener('click', (e)=>{ e.stopPropagation(); openAgentCard(b.getAttribute('data-id')); });
+    });
+    _paintActive();   // re-apply live-activity glow to any still-lit agents
+  }
+
+  // ── badge toggle: all evaluations ↔ violations only ────────────────────────
+  window._toggleShowAll = function(v){
+    _showAll = !!v;
+    document.getElementById('tg-all').classList.toggle('on', _showAll);
+    document.getElementById('tg-viol').classList.toggle('on', !_showAll);
+    renderNodes();
+  };
+
+  // ── click → recent violations panel ───────────────────────────────────────
+  function relTime(iso){
+    if(!iso) return '';
+    const t = Date.parse(iso); if(isNaN(t)) return esc(iso);
+    const s = Math.max(0, Math.round((Date.now()-t)/1000));
+    if(s<60) return s+'s ago'; if(s<3600) return Math.round(s/60)+'m ago';
+    if(s<86400) return Math.round(s/3600)+'h ago'; return Math.round(s/86400)+'d ago';
+  }
+  // Card icon → open the agent's governance card. Embedded (the dashboard tab)
+  // delegates to the parent's modal; standalone opens the registry in a new tab.
+  function openAgentCard(id){
+    try {
+      if (window.parent && window.parent !== window && typeof window.parent.showAgentCard === 'function') {
+        window.parent.showAgentCard(APP_ID, id);
+        return;
+      }
+    } catch (e) { /* cross-origin — fall through */ }
+    window.open('/ui/dashboard#tab-registry', '_blank');
+  }
+
+  function openPanel(id){
+    _selected = id;
+    const a = _byId[id] || {};
+    document.getElementById('vp-name').textContent = label(id);
+    document.getElementById('vp-id').textContent = id;
+    const body = document.getElementById('vp-body');
+    const vs = a.violations || [];
+    const listHtml = vs.length ? vs.map(v=>`
+      <div class="vitem">
+        <div class="vitem-top">
+          <span class="vtype">${esc(v.type||'')}</span>
+          <span class="vsub">${esc(v.subtype||'')}</span>
+          <span class="vat">${relTime(v.at)}</span>
+        </div>
+        ${v.snippet?`<div class="vsnip">${esc(v.snippet)}</div>`:''}
+      </div>`).join('')
+      : `<div class="vempty">No violations for this node in the ${WINDOW}-min window. ✓<br><br>(${a.span_count||0} evaluation${(a.span_count||0)===1?'':'s'} — all permissive.)</div>`;
+    // Drill-in: open the full Evaluation Trail scoped to this agent (every eval +
+    // trace + interaction, not just the window's violations). target=_top breaks
+    // out of the Agents-tab iframe into the dashboard.
+    const _trailUrl = `/ui/dashboard?goto=evaltrail&agent=${encodeURIComponent(id)}&label=${encodeURIComponent(label(id))}`;
+    body.innerHTML = listHtml +
+      `<a href="${_trailUrl}" target="_top" class="vp-trail"
+          title="See every evaluation for ${esc(label(id))} in the Evaluation Trail">
+         Open ${esc(label(id))} in Evaluation Trail →
+       </a>`;
+    document.getElementById('vpanel').classList.add('open');
+    renderNodes();
+  }
+  window.closePanel = function(){ _selected=null; document.getElementById('vpanel').classList.remove('open'); renderNodes(); };
+
+  // ── Live-activity animation (media mode) ─────────────────────────────────────
+  // Light up agents that acted recently (within ~6 s, tracked in _activeUntil) and
+  // the arrows touching them. Re-applied after every node re-render so the glow
+  // persists across the 3 s polls until it decays. Idle agents stay calm.
+  function _paintActive(){
+    if (!LIVE) return;
+    const nowMs = Date.now();
+    const liveIds = new Set(Object.keys(_activeUntil).filter(id => _activeUntil[id] > nowMs));
+    if (!liveIds.size) return;
+    liveIds.forEach(id => {
+      const g = svg.querySelector('.node-grp[data-id="' + id + '"]');
+      if (g) g.classList.add('active');
+    });
+    svg.querySelectorAll('#edge-layer path[data-edge]').forEach(p => {
+      const parts = (p.getAttribute('data-edge') || '').split('|');
+      if (liveIds.has(parts[0]) || liveIds.has(parts[1])) p.classList.add('active');
+    });
+  }
+
+  // Live mode is always on now (manual toggle removed) — kept as a harmless no-op
+  // so any legacy cross-document storage event handler can't throw.
+  window._toggleLive = function(){ /* always-live; no-op */ };
+
+  // ── polling ────────────────────────────────────────────────────────────────
+  function setLive(state, txt){
+    const dot=document.getElementById('live-dot');
+    dot.className='live-dot'+(state==='on'?' on':state==='err'?' err':'');
+    document.getElementById('live-txt').textContent=txt;
+  }
+  async function poll(){
+    try{
+      await registryReady;   // labels resolved before the first paint (no-op after)
+      const r = await fetch(`/v1/agent-topology/snapshot?app_id=${encodeURIComponent(APP_ID)}&window_min=${WINDOW}`, { cache:'no-store' });
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const snap = await r.json();
+      _byId = {}; (snap.agents||[]).forEach(a=>{ _byId[a.id]=a; });
+      const ids = (snap.agents||[]).map(a=>a.id);
+      _edges = (snap.edges||[]).filter(([s,t]) => ids.includes(s) && ids.includes(t));
+      _pos = layout(ids, _edges);
+
+      // Detect agents that acted since the last poll (eval count rose) and keep
+      // them "lit" for ~6 s (decay) so the pulse is easy to see between polls.
+      let _justActive = 0;
+      const _nowMs = Date.now();
+      if (LIVE && _seededSpan) {
+        (snap.agents||[]).forEach(a => {
+          if ((a.span_count||0) > (_prevSpan[a.id] || 0)) { _activeUntil[a.id] = _nowMs + 6000; _justActive++; }
+        });
+      }
+      _prevSpan = {}; (snap.agents||[]).forEach(a => { _prevSpan[a.id] = a.span_count||0; });
+      _seededSpan = true;
+
+      render();                                                 // renderNodes() re-applies _paintActive()
+      if(_selected && _pos[_selected]) openPanel(_selected);    // refresh open panel in place
+      const _stillLit = LIVE && Object.keys(_activeUntil).some(id => _activeUntil[id] > _nowMs);
+      const now = new Date().toLocaleTimeString([], {hour12:false});
+      setLive('on', `Live · updated ${now} · ${snap.total_span_count||0} evaluations${_stillLit ? ' · active' : ''}`);
+    }catch(e){
+      setLive('err', 'reconnecting… ('+e.message+')');
+    }
+  }
+
+  if (LIVE) { const _lb=document.getElementById('tg-live'); if(_lb) _lb.classList.add('on'); }
+  poll();
+  setInterval(poll, 3000);
+})();
+</script>
+</body>
+</html>

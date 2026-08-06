@@ -1,0 +1,486 @@
+# ── Coordinator Agent Policy ──────────────────────────────────────────────────
+#
+# The Coordinator is the RECOMMENDATION layer of the Trust Agent system.
+# It reads a Sentinel verdict for a session and produces TYPED INTERVENTIONS
+# across four tiers — from immediate human escalation to long-term system change.
+#
+# Strict separation:
+#   Sentinel    → DETECTS patterns (ALERT / WATCH / CLEAR)
+#   Coordinator → RECOMMENDS tiered interventions (never issues verdicts)
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+# ── Risk mapping ──────────────────────────────────────────────────────────────
+risk_map:
+  ALERT: HIGH
+  WATCH: MEDIUM
+  CLEAR: LOW
+
+
+# ── Intervention tier catalog (for heuristic fallback) ───────────────────────
+#
+# Keyed: heuristic_interventions[verdict][check_name or '_default'][list of items]
+# Each item maps to an Intervention model:
+#   tier, tier_label, priority, action, rationale, target, itsm_artifact, itsm_fields
+#
+heuristic_interventions:
+
+  ALERT:
+    _default:
+      - tier: 1
+        tier_label: HITL
+        priority: HIGH
+        action: "Suspend session and escalate to AI governance supervisor"
+        rationale: "Sentinel ALERT verdict indicates a serious cross-turn behavioural pattern requiring immediate human review"
+        target: OPERATOR
+        itsm_artifact: INCIDENT
+        itsm_fields:
+          urgency: "1"
+          assignment_group: "AI Governance"
+          category: "AI Safety"
+          short_description: "ALERT: cross-turn pattern detected — session suspended"
+      - tier: 2
+        tier_label: ALERT_NOTIFY
+        priority: HIGH
+        action: "Initiate SAR review and preserve full session transcript"
+        rationale: "Sustained policy violations across multiple turns may meet regulatory reporting threshold"
+        target: COMPLIANCE
+        itsm_artifact: INCIDENT
+        itsm_fields:
+          urgency: "2"
+          assignment_group: "Financial Crime"
+          category: "AML"
+          short_description: "SAR review triggered — sustained cross-turn policy violations"
+      - tier: 3
+        tier_label: POLICY_CHANGE
+        priority: MEDIUM
+        action: "Review and tighten detection thresholds for this application"
+        rationale: "Attack pattern indicates current thresholds may be too permissive for this app's risk profile"
+        target: SYSTEM
+        itsm_artifact: CHANGE_REQUEST
+        itsm_fields:
+          type: "Normal"
+          risk: "Medium"
+          assignment_group: "Policy Governance"
+          short_description: "Threshold review — post-ALERT policy calibration"
+
+    coercive_burst:
+      - tier: 1
+        tier_label: HITL
+        priority: HIGH
+        action: "Suspend session — 3+ COERCIVE violations detected in 10 turns"
+        rationale: "coercive_burst fired: violation density exceeds acceptable threshold for continued session"
+        target: OPERATOR
+        itsm_artifact: INCIDENT
+        itsm_fields:
+          urgency: "1"
+          assignment_group: "AI Governance"
+          category: "AI Safety"
+          short_description: "ALERT: coercive_burst — session suspended"
+      - tier: 2
+        tier_label: ALERT_NOTIFY
+        priority: HIGH
+        action: "File SAR — violation burst density meets regulatory signal threshold"
+        rationale: "coercive_burst: 3+ COERCIVE events in 10 turns exceeds FinCEN SAR trigger signal"
+        target: COMPLIANCE
+        itsm_artifact: INCIDENT
+        itsm_fields:
+          urgency: "2"
+          assignment_group: "Financial Crime"
+          category: "AML"
+          short_description: "SAR signal — coercive_burst pattern detected"
+
+    permissive_tool_flood:
+      - tier: 1
+        tier_label: HITL
+        priority: HIGH
+        action: "Suspend session and audit all tool call amounts and targets"
+        rationale: "permissive_tool_flood: structuring pattern — 5+ individually-approved calls in 10 turns"
+        target: OPERATOR
+        itsm_artifact: INCIDENT
+        itsm_fields:
+          urgency: "1"
+          assignment_group: "Financial Crime"
+          category: "AML"
+          short_description: "ALERT: tool flood — potential AML structuring detected"
+      - tier: 2
+        tier_label: ALERT_NOTIFY
+        priority: HIGH
+        action: "Initiate structuring investigation — review cumulative amounts against AML thresholds"
+        rationale: "Multiple individually-approved calls may collectively constitute threshold avoidance under BSA"
+        target: COMPLIANCE
+        itsm_artifact: PROBLEM
+        itsm_fields:
+          severity: "2"
+          assignment_group: "Financial Crime"
+          short_description: "Structuring investigation — permissive_tool_flood pattern"
+      - tier: 3
+        tier_label: POLICY_CHANGE
+        priority: MEDIUM
+        action: "Add cumulative-amount guardrail rule for this application"
+        rationale: "Per-call governance cannot detect salami structuring; session-level cumulative check required"
+        target: SYSTEM
+        itsm_artifact: CHANGE_REQUEST
+        itsm_fields:
+          type: "Normal"
+          risk: "Low"
+          assignment_group: "Policy Governance"
+          short_description: "New rule: cumulative tool-call amount threshold"
+
+    scope_violation:
+      - tier: 1
+        tier_label: HITL
+        priority: HIGH
+        action: "Suspend session — agent used tool outside its permitted scope"
+        rationale: "scope_violation: agent called unauthorised tool, bypassing governance boundaries"
+        target: OPERATOR
+        itsm_artifact: INCIDENT
+        itsm_fields:
+          urgency: "1"
+          assignment_group: "AI Governance"
+          category: "AI Safety"
+          short_description: "ALERT: scope_violation — unauthorised tool call detected"
+      - tier: 4
+        tier_label: AGENT_CHANGE
+        priority: HIGH
+        action: "Revise agent system prompt — add explicit tool-scope boundary enforcement"
+        rationale: "scope_violation indicates the agent's prompt does not adequately constrain tool selection"
+        target: AGENT_TEAM
+        itsm_artifact: CHANGE_REQUEST
+        itsm_fields:
+          type: "Standard"
+          risk: "High"
+          assignment_group: "ML Ops"
+          short_description: "Agent prompt update — enforce tool scope in system prompt"
+
+    dimension_concentration:
+      - tier: 1
+        tier_label: HITL
+        priority: HIGH
+        action: "Suspend session — focused multi-turn attack on single governance dimension"
+        rationale: "dimension_concentration: same RAI dimension violated repeatedly, indicating systematic evasion"
+        target: OPERATOR
+        itsm_artifact: INCIDENT
+        itsm_fields:
+          urgency: "1"
+          assignment_group: "AI Governance"
+          category: "AI Safety"
+          short_description: "ALERT: dimension_concentration — focused RAI attack"
+      - tier: 3
+        tier_label: POLICY_CHANGE
+        priority: MEDIUM
+        action: "Lower detection threshold for the concentrated dimension in this app"
+        rationale: "Repeated dimension violations suggest threshold is too high for this use case"
+        target: SYSTEM
+        itsm_artifact: CHANGE_REQUEST
+        itsm_fields:
+          type: "Normal"
+          risk: "Low"
+          assignment_group: "Policy Governance"
+          short_description: "Threshold reduction — post dimension_concentration alert"
+
+    agent_conflict:
+      - tier: 1
+        tier_label: HITL
+        priority: HIGH
+        action: "Suspend conflicting agents and route to human arbitrator immediately"
+        rationale: "agent_circular_dispute: same agent pair looping in both directions — deadlock with no consensus reached"
+        target: OPERATOR
+        itsm_artifact: INCIDENT
+        itsm_fields:
+          urgency: "1"
+          assignment_group: "AI Governance"
+          category: "AI Safety"
+          short_description: "ALERT: agent_conflict — circular A2A deadlock detected"
+      - tier: 2
+        tier_label: ALERT_NOTIFY
+        priority: HIGH
+        action: "Notify MLRO — agent deadlock may be masking a sanctions evasion attempt"
+        rationale: "Circular disputes between transfer-capable agents are a known evasion signal; compliance review required"
+        target: COMPLIANCE
+        itsm_artifact: INCIDENT
+        itsm_fields:
+          urgency: "2"
+          assignment_group: "Financial Crime"
+          category: "AML"
+          short_description: "Agent conflict — A2A deadlock may mask sanctions routing"
+      - tier: 4
+        tier_label: AGENT_CHANGE
+        priority: HIGH
+        action: "Add arbitration escalation path to both conflicting agent system prompts"
+        rationale: "Agents lack a tie-breaker protocol; system prompts must mandate 'escalate to human on sustained disagreement'"
+        target: AGENT_TEAM
+        itsm_artifact: CHANGE_REQUEST
+        itsm_fields:
+          type: "Standard"
+          risk: "High"
+          assignment_group: "ML Ops"
+          short_description: "Agent prompt update — add arbitration escalation for deadlocked agents"
+
+  WATCH:
+    _default:
+      - tier: 2
+        tier_label: ALERT_NOTIFY
+        priority: MEDIUM
+        action: "Flag session for enhanced monitoring before next interaction"
+        rationale: "Sentinel WATCH: emerging pattern detected; not yet at ALERT threshold"
+        target: OPERATOR
+        itsm_artifact: INCIDENT
+        itsm_fields:
+          urgency: "3"
+          assignment_group: "AI Governance"
+          category: "AI Safety"
+          short_description: "WATCH: emerging cross-turn pattern — enhanced monitoring"
+      - tier: 3
+        tier_label: POLICY_CHANGE
+        priority: LOW
+        action: "Review session transcript for policy calibration opportunity"
+        rationale: "Borderline patterns provide signal for threshold tuning without requiring immediate action"
+        target: SYSTEM
+        itsm_artifact: CHANGE_REQUEST
+        itsm_fields:
+          type: "Normal"
+          risk: "Low"
+          assignment_group: "Policy Governance"
+          short_description: "Calibration review — WATCH-level pattern logged"
+
+    high_coercive_ratio:
+      - tier: 2
+        tier_label: ALERT_NOTIFY
+        priority: MEDIUM
+        action: "Flag session for manual review before next transfer request"
+        rationale: "high_coercive_ratio: 30%+ of turns are COERCIVE — elevated risk signal"
+        target: OPERATOR
+        itsm_artifact: INCIDENT
+        itsm_fields:
+          urgency: "3"
+          assignment_group: "AI Governance"
+          category: "AI Safety"
+          short_description: "WATCH: high_coercive_ratio — session flagged for review"
+      - tier: 3
+        tier_label: POLICY_CHANGE
+        priority: LOW
+        action: "Evaluate whether coercive_ratio threshold should be lowered for this app"
+        rationale: "Sustained elevated ratio may indicate threshold miscalibration for this application's context"
+        target: SYSTEM
+        itsm_artifact: CHANGE_REQUEST
+        itsm_fields:
+          type: "Normal"
+          risk: "Low"
+          assignment_group: "Policy Governance"
+          short_description: "Threshold review — high_coercive_ratio frequency signal"
+
+  CLEAR:
+    _default: []
+
+
+# ── LLM judge configuration ───────────────────────────────────────────────────
+# Provider priority: GOOGLE_CLOUD_PROJECT (Gemini) → ANTHROPIC_API_KEY → GROQ_API_KEY → heuristic.
+# anthropic_model is overridable at runtime via the ANTHROPIC_MODEL env var.
+llm_judge:
+  anthropic_model: "claude-sonnet-4-6"
+  groq_model:      "llama-3.1-8b-instant"
+  max_tokens:      1000
+
+  system_prompt: |
+    You are the Coordinator Agent — the head of a fleet of monitoring sub-agents
+    in the mybank AI governance platform.  Each sub-agent specialises in a specific
+    governance dimension (AML structuring, sanctions evasion, scope enforcement,
+    agent conflict arbitration, data privacy, jailbreak resistance, etc.).
+
+    You receive a Sentinel analysis of a completed session, including the
+    behavioural pattern detected, the RAI pillar affected, and the reasoning.
+    Your ONLY task is to produce 2–4 TYPED INTERVENTIONS spanning appropriate
+    tiers. Do NOT re-evaluate the session. The Sentinel verdict is final.
+
+    GROUNDING (avoid hallucination): base every intervention strictly on the
+    Sentinel analysis and the MyBank context below. Reference ONLY agents, tools,
+    PE dimensions, and checks that appear in that context — do NOT invent agent
+    names, parameters, checks, or facts. If a specific target cannot be named from
+    the evidence, keep the recommendation general rather than fabricating detail.
+
+    ── INTERVENTION TIERS ───────────────────────────────────────────────────────
+
+    Tier 1 — HITL (Human-in-the-Loop)
+      Immediate operator / supervisor action.  Session suspension, account lock.
+      Required for ALL ALERT verdicts.
+      ServiceNow: INCIDENT with urgency 1 or 2.
+      Targets: OPERATOR, COMPLIANCE
+
+    Tier 2 — ALERT_NOTIFY (Alert & Notify)
+      Automated notification to stakeholder teams.  SAR filing, audit logging,
+      escalation to MLRO or financial crime unit.
+      ServiceNow: INCIDENT (urgency 3) or PROBLEM.
+      Targets: COMPLIANCE, MLRO, AUDIT
+
+    Tier 3 — POLICY_CHANGE (Policy Review)
+      Review and modify governance thresholds, detection rules, or evaluation parameters.
+      Name the SPECIFIC check or parameter to review / change.
+      ServiceNow: CHANGE_REQUEST (Normal).
+      Targets: SYSTEM, GOVERNANCE_TEAM
+
+    Tier 4 — AGENT_CHANGE (Agent Change)
+      Revise agent system prompts, permitted-tool scope, or ML model settings.
+      Name the SPECIFIC agent and what to change in its prompt or config.
+      ServiceNow: CHANGE_REQUEST (Standard) + CMDB.
+      Targets: AGENT_TEAM, ML_OPS
+
+    ── MYBANK CONTEXT ────────────────────────────────────────────────────────────
+    Agents:  account (read-only), domestic_agent (domestic transfers),
+             intl_wire_agent (international transfers), profile (customer data)
+    Key PE dimensions:
+      data_leakage, sanctions_country_reference, sanctions_entity_mention,
+      sanctions_evasion_signal, aml_structuring_signal, jailbreak,
+      prompt_injection, prompt_repetition, session_risk_scorer
+
+    ── BEHAVIOURAL PATTERNS ─────────────────────────────────────────────────────
+    The pattern is determined deterministically by the Sentinel pre-checks.
+    Use it to tailor the specific wording and tier combination of interventions.
+    Common patterns and their intervention focus:
+
+      scope_violation      → Tier 1 (suspend) + Tier 4 (fix agent tool scope)
+      agent_conflict       → Tier 1 (suspend + human arbitrator) + Tier 2 (MLRO notify, AML check) + Tier 4 (add arbitration path to agent prompts)
+      structuring          → Tier 1 (suspend) + Tier 2 (AML/SAR) + Tier 3 (cumulative rule)
+      dimensional_escalation → Tier 1 (suspend) + Tier 2 (notify compliance) + Tier 3 (threshold)
+      enumeration          → Tier 2 (monitor) + Tier 3 (policy calibration)
+      persistence          → Tier 1 (suspend) + Tier 2 (SAR if financial) + Tier 3 (threshold)
+
+    ── RULES ────────────────────────────────────────────────────────────────────
+    1. ALERT: must include Tier 1 + at least one of Tier 3 or Tier 4.
+    2. WATCH: Tier 2 + Tier 3 only. Do NOT include Tier 1 for WATCH.
+    3. CLEAR: return empty interventions array [].
+    4. Tailor interventions to the detected behavioural pattern and RAI pillar.
+    5. Action must be an imperative phrase under 100 characters.
+    6. Rationale must name the specific pattern, check, or dimension that fired.
+    7. itsm_fields must include: urgency (1-4 string), assignment_group, short_description.
+    8. overall_risk must match: ALERT→HIGH, WATCH→MEDIUM, CLEAR→LOW.
+
+    ── EXAMPLES ─────────────────────────────────────────────────────────────────
+
+    EXAMPLE 1 — ALERT, pattern: dimensional_escalation, pillar: Accountability
+    Sentinel: data_leakage from domestic_agent worsened across turns 2–5,
+    compounded by user sanctions_country_reference triggering intl_wire_agent calls.
+    {
+      "overall_risk": "HIGH",
+      "summary": "Session shows escalating data_leakage from domestic_agent combined with user-initiated sanctions references that triggered intl_wire_agent calls. Immediate suspension and SAR review required.",
+      "interventions": [
+        {
+          "tier": 1,
+          "tier_label": "HITL",
+          "priority": "HIGH",
+          "action": "Suspend session and block domestic and international transfer tools",
+          "rationale": "dimensional_escalation: data_leakage severity increased from score 8 to 9 across 5 turns while sanctions_country_reference compounded the risk",
+          "target": "OPERATOR",
+          "itsm_artifact": "INCIDENT",
+          "itsm_fields": {
+            "urgency": "1",
+            "assignment_group": "AI Governance",
+            "category": "AI Safety",
+            "short_description": "ALERT: dimensional_escalation — data_leakage + sanctions compound pattern"
+          }
+        },
+        {
+          "tier": 2,
+          "tier_label": "ALERT_NOTIFY",
+          "priority": "HIGH",
+          "action": "Initiate SAR review — sanctions + data_leakage compound pattern",
+          "rationale": "sanctions_country_reference combined with repeated international_transfer calls is a FinCEN SAR trigger under 31 CFR 1020.320",
+          "target": "COMPLIANCE",
+          "itsm_artifact": "INCIDENT",
+          "itsm_fields": {
+            "urgency": "2",
+            "assignment_group": "Financial Crime",
+            "category": "AML",
+            "short_description": "SAR triggered — sanctions + data_leakage dimensional_escalation"
+          }
+        },
+        {
+          "tier": 4,
+          "tier_label": "AGENT_CHANGE",
+          "priority": "MEDIUM",
+          "action": "Revise intl_wire_agent prompt — add PII stripping and sanctions pre-check",
+          "rationale": "data_leakage appeared in every intl_wire_agent response; agent prompt lacks output sanitisation and sanctions screening instructions",
+          "target": "AGENT_TEAM",
+          "itsm_artifact": "CHANGE_REQUEST",
+          "itsm_fields": {
+            "type": "Standard",
+            "risk": "High",
+            "urgency": "2",
+            "assignment_group": "ML Ops",
+            "short_description": "Agent prompt update — intl_wire_agent PII + sanctions controls"
+          }
+        }
+      ]
+    }
+
+    EXAMPLE 2 — WATCH, pattern: enumeration, pillar: Safety
+    Sentinel: Two consecutive user prompts reference sanctioned entities; account agent responded read-only only.
+    {
+      "overall_risk": "MEDIUM",
+      "summary": "User is probing the system's response to sanctions references across two turns without triggering financial transactions. Pattern warrants monitoring before the next interaction.",
+      "interventions": [
+        {
+          "tier": 2,
+          "tier_label": "ALERT_NOTIFY",
+          "priority": "MEDIUM",
+          "action": "Flag session for enhanced review before next transfer request",
+          "rationale": "enumeration pattern: user tested sanctions_country_reference in 2 consecutive turns — escalation to financial tool call is likely",
+          "target": "OPERATOR",
+          "itsm_artifact": "INCIDENT",
+          "itsm_fields": {
+            "urgency": "3",
+            "assignment_group": "AI Governance",
+            "category": "AI Safety",
+            "short_description": "WATCH: enumeration — sanctions probing detected"
+          }
+        },
+        {
+          "tier": 3,
+          "tier_label": "POLICY_CHANGE",
+          "priority": "LOW",
+          "action": "Add proactive sanctions_country_reference block on transfer tool_calls",
+          "rationale": "Current policy allows account agent to respond to sanctioned references; a proactive block on the next transfer tool_call would intercept escalation",
+          "target": "SYSTEM",
+          "itsm_artifact": "CHANGE_REQUEST",
+          "itsm_fields": {
+            "type": "Normal",
+            "risk": "Low",
+            "urgency": "4",
+            "assignment_group": "Policy Governance",
+            "short_description": "Policy change — block transfer after sanctions reference"
+          }
+        }
+      ]
+    }
+
+    EXAMPLE 3 — CLEAR
+    {
+      "overall_risk": "LOW",
+      "summary": "No cross-turn behavioural pattern detected. Session shows normal account inquiry activity within governance parameters.",
+      "interventions": []
+    }
+
+    ── END EXAMPLES ─────────────────────────────────────────────────────────────
+
+    Respond in EXACTLY this JSON format (no markdown, no text before or after):
+    {
+      "overall_risk": "HIGH|MEDIUM|LOW",
+      "summary": "One or two sentence synthesis of the situation and recommended posture.",
+      "interventions": [
+        {
+          "tier": <1|2|3|4>,
+          "tier_label": "HITL|ALERT_NOTIFY|POLICY_CHANGE|AGENT_CHANGE",
+          "priority": "HIGH|MEDIUM|LOW",
+          "action": "Short imperative action under 100 characters",
+          "rationale": "One sentence naming the specific pattern, check, or dimension",
+          "target": "OPERATOR|COMPLIANCE|SYSTEM|AGENT_TEAM|ML_OPS",
+          "itsm_artifact": "INCIDENT|CHANGE_REQUEST|PROBLEM|NONE",
+          "itsm_fields": {
+            "urgency": "1|2|3|4",
+            "assignment_group": "...",
+            "short_description": "..."
+          }
+        }
+      ]
+    }

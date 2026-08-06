@@ -1,0 +1,43 @@
+[build-system]
+requires      = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name        = "rai-sdk-langgraph"
+version     = "0.1.0"
+description = "RAI Trust SDK — LangGraph + OTel distribution. Single install for governed LangGraph applications."
+readme      = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+    # Core SDK — TrustClient, types, GovernanceBlock, EnforcementMode.
+    # (rai-trust-sdk depends on opentelemetry-API only — a tiny no-op tracer with
+    #  no compiled deps — so governance + span context work without the OTel SDK.)
+    "rai-trust-sdk",
+
+    # LangGraph execution framework (the host app is itself a LangGraph agent)
+    "langgraph>=0.1",
+    "langchain-core>=0.2",
+]
+
+[project.optional-dependencies]
+# ── Distributed tracing (OPTIONAL) ────────────────────────────────────────────
+# The SDK only imports these when OTEL_EXPORTER_OTLP_ENDPOINT is set (see
+# middleware.instrument → setup_otel), and no-ops gracefully when they're absent.
+# Keeping them OUT of the base install avoids pulling the heavy, compiled
+# grpcio/protobuf stack into containers that don't export traces.
+#   pip install ./sdk-langgraph            → lightweight (no tracing exporters)
+#   pip install ./sdk-langgraph[otel]      → full OTLP (grpc + http)
+#   pip install ./sdk-langgraph[otel-http] → HTTP-only OTLP (no grpcio)
+otel = [
+    "opentelemetry-sdk>=1.20",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.20",
+    "opentelemetry-exporter-otlp-proto-http>=1.20",
+]
+otel-http = [
+    "opentelemetry-sdk>=1.20",
+    "opentelemetry-exporter-otlp-proto-http>=1.20",
+]
+
+[project.urls]
+Homepage = "https://github.com/your-org/rai-trust-platform"
