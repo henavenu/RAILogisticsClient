@@ -1,92 +1,71 @@
-# PharmaLogistics Trust Demo
+# PharmaLogistics — standalone Trust client
 
-Standalone, deployable build of the **RAI Trust Platform** with
-**PharmaLogistics** — a pharmaceutical supply-chain assistant — as the default
-governed application.
+A multi-agent pharmaceutical supply-chain assistant (LangGraph) governed by the
+**RAI Trust platform** through the RAI Trust SDK. This repo is the **app only**: it
+installs the SDK from `sdk-dist/wheelhouse` and reaches the Trust APIs over HTTP.
+No platform code lives here — point it at the local beta stack or the GCP deployment
+by changing URLs.
 
-The point of the demo: every agent turn is evaluated in real time by a policy
-stack (Policy Engine + Guardrail + Sentinel + Coordinator), and the governance
-decision is visible in a live dashboard alongside the chat.
+Every agent carries an **agent passport** (`passports.py`, list at `/passports`), and
+the passport is enforced at runtime: the same Cross-Border Logistics agent releasing
+the same consignment is autonomous in the US and held for a Qualified Person in the EU.
 
-## Routes
+## Run
 
-| Path | What |
+```bash
+./run.sh                           # first run: venv + deps + SDK wheels; then serves :5001
+venv/bin/python onboard_trust.py   # once per Trust platform (idempotent)
+venv/bin/python scenario_check.py  # all menu scenarios against the live app
+```
+
+| File | Purpose |
 |---|---|
-| `/` | **PharmaLogistics** chat app |
-| `/mybank/` | MyBank chat app — same governance stack, second app_id |
-| `/ui/dashboard` | Trust Radar / governance dashboard |
-| `/ui` | PAP admin UI |
-| `/docs` | PAP API docs |
+| `rai.env` | SDK config: `RAI_PE_URL`, `RAI_PAP_URL`, eval/enforcement mode, timeout (from `rai.env.example`) |
+| `.env` | LLM key, `TRUST_APP_ID`, `RAI_APP_KEY` (written by `onboard_trust.py`), URLs the app calls directly |
 
-Both apps register distinct identities (`pharmalogistics`, `mybank`) with one
-shared PAP, so the dashboard shows cross-app governance in a single view.
+To move to another Trust platform (e.g. GCP): set the URLs in `rai.env` and `.env`, run
+`onboard_trust.py --pap <url> --pe <url>`, restart.
 
-## Deploying
+## What `onboard_trust.py` configures (config only, via the Trust APIs)
 
-See **[README_DEPLOY.md](README_DEPLOY.md)** — GitHub push and Cloud Run deploy,
-step by step.
+1. Registers `pharmalogistics` (`POST /v1/apps`, domain `healthcare`) and writes the
+   one-time credential to `.env`.
+2. Assigns packs: `session_guard`, `sanctions`, `prompt_filters`, `eu_ai_act`,
+   `agent_coordination`, `sanctions_advanced`, `agent_passport`.
+3. Passport enforcement: declarative rule `passport_oversight` (Policy Builder), the
+   app-only `agent_passport` pack, and an app-scoped policy with `hitl_trigger=true`.
+4. Publishes, so the Policy Engine reloads.
 
-## Running locally
+## Scenarios
 
-Two options.
+| Menu item | Expected |
+|---|---|
+| Inventory positions · Order activity · Facility profile | PERMISSIVE |
+| Replenishment order | PERMISSIVE |
+| 🇺🇸 Release · US (Execute) | PERMISSIVE — passport US stamp: Execute · HOTL |
+| 🇪🇺 Release · EU (QP confirms) | **HITL** — passport EU stamp: Assist · HITL → Human Review → QP certifies → released |
+| Cold-chain excursion (expedite / skip validation) | COERCIVE (scope violation) |
+| Embargoed shipment (Russia, denied party) | COERCIVE (OFAC/BIS) |
+| SOM structuring ×3 | PERMISSIVE, PERMISSIVE, COERCIVE |
+| Diversion Review Board ($12k controlled-substance hold) | HITL (2-2 council deadlock) |
+| Sourcing negotiation | **parked** — nodes missing; next to fix |
 
-**Container** — closest to what gets deployed, and the fastest way to see the
-whole stack:
+## Agent passports
 
-```bash
-docker build -t pharmalogistics:local .
-docker run --rm -p 8099:8080 -e PORT=8080 \
-  -e GROQ_API_KEY=your_key_here \
-  pharmalogistics:local
-# → http://127.0.0.1:8099
-```
+Risk tier follows the RAI primer: the highest of **agency**, **impact** and **reach** sets
+the tier; each **amplifier** (coordination, trust-boundary exposure) adds one; swarm
+behaviour or a **cross-jurisdiction** boundary sets **Tier 4** alone. Oversight follows
+agency — Instruct/Assist → HITL, Execute → HOTL, Delegate → HIC — and is stamped **per
+jurisdiction**. Validity shortens with tier (T4 6 months … T1 36 months).
 
-Boot takes ~40–60s (seven services plus a SQLite seed). Swap `GROQ_API_KEY` for
-`ANTHROPIC_API_KEY`, or set `LLM_DISABLED=true` for a stub model that exercises
-governance without any LLM credential.
+**Passport enforcement.** Before the Cross-Border agent's `international_transfer` is
+governed, the app stamps the passport for the destination onto the call
+(`passport_oversight`, `passport_jurisdiction`, `passport_tier`). The platform's
+`passport_oversight` rule scores a `HITL` stamp NORMATIVE, and the app-scoped
+`hitl_trigger` policy turns that into `REQUIRE_HUMAN_REVIEW` — the SDK raises
+`HITLInterrupt` and the item lands in the platform's Human Review. On approval the app
+resumes with `passport_oversight: QP-CERTIFIED` (reviewer recorded), which passes.
 
-**Native processes** — better for editing code:
-
-```bash
-./start_all.sh                              # platform + MyBank on :5000
-sdk/examples/pharma_logistics/run.sh        # PharmaLogistics on :5001
-```
-
-Each service reads its own `.env`, bootstrapped from the committed
-`.env.example` on first run. Add your LLM key there. Stop with `./stop_all.sh`.
-
-## Demo scenarios
-
-`sdk/examples/pharma_logistics/` drives cold-chain, controlled-substance, and
-restricted-destination scenarios. The deterministic ones need no LLM:
-
-```bash
-# Embargoed destination + denied party → COERCIVE, request blocked
-curl -X POST localhost:8099/api/demo/sanctions_wire \
-  -H 'Content-Type: application/json' -d '{"session_id":"demo1"}'
-```
-
-Demo login: `dana.reyes` / `1234`.
-
-## Layout
-
-```
-sdk/examples/pharma_logistics/   PharmaLogistics app (LangGraph)
-sdk/examples/mybank_clean/       MyBank app
-pap/                             Policy Admin Platform + dashboard  :3002
-policy-engine/                   Policy Engine                      :3003
-guardrail-service/               Content evaluation                 :3001
-trust-agents/sentinel/           Cross-turn audit                   :3012
-trust-agents/coordinator/        Escalation                         :3013
-sdk/, sdk-langgraph/             Instrumentation SDKs
-docker/                          nginx + supervisord for the single container
-```
-
-Governance behaviour comes from `pap/config/pap.seed.db`, a committed
-config-only snapshot materialized into `pap.db` on every boot.
-
-## Upstream
-
-Forked from the `Neuro-AI-Trust-MVP` repo (branch `Neuro-Trust-MVP`), which
-remains the upstream for platform changes. The deltas carried here are listed at
-the end of [README_DEPLOY.md](README_DEPLOY.md).
+The passports live in the app today because the beta platform has no passport model.
+The natural platform home (passport columns on agent cards, a PE passport gate, a
+passport list in the Agent Registry) is a follow-up to propose to the platform team.

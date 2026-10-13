@@ -173,3 +173,7 @@ traces.jsonl
 # ── Proto dev tool (top-level DB inspector) ──────────────────
 # Local script for poking pap.db. Not part of the platform.
 _inspect_db.py
+
+# SDK config (per-environment Trust API URLs)
+rai.env
+*.out

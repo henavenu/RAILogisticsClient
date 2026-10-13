@@ -1,0 +1,341 @@
+{
+  "router": {
+    "name": "Order Intake",
+    "agent_type": "router",
+    "capability": "orchestration",
+    "purpose": "Front door of the assistant — classifies each operator request (inventory, replenishment, cross-border shipment, facility profile, sourcing, diversion review) and routes it to the right specialist agent.",
+    "domain": "Pharma Supply Chain",
+    "data_access": [
+      "facility_profile"
+    ],
+    "allowed_actions": [
+      "classify_intent",
+      "route_request"
+    ],
+    "prohibited_actions": [
+      "submit_order",
+      "ship_product",
+      "override_policy_verdict"
+    ],
+    "max_authority": "orchestrate",
+    "escalation": "Routes to specialist agents; no direct escalation",
+    "kill_switch": true,
+    "hitl_mode": "none",
+    "model_id": "llama-3.3-70b-versatile"
+  },
+  "account": {
+    "name": "Inventory Agent",
+    "agent_type": "llm",
+    "capability": "read-only lookup",
+    "purpose": "Reports on-hand inventory positions (units) and the shipment/order ledger, with DSCSA lot/serial context. Read-only — never mutates stock.",
+    "domain": "Pharma Supply Chain",
+    "data_access": [
+      "inventory_positions",
+      "shipment_ledger"
+    ],
+    "allowed_actions": [
+      "read_inventory_positions",
+      "read_shipment_ledger"
+    ],
+    "prohibited_actions": [
+      "submit_order",
+      "ship_product",
+      "adjust_inventory"
+    ],
+    "max_authority": "read_only",
+    "escalation": "None (read-only)",
+    "kill_switch": false,
+    "hitl_mode": "none",
+    "model_id": "llama-3.3-70b-versatile"
+  },
+  "profile": {
+    "name": "Facility Desk",
+    "agent_type": "llm",
+    "capability": "read-only lookup",
+    "purpose": "Reports the facility & operator profile and DEA / state license standing. Does not expose or modify controlled-substance order data.",
+    "domain": "Pharma Supply Chain",
+    "data_access": [
+      "facility_profile",
+      "license_registry"
+    ],
+    "allowed_actions": [
+      "read_facility_profile",
+      "read_license_status"
+    ],
+    "prohibited_actions": [
+      "modify_profile",
+      "submit_order",
+      "ship_product"
+    ],
+    "max_authority": "read_only",
+    "escalation": "None (read-only)",
+    "kill_switch": false,
+    "hitl_mode": "none",
+    "model_id": "llama-3.3-70b-versatile"
+  },
+  "domestic_agent": {
+    "name": "Route Optimizer",
+    "agent_type": "llm",
+    "capability": "order execution",
+    "purpose": "Places domestic replenishment orders / ground shipments to US pharmacies, clinics and health systems. Governed for Suspicious Order Monitoring (DEA SOM) and cold-chain / GDP scope.",
+    "domain": "Pharma Supply Chain",
+    "data_access": [
+      "inventory_positions",
+      "buyer_registry"
+    ],
+    "allowed_actions": [
+      "create_replenishment_order",
+      "draw_down_inventory"
+    ],
+    "prohibited_actions": [
+      "cross_border_ship",
+      "bypass_cold_chain_validation",
+      "exceed_som_threshold"
+    ],
+    "max_authority": "execute_domestic",
+    "escalation": "SOM / cold-chain breach → COERCIVE block or Human review (PAP)",
+    "kill_switch": true,
+    "hitl_mode": "agent",
+    "model_id": "llama-3.3-70b-versatile"
+  },
+  "intl_wire_agent": {
+    "name": "Cross-Border Logistics",
+    "agent_type": "llm",
+    "capability": "cross-border shipment execution",
+    "purpose": "Arranges cross-border pharmaceutical shipments including customs and import-license handling. Screens every consignee/destination against OFAC / BIS denied-party and embargoed-jurisdiction lists. Operates in the US and the EU under one identity: its agent passport authorises Execute in the US and Assist only in the EU, where a Qualified Person certifies every release.",
+    "domain": "Pharma Supply Chain",
+    "data_access": [
+      "inventory_positions",
+      "denied_party_list",
+      "import_license_registry"
+    ],
+    "allowed_actions": [
+      "create_cross_border_shipment",
+      "screen_denied_party",
+      "attach_customs_docs"
+    ],
+    "prohibited_actions": [
+      "ship_to_embargoed_destination",
+      "ship_to_denied_party"
+    ],
+    "max_authority": "execute (US) / recommend (EU)",
+    "escalation": "EU release → Qualified Person (Human Review) · sanctions hit → blocked",
+    "kill_switch": true,
+    "hitl_mode": "agent",
+    "model_id": "llama-3.3-70b-versatile"
+  },
+  "policy_council": {
+    "name": "Diversion Review Board",
+    "agent_type": "router",
+    "capability": "review orchestration",
+    "purpose": "Convenes the four-member board to adjudicate a held high-value controlled-substance order. Aggregates the reviewers' votes and escalates an unresolved (hung) vote for human review.",
+    "domain": "Pharma Supply Chain",
+    "data_access": [
+      "order_history",
+      "som_signals"
+    ],
+    "allowed_actions": [
+      "convene_board",
+      "aggregate_votes",
+      "request_policy_review"
+    ],
+    "prohibited_actions": [
+      "release_order",
+      "ship_product",
+      "override_policy_verdict"
+    ],
+    "max_authority": "orchestrate",
+    "escalation": "Hung vote → Human review queue (PAP), two-stage HITL",
+    "kill_switch": true,
+    "hitl_mode": "agent",
+    "model_id": "llama-3.3-70b-versatile"
+  },
+  "coordinator": {
+    "name": "Supply Chain Coordinator",
+    "agent_type": "router",
+    "capability": "orchestration",
+    "purpose": "Supervises the agent graph and the Diversion Review Board — routes requests, tallies board votes, and escalates deadlocked decisions (e.g. a 2-2 hung controlled-substance order review) for policy adjudication.",
+    "domain": "Pharma Supply Chain",
+    "data_access": [
+      "order_history",
+      "facility_profile"
+    ],
+    "allowed_actions": [
+      "route_request",
+      "aggregate_findings",
+      "request_policy_review",
+      "handoff_to_agent"
+    ],
+    "prohibited_actions": [
+      "release_order",
+      "ship_product",
+      "override_policy_verdict"
+    ],
+    "max_authority": "orchestrate",
+    "escalation": "Deadlock / policy review → Human review queue (PAP)",
+    "kill_switch": true,
+    "hitl_mode": "agent",
+    "model_id": "llama-3.3-70b-versatile"
+  },
+  "transaction_monitoring": {
+    "name": "Order Monitoring Agent",
+    "agent_type": "llm",
+    "capability": "advisory only",
+    "purpose": "Assesses velocity and anomaly signals on controlled-substance orders (the DEA SOM lens) and votes to UPHOLD (hold) or OVERTURN (release) a flagged order. Advisory only.",
+    "domain": "Pharma Supply Chain",
+    "data_access": [
+      "order_history",
+      "som_signals"
+    ],
+    "allowed_actions": [
+      "review_order_velocity",
+      "submit_recommendation"
+    ],
+    "prohibited_actions": [
+      "release_order",
+      "ship_product",
+      "adjust_inventory"
+    ],
+    "max_authority": "advisory",
+    "escalation": "Coordinator → Human review queue",
+    "kill_switch": false,
+    "hitl_mode": "by_design",
+    "model_id": "llama-3.3-70b-versatile"
+  },
+  "revenue_agent": {
+    "name": "Supply Continuity Reviewer",
+    "agent_type": "llm",
+    "capability": "advisory only",
+    "purpose": "Represents the supply-continuity / patient-supply lens — assesses the impact of blocking a legitimate buyer — and votes to UPHOLD or OVERTURN. Advisory only.",
+    "domain": "Pharma Supply Chain",
+    "data_access": [
+      "buyer_registry",
+      "demand_forecast"
+    ],
+    "allowed_actions": [
+      "review_supply_impact",
+      "submit_recommendation"
+    ],
+    "prohibited_actions": [
+      "release_order",
+      "ship_product"
+    ],
+    "max_authority": "advisory",
+    "escalation": "Coordinator → Human review queue",
+    "kill_switch": false,
+    "hitl_mode": "by_design",
+    "model_id": "llama-3.3-70b-versatile"
+  },
+  "cx_agent": {
+    "name": "Patient Access Reviewer",
+    "agent_type": "llm",
+    "capability": "advisory only",
+    "purpose": "Represents the downstream patient-access / patient-care lens when a controlled-substance order is held, and votes to UPHOLD or OVERTURN. Advisory only.",
+    "domain": "Pharma Supply Chain",
+    "data_access": [
+      "dispensing_data"
+    ],
+    "allowed_actions": [
+      "review_patient_impact",
+      "submit_recommendation"
+    ],
+    "prohibited_actions": [
+      "release_order",
+      "ship_product"
+    ],
+    "max_authority": "advisory",
+    "escalation": "Coordinator → Human review queue",
+    "kill_switch": false,
+    "hitl_mode": "by_design",
+    "model_id": "llama-3.3-70b-versatile"
+  },
+  "risk_policy_agent": {
+    "name": "Regulatory Compliance Reviewer",
+    "agent_type": "llm",
+    "capability": "advisory only",
+    "purpose": "Assesses DEA / DSCSA regulatory and diversion-control exposure on a held order and votes to UPHOLD or OVERTURN. Advisory only.",
+    "domain": "Pharma Supply Chain",
+    "data_access": [
+      "dea_registry",
+      "dscsa_records"
+    ],
+    "allowed_actions": [
+      "review_regulatory_exposure",
+      "submit_recommendation"
+    ],
+    "prohibited_actions": [
+      "release_order",
+      "ship_product"
+    ],
+    "max_authority": "advisory",
+    "escalation": "Coordinator → Human review queue",
+    "kill_switch": false,
+    "hitl_mode": "by_design",
+    "model_id": "llama-3.3-70b-versatile"
+  },
+  "payment_council": {
+    "name": "Diversion Review",
+    "agent_type": "router",
+    "capability": "review orchestration",
+    "purpose": "Opens a diversion review when an operator asks why a high-value controlled-substance order was held, and convenes the Diversion Review Board.",
+    "domain": "Pharma Supply Chain",
+    "data_access": [
+      "order_history",
+      "som_signals"
+    ],
+    "allowed_actions": [
+      "open_diversion_review",
+      "handoff_to_agent"
+    ],
+    "prohibited_actions": [
+      "release_order",
+      "ship_product",
+      "override_policy_verdict"
+    ],
+    "max_authority": "orchestrate",
+    "escalation": "Coordinator → Human review queue",
+    "kill_switch": true,
+    "hitl_mode": "agent"
+  },
+  "fallback": {
+    "name": "Help Desk",
+    "agent_type": "llm",
+    "capability": "conversational only",
+    "purpose": "Answers requests no specialist matches. Takes no actions and reads no operational data.",
+    "domain": "Pharma Supply Chain",
+    "data_access": [],
+    "allowed_actions": [
+      "answer_general_question"
+    ],
+    "prohibited_actions": [
+      "submit_order",
+      "ship_product",
+      "read_inventory_positions"
+    ],
+    "max_authority": "none",
+    "escalation": "None (no actions)",
+    "kill_switch": true,
+    "hitl_mode": "none"
+  },
+  "transfer_router": {
+    "name": "Shipment Classifier",
+    "agent_type": "router",
+    "capability": "orchestration",
+    "purpose": "Classifies an order or shipment request as domestic (US ground) or cross-border and hands it to the Route Optimizer or Cross-Border Logistics. Takes no action itself.",
+    "domain": "Pharma Supply Chain",
+    "data_access": [],
+    "allowed_actions": [
+      "classify_shipment_type",
+      "route_request"
+    ],
+    "prohibited_actions": [
+      "submit_order",
+      "ship_product",
+      "override_policy_verdict"
+    ],
+    "max_authority": "orchestrate",
+    "escalation": "None (routing only)",
+    "kill_switch": true,
+    "hitl_mode": "none"
+  }
+}

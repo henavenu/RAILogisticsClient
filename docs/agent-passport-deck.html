@@ -1,0 +1,451 @@
+<title>Agent Passports Showcase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a stack of 16:9 slide plates with speaker notes beneath each; Present mode
+   shows one plate at a time, full width. Palette = passport ink on cool paper, with the
+   primer's four tier colours as the only semantic colour. */
+:root {
+  --paper: #EEF1F5;
+  --plate: #FFFFFF;
+  --ink: #132238;
+  --muted: #5B6779;
+  --rule: #D5DBE4;
+  --stamp: #0F6E73;          /* accent: passport stamp ink */
+  --stamp-soft: #E2F0F0;
+  --t1: #1E7B6B; --t2: #C9721F; --t3: #B8352B; --t4: #6A3D9A;
+  --t3-soft: #FBE9E7; --t4-soft: #EFE7F7; --t2-soft: #FBEFE2; --t1-soft: #E3F2EE;
+  --notes: #F7F9FB;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0D141F; --plate: #152133; --ink: #E6ECF4; --muted: #9AA8BC; --rule: #2A3A52;
+  --stamp: #4FB8BC; --stamp-soft: #12333A;
+  --t1: #4CB7A2; --t2: #E6A15A; --t3: #EE7B70; --t4: #B592E0;
+  --t3-soft: #3A1E1E; --t4-soft: #2B2140; --t2-soft: #3A2A18; --t1-soft: #15322C;
+  --notes: #111B2A; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --paper: #0D141F; --plate: #152133; --ink: #E6ECF4; --muted: #9AA8BC; --rule: #2A3A52;
+  --stamp: #4FB8BC; --stamp-soft: #12333A;
+  --t1: #4CB7A2; --t2: #E6A15A; --t3: #EE7B70; --t4: #B592E0;
+  --t3-soft: #3A1E1E; --t4-soft: #2B2140; --t2-soft: #3A2A18; --t1-soft: #15322C;
+  --notes: #111B2A; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5;
+       padding-inline: 16px; padding-block: 0 48px; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--paper);
+       display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+       max-width: 1100px; margin: 0 auto; padding-block: 12px; border-bottom: 1px solid var(--rule); }
+.bar h1 { font-family: var(--display); font-stretch: 112%; font-weight: 750; font-size: 17px; margin: 0; letter-spacing: -.2px; }
+.bar h1 span { color: var(--muted); font-weight: 500; }
+.bar .ctl { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: 500 13px var(--body); color: var(--ink); background: var(--plate); border: 1px solid var(--rule);
+         border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:hover { border-color: var(--stamp); }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--stamp); outline-offset: 2px; }
+button[aria-pressed="true"] { background: var(--stamp); color: var(--plate); border-color: var(--stamp); }
+
+.deck { max-width: 1100px; margin: 0 auto; display: grid; gap: 34px; padding-top: 22px; }
+.unit { display: grid; gap: 10px; min-width: 0; }
+.plate { position: relative; background: var(--plate); border: 1px solid var(--rule); border-radius: 10px;
+         aspect-ratio: 16 / 9; max-width: 100%; padding: 4.2% 5% 4%; display: flex; flex-direction: column;
+         overflow: hidden; container-type: inline-size; }
+.plate .no { position: absolute; right: 4%; bottom: 4%; font: 500 clamp(9px, 1.1cqi, 12px) var(--mono); color: var(--muted); }
+.eyebrow { font: 600 clamp(9px, 1.15cqi, 12.5px) var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--stamp); margin: 0 0 1.4cqi; }
+.plate h2 { font-family: var(--display); font-stretch: 108%; font-weight: 760; font-size: clamp(17px, 3.6cqi, 40px);
+            line-height: 1.08; letter-spacing: -.01em; margin: 0 0 1.8cqi; text-wrap: balance; max-width: 30ch; }
+.plate p, .plate li { font-size: clamp(10.5px, 1.55cqi, 17px); line-height: 1.45; }
+.plate p { margin: 0 0 1.2cqi; max-width: 64ch; }
+.lede { color: var(--muted); }
+.grid { display: grid; gap: 1.6cqi; flex: 1; min-height: 0; }
+.g2 { grid-template-columns: 1fr 1fr; } .g3 { grid-template-columns: repeat(3, 1fr); } .g4 { grid-template-columns: repeat(4, 1fr); }
+.cell { border: 1px solid var(--rule); border-radius: 8px; padding: 1.6cqi 1.8cqi; min-width: 0; }
+.cell h3 { font-family: var(--display); font-weight: 700; font-size: clamp(11.5px, 1.75cqi, 19px); margin: 0 0 .8cqi; }
+.cell p, .cell li { font-size: clamp(9.5px, 1.32cqi, 14.5px); color: var(--ink); }
+.cell ul { margin: 0; padding-left: 1.1em; }
+.cell li + li { margin-top: .35cqi; }
+.k { font: 500 clamp(8.5px, 1.05cqi, 11.5px) var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.mono { font-family: var(--mono); }
+
+/* tier chips */
+.tier { display: inline-block; font: 700 clamp(8.5px, 1.1cqi, 12px) var(--mono); padding: .25em .6em; border-radius: 4px; color: var(--plate); white-space: nowrap; }
+.tier.t1 { background: var(--t1); } .tier.t2 { background: var(--t2); } .tier.t4 { background: var(--t4); }
+.tier.t3 { background: var(--t3-soft); color: var(--t3); box-shadow: inset 0 0 0 1px var(--t3); }
+.ov { display: inline-block; font: 700 clamp(8.5px, 1.05cqi, 11.5px) var(--mono); padding: .2em .55em; border-radius: 3px; color: var(--plate); }
+.ov.hitl { background: var(--t1); } .ov.hotl { background: var(--t3); } .ov.hic { background: var(--t4); }
+
+/* title slide */
+.title .plate { justify-content: space-between; }
+.title h2 { font-size: clamp(24px, 6.4cqi, 72px); max-width: 14ch; }
+.mrz { font: 500 clamp(8.5px, 1.45cqi, 16px) var(--mono); letter-spacing: .14em; color: var(--muted); border-top: 1px dashed var(--rule);
+       padding-top: 1.4cqi; white-space: pre; overflow: hidden; }
+.mrz b { color: var(--stamp); font-weight: 500; }
+
+/* tier slide */
+.ladder { display: grid; grid-template-columns: 1.1fr repeat(4, 1fr); gap: 0; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; flex: 1; min-height: 0; }
+.ladder > div { padding: 1cqi 1.2cqi; border-top: 1px solid var(--rule); font-size: clamp(8.5px, 1.18cqi, 13px); line-height: 1.35; }
+.ladder > .h { border-top: none; font: 700 clamp(9px, 1.25cqi, 13.5px) var(--display); color: var(--plate); }
+.ladder > .h.t1 { background: var(--t1); } .ladder > .h.t2 { background: var(--t2); } .ladder > .h.t4 { background: var(--t4); }
+.ladder > .h.t3 { background: var(--t3-soft); color: var(--t3); }
+.ladder > .h.d { background: var(--notes); color: var(--ink); }
+.ladder .d { font-weight: 600; background: var(--notes); }
+.alone { display: inline-block; margin-top: .4em; font: 700 clamp(7.5px, .95cqi, 10.5px) var(--mono); color: var(--plate); background: var(--t4); padding: .15em .45em; border-radius: 3px; }
+
+/* oversight slide */
+.ovcol { border-radius: 8px; padding: 1.8cqi; border: 1px solid var(--rule); min-width: 0; display: flex; flex-direction: column; gap: .8cqi; }
+.ovcol.hitl { background: var(--t1-soft); } .ovcol.hotl { background: var(--t3-soft); } .ovcol.hic { background: var(--t4-soft); }
+.ovcol .big { font-family: var(--display); font-weight: 800; font-stretch: 115%; font-size: clamp(18px, 4cqi, 44px); line-height: 1; }
+.ovcol.hitl .big { color: var(--t1); } .ovcol.hotl .big { color: var(--t3); } .ovcol.hic .big { color: var(--t4); }
+.ovcol .demo { margin-top: auto; border-top: 1px solid var(--rule); padding-top: .8cqi; font-size: clamp(9px, 1.25cqi, 13.5px); }
+
+/* stamp slide */
+.stamp { border: 2px solid var(--stamp); border-radius: 10px; padding: 1.6cqi 1.8cqi; position: relative; min-width: 0; }
+.stamp.eu { border-color: var(--t1); }
+.stamp .code { position: absolute; top: 1.2cqi; right: 1.6cqi; font: 800 clamp(16px, 3.6cqi, 40px) var(--display); font-stretch: 120%; opacity: .2; }
+.gapnote { border: 1px dashed var(--t4); background: var(--t4-soft); border-radius: 8px; padding: 1.2cqi 1.6cqi; font-size: clamp(9.5px, 1.35cqi, 14.5px); }
+
+/* flow slide */
+.flow { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 1cqi; flex: 1; min-height: 0; counter-reset: step; }
+.flow li { border: 1px solid var(--rule); border-radius: 8px; padding: 1.3cqi; font-size: clamp(8.5px, 1.2cqi, 13px); line-height: 1.38; position: relative; counter-increment: step; }
+.flow li::before { content: counter(step); display: block; font: 700 clamp(10px, 1.6cqi, 18px) var(--mono); color: var(--stamp); margin-bottom: .6cqi; }
+.flow li b { display: block; font-family: var(--display); font-size: clamp(9.5px, 1.35cqi, 14.5px); margin-bottom: .4cqi; }
+.flow li.hold { border-color: var(--t1); background: var(--t1-soft); }
+.where { display: inline-block; margin-top: .6cqi; font: 500 clamp(7.5px, .95cqi, 10.5px) var(--mono); color: var(--muted); }
+
+/* table slide */
+.tbl { width: 100%; border-collapse: collapse; font-size: clamp(9px, 1.3cqi, 14px); }
+.tbl th { text-align: left; font: 600 clamp(8px, 1.05cqi, 11.5px) var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: .8cqi 1cqi; border-bottom: 1px solid var(--rule); }
+.tbl td { padding: .75cqi 1cqi; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.v { font: 700 clamp(8px, 1.05cqi, 11.5px) var(--mono); padding: .15em .5em; border-radius: 3px; white-space: nowrap; }
+.v.p { color: var(--t1); box-shadow: inset 0 0 0 1px var(--t1); } .v.n { color: var(--plate); background: var(--t1); }
+.v.c { color: var(--plate); background: var(--t3); }
+.soon { display: inline-block; font: 700 clamp(8px, 1.05cqi, 11.5px) var(--mono); color: var(--t2); box-shadow: inset 0 0 0 1px var(--t2); border-radius: 3px; padding: .15em .5em; letter-spacing: .04em; }
+
+/* notes */
+.notes { background: var(--notes); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 16px; font-size: 14px; color: var(--ink); }
+.notes .k { display: block; margin-bottom: 4px; }
+.notes p { margin: 0; max-width: 90ch; }
+.notes .copy { float: right; margin: -4px -6px 6px 10px; font-size: 12px; padding: 3px 9px; }
+
+/* present mode */
+body.present { padding-block: 0; }
+body.present .notes { display: none; }
+body.present .deck { gap: 0; }
+body.present .unit { display: none; }
+body.present .unit.on { display: grid; }
+.hint { color: var(--muted); font-size: 12px; }
+
+@media (max-width: 700px) {
+  .plate { aspect-ratio: auto; min-height: 0; padding: 22px 18px 34px; container-type: normal; }
+  .plate h2 { font-size: 22px; } .title h2 { font-size: 30px; }
+  .plate p, .plate li { font-size: 14px; } .cell p, .cell li { font-size: 13.5px; }
+  .g2, .g3, .g4 { grid-template-columns: 1fr; }
+  .flow { grid-template-columns: 1fr 1fr; }
+  .ladder { grid-template-columns: 1fr 1fr; } .ladder > .h.d, .ladder > .d { grid-column: 1 / -1; }
+  .ladder > div { font-size: 12.5px; }
+  .eyebrow, .k, .tier, .ov, .v, .soon, .where { font-size: 11px; }
+  .ovcol .big { font-size: 28px; } .stamp .code { font-size: 26px; }
+  .mrz { font-size: 10px; white-space: normal; word-break: break-all; }
+  .tbl-wrap { overflow-x: auto; } .tbl { min-width: 520px; font-size: 13px; }
+  .eyebrow { margin-bottom: 8px; } .plate h2 { margin-bottom: 12px; } .grid { gap: 10px; }
+  .cell, .ovcol, .stamp { padding: 12px 14px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header class="bar">
+  <h1>Agent Passports <span>· PharmaLogistics on the RAI Trust platform</span></h1>
+  <div class="ctl">
+    <button id="btn-present" type="button" aria-pressed="false">Present</button>
+    <button id="btn-copy-all" type="button">Copy all notes</button>
+  </div>
+</header>
+
+<main class="deck" id="deck">
+
+<!-- 1 -->
+<section class="unit title">
+  <div class="plate">
+    <div>
+      <p class="eyebrow">Showcase · RAI Trust platform</p>
+      <h2>One agent. Two countries. One passport that decides.</h2>
+      <p class="lede">How the Trust platform governs an AI agent whose authority changes when it crosses a border, using the agent passport and the risk tiers from our primer.</p>
+    </div>
+    <div class="mrz" aria-label="Machine-readable passport line for the Cross-Border Logistics agent">P&lt;PLX<b>CROSS&lt;BORDER&lt;LOGISTICS</b>&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;
+CLR31&lt;&lt;&lt;&lt;<b>T4</b>&lt;US<b>EXECUTE</b>&lt;HOTL&lt;EU<b>ASSIST</b>&lt;HITL&lt;&lt;270413&lt;&lt;&lt;&lt;&lt;&lt;</div>
+    <span class="no">01</span>
+  </div>
+  <div class="notes"><button class="copy" type="button">Copy</button><span class="k">Speaker notes</span>
+    <p>Today's demo answers one question: when an AI agent acts in more than one country, who decides how much it is allowed to do on its own? Our answer is the agent passport. The same Cross-Border Logistics agent, doing the same release, gets full autonomy in the US and is held for a Qualified Person in the EU. The Trust platform enforces that at runtime. The line at the bottom is that agent's passport in machine-readable form: Tier 4, Execute with a human on the loop in the US, Assist with a human in the loop in the EU, valid to April 2027.</p></div>
+</section>
+
+<!-- 2 -->
+<section class="unit">
+  <div class="plate">
+    <p class="eyebrow">What we are showcasing</p>
+    <h2>Authority has to travel with the agent</h2>
+    <div class="grid g3">
+      <div class="cell"><h3>The problem</h3><ul>
+        <li>Agents now act across jurisdictions under one identity.</li>
+        <li>What one country authorises, another may not.</li>
+        <li>Model behaviour alone cannot hold that line.</li></ul></div>
+      <div class="cell"><h3>The passport</h3><ul>
+        <li>A portable record per agent: owner, risk tier, validity.</li>
+        <li>One stamp per jurisdiction, each with its own agency and oversight model.</li>
+        <li>Sovereignty, lineage of delegated authority, revocation.</li></ul></div>
+      <div class="cell"><h3>The enforcement</h3><ul>
+        <li>The passport is stamped onto every governed action.</li>
+        <li>The Trust platform reads the stamp and applies the oversight it requires.</li>
+        <li>Every hold and every certification lands in the audit trail.</li></ul></div>
+    </div>
+    <span class="no">02</span>
+  </div>
+  <div class="notes"><button class="copy" type="button">Copy</button><span class="k">Speaker notes</span>
+    <p>Three ideas. First, agents increasingly act across borders under a single identity, and what the US authorises is not what the EU authorises. Second, the passport records that difference explicitly: who owns the agent, its risk tier, and a stamp per jurisdiction saying what it may do there and how a human oversees it. Third, the passport is not a document on a shelf. It is stamped onto each governed action, and the Trust platform enforces the oversight that stamp requires, with a full audit trail.</p></div>
+</section>
+
+<!-- 3 -->
+<section class="unit">
+  <div class="plate">
+    <p class="eyebrow">The client</p>
+    <h2>PharmaLogistics: a 13-agent pharma distribution fleet</h2>
+    <div class="grid g2">
+      <div class="cell"><h3>What the agents do</h3><ul>
+        <li><b>Order Intake</b> routes every request to a specialist.</li>
+        <li><b>Inventory Agent</b> and <b>Facility Desk</b> read positions and DEA licence standing.</li>
+        <li><b>Route Optimizer</b> places domestic replenishment orders.</li>
+        <li><b>Cross-Border Logistics</b> releases cold-chain consignments US → EU.</li>
+        <li><b>Diversion Review Board</b>: four reviewers and a coordinator decide held controlled-substance orders.</li></ul></div>
+      <div class="cell"><h3>How it is governed</h3><ul>
+        <li>A standalone app. It reaches the Trust platform only through its APIs, with an app credential.</li>
+        <li>The RAI Trust SDK discovers and registers all agents and evaluates every tool call and agent-to-agent handoff.</li>
+        <li>Seven policy packs, including sanctions, agent coordination, EU AI Act and the new <span class="mono">agent_passport</span> pack.</li>
+        <li>Passport enforcement is configuration on the platform: a rule, a pack and a policy. No platform code changed.</li></ul></div>
+    </div>
+    <span class="no">03</span>
+  </div>
+  <div class="notes"><button class="copy" type="button">Copy</button><span class="k">Speaker notes</span>
+    <p>PharmaLogistics is a pharmaceutical distributor's assistant built as a multi-agent LangGraph app. It runs standalone and connects to the Trust platform the way any client would: SDK, app credential, APIs. The SDK registers all 13 agents and evaluates every tool call and handoff. Passport enforcement was added purely as platform configuration, which matters because it shows a client can bring a new governance requirement without a platform release.</p></div>
+</section>
+
+<!-- 4 -->
+<section class="unit">
+  <div class="plate">
+    <p class="eyebrow">From our primer · Assigning the risk tier</p>
+    <h2>Highest dimension sets the tier; amplifiers raise it</h2>
+    <div class="ladder" role="table" aria-label="Risk tier ladder">
+      <div class="h d" role="columnheader">Risk dimension</div>
+      <div class="h t1" role="columnheader">Tier 1 · Limited</div>
+      <div class="h t2" role="columnheader">Tier 2 · Elevated</div>
+      <div class="h t3" role="columnheader">Tier 3 · High</div>
+      <div class="h t4" role="columnheader">Tier 4 · Critical</div>
+      <div class="d">Agency</div><div>Instruct · no discretion</div><div>Assist · human confirms</div><div>Execute · human on call</div><div>Delegate · operates independently</div>
+      <div class="d">Impact</div><div>Low, fully reversible</div><div>Limited, easily corrected</div><div>Significant, difficult to reverse</div><div>Severe, irreversible harm</div>
+      <div class="d">Reach</div><div>Single system or dataset</div><div>Multiple internal systems</div><div>External systems or regulated data</div><div>Cross-organizational or public</div>
+      <div class="d">Coordination <span class="k">+1 if yes</span></div><div>Single agent</div><div>Sequential workflow</div><div>Supervised orchestration</div><div>Swarm behaviour<br><span class="alone">SETS TIER 4 ALONE</span></div>
+      <div class="d">Trust boundary <span class="k">+1 if yes</span></div><div>One org, one system</div><div>Own systems</div><div>Cross-platform</div><div>Cross-jurisdiction<br><span class="alone">SETS TIER 4 ALONE</span></div>
+    </div>
+    <p class="lede" style="margin-top:1.4cqi">PharmaLogistics fleet: <span class="tier t4">T4 × 2</span> <span class="tier t3">T3 × 9</span> <span class="tier t2">T2 × 1</span> <span class="tier t1">T1 × 1</span>. Validity shortens with tier: T4 6 months · T3 12 · T2 24 · T1 36.</p>
+    <span class="no">04</span>
+  </div>
+  <div class="notes"><button class="copy" type="button">Copy</button><span class="k">Speaker notes</span>
+    <p>Tiers come straight from our primer, not a vendor score. Three dimensions (agency, impact and reach) are each scored one to four, and the highest sets the tier. Two amplifiers each add a level: coordinating with other agents, and acting outside a boundary you control. Swarm behaviour or a cross-jurisdiction boundary set Tier 4 on their own. That is why Cross-Border Logistics is Tier 4 even though it only executes. Most of the fleet is Tier 3 because the agents coordinate or touch regulated data. Higher tier buys a shorter leash: a Tier 4 passport is valid for six months.</p></div>
+</section>
+
+<!-- 5 -->
+<section class="unit">
+  <div class="plate">
+    <p class="eyebrow">Human oversight models</p>
+    <h2>Oversight follows agency, and is stamped per jurisdiction</h2>
+    <div class="grid g3">
+      <div class="ovcol hitl">
+        <span class="big">HITL</span><span class="k">Human in the loop · high oversight</span>
+        <p>Every consequential action is approved by a human before it happens.</p>
+        <p class="k">For Instruct and Assist agency</p>
+        <div class="demo"><b>In the demo:</b> EU release. A Qualified Person certifies each batch before release. Also the Diversion Review Board escalation.</div>
+      </div>
+      <div class="ovcol hotl">
+        <span class="big">HOTL</span><span class="k">Human on the loop · medium oversight</span>
+        <p>The agent acts; a human monitors and can intervene.</p>
+        <p class="k">For Execute agency</p>
+        <div class="demo"><b>In the demo:</b> US export release and domestic replenishment. The agent acts, the platform evaluates every action, the QA officer watches the trail.</div>
+      </div>
+      <div class="ovcol hic">
+        <span class="big">HIC</span><span class="k">Human in command · low oversight</span>
+        <p>Oversight at the system level, per mandate rather than per decision.</p>
+        <p class="k">For Delegate agency</p>
+        <div class="demo"><b>In the demo:</b> no agent holds Delegate today. The board's delegation to the deployment owner is the mandate an HIC agent would run under.</div>
+      </div>
+    </div>
+    <span class="no">05</span>
+  </div>
+  <div class="notes"><button class="copy" type="button">Copy</button><span class="k">Speaker notes</span>
+    <p>The primer ties oversight to agency. Instruct and Assist mean a human in the loop: nothing consequential happens without approval. Execute means a human on the loop: the agent acts, and a human monitors and can step in. Delegate means a human in command: oversight is set at the level of the mandate, not each decision. The key move in this demo is that oversight is stamped per jurisdiction. The same agent is on the loop in the US and in the loop in the EU, and the platform knows which applies at the moment of action.</p></div>
+</section>
+
+<!-- 6 -->
+<section class="unit">
+  <div class="plate">
+    <p class="eyebrow">Agent passport · Cross-jurisdictional agreement (live today)</p>
+    <h2>Same identity, two operating envelopes</h2>
+    <div class="grid g2" style="flex:0 0 auto">
+      <div class="stamp"><span class="code">US</span>
+        <h3 style="margin:0 0 .6cqi; font-family:var(--display)">United States <span class="ov hotl">HOTL</span></h3>
+        <p class="k">PharmaLogistics Inc. — Trenton, NJ</p>
+        <p><b>Execute:</b> release a cold-chain consignment for export.</p>
+        <p class="lede">FDA 21 CFR 211 · DSCSA · DEA CSA. Granted by the US QA release officer.</p></div>
+      <div class="stamp eu"><span class="code">EU</span>
+        <h3 style="margin:0 0 .6cqi; font-family:var(--display)">European Union <span class="ov hitl">HITL</span></h3>
+        <p class="k">PharmaLogistics Europe B.V. — Amsterdam</p>
+        <p><b>Assist:</b> recommend release. A Qualified Person certifies every batch.</p>
+        <p class="lede">EU GDP 2013/C 343/01 · Dir. 2001/83/EC Art. 51 · FMD · EU AI Act Art. 14 · GDPR Ch. V. Granted by the EU Qualified Person.</p></div>
+    </div>
+    <div class="grid g2" style="margin-top:1.6cqi; flex:0 0 auto">
+      <div class="cell"><h3>Sovereignty</h3><p>Data rests in-region (US us-east, EU Frankfurt); inference runs in the US. EU transfer basis: EU–US Data Privacy Framework + SCCs, with consignee data pseudonymised before it leaves the EU.</p></div>
+      <div class="gapnote"><b>The policy gap, closed by the platform.</b> The agent is built to execute. The EU authorises only assist. Where a stamp says HITL, the Trust platform holds the action for a human before it runs, and the passport is where an auditor sees the gap.</div>
+    </div>
+    <span class="no">06</span>
+  </div>
+  <div class="notes"><button class="copy" type="button">Copy</button><span class="k">Speaker notes</span>
+    <p>This is what is live today: one corporate group, two jurisdictions. Each stamp records the local legal entity, the applicable law, what the agent may do there and who granted it. In the US the QA release officer granted Execute; in the EU the Qualified Person granted only Assist, because EU law requires a QP to certify each batch. The agent's capability ceiling is Execute, so there is a gap between what it can do and what the EU allows. That gap is closed by policy on the platform, not by hoping the model behaves, and the passport makes the gap visible to an auditor.</p></div>
+</section>
+
+<!-- 7 -->
+<section class="unit">
+  <div class="plate">
+    <p class="eyebrow">Agent passport · Cross-organisational agreement <span class="soon">NEXT · THIRD-PARTY AGENT</span></p>
+    <h2>When the counterparty is another company's agent</h2>
+    <div class="grid g2">
+      <div class="cell"><h3>Cross-jurisdiction (today)</h3><ul>
+        <li>One owner organisation; subsidiaries per country.</li>
+        <li>Stamps issued by our own legal entities.</li>
+        <li>Trust comes from our internal delegation chain.</li>
+        <li>Trust boundary: <b>cross-jurisdiction</b> → T4.</li></ul></div>
+      <div class="cell"><h3>Cross-organisation (adding next)</h3><ul>
+        <li>A third-party carrier or importer runs its own agent with its own passport.</li>
+        <li>Each passport is issued by its controlling organisation; trust comes from verifying the other side's passport, not from a sovereign.</li>
+        <li>At handoff, our agent checks the counterpart's passport: issuer, tier, stamp for this jurisdiction, validity, revocation status.</li>
+        <li>The agreement between the organisations sets scope, data sharing, liability and who can revoke.</li>
+        <li>Reach becomes <b>cross-organizational</b> → T4 on reach as well.</li></ul></div>
+    </div>
+    <span class="no">07</span>
+  </div>
+  <div class="notes"><button class="copy" type="button">Copy</button><span class="k">Speaker notes</span>
+    <p>Today's demo is cross-jurisdictional within one group. The next step, which we are adding tomorrow, is cross-organisational: a third-party carrier's agent with its own passport. The model changes in one important way. A passport is issued by the organisation that controls the agent, so trust between companies comes from verifying each other's passports at the handoff, against an agreement that defines scope, data sharing, liability and revocation. Our agent would refuse, or route to a human, if the counterpart's passport has no valid stamp for the jurisdiction or has been revoked.</p></div>
+</section>
+
+<!-- 8 -->
+<section class="unit">
+  <div class="plate">
+    <p class="eyebrow">Runtime enforcement</p>
+    <h2>How an EU release is held, certified and released</h2>
+    <ol class="flow">
+      <li><b>Agent proposes</b>Cross-Border Logistics prepares a release to Germany.<span class="where">app</span></li>
+      <li><b>Passport stamped</b><span class="mono">EU · assist · HITL · T4</span> is attached to the call.<span class="where">app · passports.py</span></li>
+      <li class="hold"><b>Platform holds</b>The <span class="mono">passport_oversight</span> rule scores NORMATIVE; the policy's HITL trigger requires human review.<span class="where">Trust platform</span></li>
+      <li class="hold"><b>QP decides</b>The item appears in Human Review; the Qualified Person approves.<span class="where">Trust dashboard</span></li>
+      <li><b>Release resumes</b>Re-stamped <span class="mono">QP-CERTIFIED</span> with the reviewer's name; passes.<span class="where">app → platform</span></li>
+      <li><b>Audit</b>The hold and the certified release sit side by side in the Eval Trail.<span class="where">Trust dashboard</span></li>
+    </ol>
+    <p class="lede" style="margin-top:1.4cqi">A US release takes steps 1, 2 and 5 directly: the stamp says HOTL, so the platform lets it through and monitors.</p>
+    <span class="no">08</span>
+  </div>
+  <div class="notes"><button class="copy" type="button">Copy</button><span class="k">Speaker notes</span>
+    <p>Here is the mechanism. The agent proposes the release. Before the call is governed, the app stamps the passport for the destination onto it. The Trust platform has a rule that reads the stamp: a HITL stamp scores NORMATIVE, and an app-scoped policy with a HITL trigger turns that into a required human review, so the SDK pauses the agent. The Qualified Person approves in Human Review. When the release resumes, the stamp records the certification and who gave it, so the audit trail shows which authority the human exercised. For a US release the stamp says HOTL and the action simply proceeds under monitoring.</p></div>
+</section>
+
+<!-- 9 -->
+<section class="unit">
+  <div class="plate">
+    <p class="eyebrow">Demo run · local</p>
+    <h2>What you will see</h2>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Step</th><th>Action in the app</th><th>Platform decision</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Open the passport list</td><td>—</td><td>13 passports, tiers and stamps</td></tr>
+        <tr><td>2</td><td>Release · US</td><td><span class="v p">PERMISSIVE</span></td><td>US stamp: Execute · HOTL</td></tr>
+        <tr><td>3</td><td>Release · EU</td><td><span class="v n">HITL</span></td><td>EU stamp: Assist · HITL → Qualified Person</td></tr>
+        <tr><td>4</td><td>Approve in Human Review</td><td><span class="v p">RELEASED</span></td><td>Resumed as QP-CERTIFIED</td></tr>
+        <tr><td>5</td><td>Embargoed shipment</td><td><span class="v c">COERCIVE</span></td><td>OFAC/BIS: embargoed destination, denied party</td></tr>
+        <tr><td>6</td><td>Cold-chain excursion</td><td><span class="v c">COERCIVE</span></td><td>Agent acting outside its scope</td></tr>
+        <tr><td>7</td><td>Controlled-substance orders × 3</td><td><span class="v c">COERCIVE</span> on 3rd</td><td>Split under the DEA reporting threshold</td></tr>
+        <tr><td>8</td><td>Diversion Review Board</td><td><span class="v n">HITL</span></td><td>Four reviewers deadlock 2–2</td></tr>
+      </tbody></table></div>
+    <span class="no">09</span>
+  </div>
+  <div class="notes"><button class="copy" type="button">Copy</button><span class="k">Speaker notes</span>
+    <p>The demo runs locally against the beta Trust platform. Steps two to four are the passport story: the same release is permitted in the US, held in the EU, and released once a Qualified Person approves. Steps five to eight show the passport does not weaken anything else. Sanctions still block, an agent acting outside its scope is still blocked, order structuring is caught on the third order, and a deadlocked review board still escalates to a human. All twelve scenarios pass in the automated check before every demo.</p></div>
+</section>
+
+<!-- 10 -->
+<section class="unit">
+  <div class="plate">
+    <p class="eyebrow">Next</p>
+    <h2>From app-held passports to a platform capability</h2>
+    <div class="grid g4">
+      <div class="cell"><h3>Third-party agent</h3><p>Add a carrier's agent with its own passport; verify passports at the handoff. Makes the showcase cross-organisational.</p></div>
+      <div class="cell"><h3>Platform-native passports</h3><p>Passport fields on agent cards, a passport gate in the Policy Engine, the passport list in the Agent Registry.</p></div>
+      <div class="cell"><h3>Hosted demo</h3><p>Connect the standalone app to the GCP Trust deployment: the same app with different URLs and a new app credential.</p></div>
+      <div class="cell"><h3>Sourcing negotiation</h3><p>Restore the supplier-selection debate (cost vs qualified source) as a second multi-agent HITL scenario.</p></div>
+    </div>
+    <span class="no">10</span>
+  </div>
+  <div class="notes"><button class="copy" type="button">Copy</button><span class="k">Speaker notes</span>
+    <p>Four next steps. Tomorrow we add a third-party agent so the agreement is cross-organisational. Then we propose passports as a first-class platform object: fields on the agent card, a gate in the Policy Engine, and the list in the Agent Registry, so any client gets this without app-side code. We will connect the same standalone app to the hosted GCP platform. And we will restore the sourcing negotiation scenario as a second multi-agent example.</p></div>
+</section>
+
+</main>
+
+<script>
+(function () {
+  const units = Array.from(document.querySelectorAll('.unit'));
+  const btnPresent = document.getElementById('btn-present');
+  let idx = 0;
+
+  function show(i) {
+    idx = Math.max(0, Math.min(units.length - 1, i));
+    units.forEach((u, k) => u.classList.toggle('on', k === idx));
+  }
+  function setPresent(on) {
+    document.body.classList.toggle('present', on);
+    btnPresent.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btnPresent.textContent = on ? 'Exit present (Esc)' : 'Present';
+    if (on) { show(idx); window.scrollTo(0, 0); }
+  }
+  btnPresent.addEventListener('click', () => setPresent(!document.body.classList.contains('present')));
+  document.addEventListener('keydown', (e) => {
+    if (!document.body.classList.contains('present')) return;
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); show(idx + 1); }
+    if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); show(idx - 1); }
+    if (e.key === 'Escape') setPresent(false);
+  });
+  units.forEach((u, k) => u.querySelector('.plate').addEventListener('click', () => {
+    if (document.body.classList.contains('present')) show(k + 1);
+  }));
+
+  function copyText(text, btn) {
+    const done = () => { const t = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = t; }, 1400); };
+    const fallback = () => {
+      const r = document.createRange(); const target = btn.nextElementSibling?.nextElementSibling || btn.parentElement;
+      r.selectNodeContents(target); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = 'Selected, press Ctrl/⌘ C';
+    };
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+  }
+  document.querySelectorAll('.notes .copy').forEach((btn) => {
+    btn.addEventListener('click', () => copyText(btn.parentElement.querySelector('p').textContent.trim(), btn));
+  });
+  document.getElementById('btn-copy-all').addEventListener('click', (e) => {
+    const all = units.map((u, k) => {
+      const h = u.querySelector('h2')?.textContent.trim() || '';
+      const n = u.querySelector('.notes p')?.textContent.trim() || '';
+      return `Slide ${k + 1} — ${h}\n${n}`;
+    }).join('\n\n');
+    copyText(all, e.currentTarget);
+  });
+})();
+</script>

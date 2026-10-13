@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Passports</title>
+<style>
+:root {
+  --bg: #F4F1FB; --card: #FFFFFF; --border: #E3DDF0; --text: #1E1638; --muted: #6E6787;
+  --brand: #4B2A87; --brand-soft: #EEE8FA;
+  --t1: #1E7B6B; --t2: #D9822B; --t3: #C0392B; --t4: #6A3D9A;
+  --hitl: #1E7B6B; --hotl: #C0392B; --hic: #6A3D9A;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+       background: var(--bg); color: var(--text); font-size: 14px; }
+header { background: linear-gradient(90deg, #3A1F6E 0%, #4B2A87 55%, #5A34A0 100%); color: #fff;
+         padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+header h1 { font-size: 19px; margin: 0; font-weight: 700; letter-spacing: -0.2px; }
+header h1 em { color: #C6B6FF; font-style: normal; font-weight: 400; }
+header a { color: #fff; text-decoration: none; font-size: 13px; padding: 6px 12px;
+           border: 1px solid rgba(255,255,255,.3); border-radius: 6px; }
+header a:hover { background: rgba(255,255,255,.12); }
+main { max-width: 1180px; margin: 0 auto; padding: 20px 16px 48px; }
+.intro { color: var(--muted); margin: 0 0 16px; line-height: 1.5; max-width: 860px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 14px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.panel { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 760px; }
+th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted);
+     font-weight: 600; padding: 10px 14px; border-bottom: 1px solid var(--border); background: #FAF8FE; }
+td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr.row { cursor: pointer; }
+tr.row:hover td { background: var(--brand-soft); }
+tr.row:last-child td { border-bottom: none; }
+.name { font-weight: 600; }
+.sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.tier { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; }
+.tier.t1 { background: var(--t1); } .tier.t2 { background: var(--t2); }
+.tier.t3 { background: #FDECEA; color: var(--t3); border: 1px solid var(--t3); }
+.tier.t4 { background: var(--t4); }
+.stamp { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 6px;
+         padding: 3px 8px; margin: 0 6px 4px 0; font-size: 12px; white-space: nowrap; background: #fff; }
+.stamp b { font-weight: 700; }
+.ov { font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 4px; color: #fff; letter-spacing: .3px; }
+.ov.HITL { background: var(--hitl); } .ov.HOTL { background: var(--hotl); } .ov.HIC { background: var(--hic); }
+.mode { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .3px; border-radius: 4px; padding: 2px 7px; white-space: nowrap; }
+.mode.passport { background: var(--t4); color: #fff; }
+.mode.identity { color: var(--muted); border: 1px solid var(--border); background: #fff; }
+.cardlink { font-size: 12px; color: var(--brand); text-decoration: none; white-space: nowrap; }
+.cardlink:hover { text-decoration: underline; }
+.xj { display: inline-block; font-size: 10.5px; font-weight: 700; color: var(--t4); border: 1px solid var(--t4);
+      border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: 1px; }
+
+/* detail drawer */
+.scrim { position: fixed; inset: 0; background: rgba(30,22,56,.35); display: none; }
+.scrim.open { display: block; }
+.drawer { position: fixed; top: 0; right: 0; height: 100%; width: min(640px, 100%); background: var(--bg);
+          box-shadow: -8px 0 24px rgba(30,22,56,.18); transform: translateX(100%); transition: transform .2s ease;
+          overflow-y: auto; }
+.drawer.open { transform: none; }
+.dhead { background: var(--card); border-bottom: 1px solid var(--border); padding: 18px 20px; position: sticky; top: 0; }
+.dhead .close { float: right; border: 1px solid var(--border); background: #fff; border-radius: 6px; padding: 4px 10px; cursor: pointer; color: var(--text); }
+.dhead h2 { margin: 0 0 4px; font-size: 18px; }
+.dbody { padding: 16px 20px 32px; }
+.sec { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+.sec h3 { margin: 0 0 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+.kv { display: grid; grid-template-columns: 150px 1fr; gap: 6px 12px; font-size: 13px; }
+.kv .k { color: var(--muted); }
+.dims { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+.dim { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+.dim .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+.dim .val { font-weight: 700; margin: 2px 0; }
+.dim .txt { font-size: 12px; color: var(--muted); line-height: 1.35; }
+.jur { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+.jur-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.jur-top b { font-size: 14px; }
+.gap { background: #F5F0FF; border: 1px dashed var(--t4); border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.45; }
+ul.lin { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; }
+.err { padding: 24px; color: var(--t3); }
+@media (max-width: 560px) {
+  header { padding: 12px 16px; } .kv { grid-template-columns: 1fr; } .dims { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>PharmaLogistics <em>· Agent Passports</em></h1>
+  <a href="/">← Back to app</a>
+</header>
+<main>
+  <p class="intro">Every agent in the fleet has one governance record. Inside a trust domain the organisation
+    controls it is held in <b>identity mode</b> — the agent card in the Trust registry. When an agent acts across a
+    boundary the organisation does not control, the same record is presented in <b>passport mode</b>, with a stamp per
+    jurisdiction: what it may do there, how it is overseen, who granted it, and when the grant expires. Risk tier follows the primer — the highest of agency, impact and reach
+    sets the tier, each amplifier adds one, and a cross-jurisdiction boundary sets Tier 4 on its own. Oversight is
+    stamped per jurisdiction.</p>
+  <div class="legend">
+    <span><span class="tier t1">T1</span> Limited</span><span><span class="tier t2">T2</span> Elevated</span>
+    <span><span class="tier t3">T3</span> High</span><span><span class="tier t4">T4</span> Critical</span>
+    <span><span class="ov HITL">HITL</span> human in the loop</span><span><span class="ov HOTL">HOTL</span> human on the loop</span>
+    <span><span class="ov HIC">HIC</span> human in command</span>
+    <span><span class="mode passport">PASSPORT MODE</span> crosses a boundary</span><span><span class="mode identity">IDENTITY MODE</span> agent card</span>
+  </div>
+  <div class="panel"><div class="table-wrap" id="list"><div class="err" style="color:var(--muted)">Loading passports…</div></div></div>
+</main>
+
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" aria-hidden="true"></aside>
+
+<script>
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let DETAIL = {};
+let REGISTRY_URL = '';
+const modeBadge = m => m === 'passport' ? '<span class="mode passport">PASSPORT MODE</span>' : '<span class="mode identity">IDENTITY MODE</span>';
+
+function tierBadge(t, name) { return `<span class="tier t${t}">T${t}${name ? ' · ' + esc(name) : ''}</span>`; }
+function stampChip(j) { return `<span class="stamp"><b>${esc(j.code)}</b> ${esc(j.agency)} <span class="ov ${esc(j.oversight)}">${esc(j.oversight)}</span></span>`; }
+
+async function load() {
+  const el = document.getElementById('list');
+  try {
+    const r = await fetch('/api/passports', { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    DETAIL = d.detail || {};
+    REGISTRY_URL = d.registry_url || '';
+    const rows = (d.passports || []).slice().sort((a, b) => (a.record_mode === 'passport' ? -1 : 0) - (b.record_mode === 'passport' ? -1 : 0) || b.tier - a.tier || a.name.localeCompare(b.name));
+    el.innerHTML = `<table><thead><tr>
+        <th>Agent</th><th>Record mode</th><th>Passport</th><th>Risk tier</th><th>Jurisdiction stamps</th><th>Valid until</th>
+      </tr></thead><tbody>${rows.map(p => `
+      <tr class="row" onclick="openDrawer('${esc(p.agent_id)}')">
+        <td><div class="name">${esc(p.name)}${p.cross_jurisdiction ? '<span class="xj">CROSS-JURISDICTION</span>' : ''}</div>
+            <div class="sub">${esc(p.role)}</div></td>
+        <td>${modeBadge(p.record_mode)}</td>
+        <td class="mono">${esc(p.passport_no)}</td>
+        <td>${tierBadge(p.tier, p.tier_name)}<div class="sub">${esc(p.basis)}</div></td>
+        <td>${p.jurisdictions.map(stampChip).join('')}</td>
+        <td class="mono">${esc(p.valid_until)}</td>
+      </tr>`).join('')}</tbody></table>`;
+  } catch (e) {
+    el.innerHTML = `<div class="err">Could not load passports (${esc(e.message)}).</div>`;
+  }
+}
+
+function kv(pairs) { return `<div class="kv">${pairs.map(([k, v]) => `<div class="k">${esc(k)}</div><div>${v}</div>`).join('')}</div>`; }
+
+function openDrawer(id) {
+  const p = DETAIL[id]; if (!p) return;
+  const t = p.risk_tier;
+  const ceilingGap = p.cross_jurisdiction && p.jurisdictions.some(j => j.agency !== p.agency);
+  document.getElementById('drawer').innerHTML = `
+    <div class="dhead"><button class="close" onclick="closeDrawer()">Close</button>
+      <h2>${esc(p.name)}</h2>
+      <div class="sub mono">${esc(p.passport_no)} · issued ${esc(p.issued)} · valid until ${esc(p.valid_until)}</div>
+      <div style="margin-top:8px">${modeBadge(p.record_mode)} ${tierBadge(t.tier, t.name)} <span class="sub" style="margin-left:6px">${esc(t.basis)}</span></div>
+      <div class="sub" style="margin-top:8px">${p.record_mode === 'passport'
+        ? 'Presented at the trust boundary. Its identity-mode record is the agent card'
+        : 'Held in identity mode: this agent never acts outside a boundary the organisation controls. Its record is the agent card'}
+        <span class="mono">${esc(p.agent_id)}</span> in the Trust registry${REGISTRY_URL ? ` — <a class="cardlink" href="${esc(REGISTRY_URL)}" target="_blank" rel="noopener">open Agent Registry ↗</a>` : ''}.</div>
+    </div>
+    <div class="dbody">
+      <div class="sec"><h3>Risk tier — three dimensions, two amplifiers</h3>
+        <div class="dims">
+          <div class="dim"><div class="lbl">Agency</div><div class="val">Tier ${t.dimensions.agency}</div><div class="txt">${esc(p.agency_label)}</div></div>
+          <div class="dim"><div class="lbl">Impact</div><div class="val">Tier ${t.dimensions.impact}</div><div class="txt">${esc(p.impact_label)}</div></div>
+          <div class="dim"><div class="lbl">Reach</div><div class="val">Tier ${t.dimensions.reach}</div><div class="txt">${esc(p.reach_label)}</div></div>
+        </div>
+        ${kv([['Coordination', esc(p.coordination_label)], ['Trust boundary', esc(p.trust_boundary_label)],
+              ['Amplifiers raised', t.amplifiers.length ? esc(t.amplifiers.join(', ')) : 'none'],
+              ['Capability ceiling', esc(p.capability_ceiling)]])}
+      </div>
+      <div class="sec"><h3>Jurisdiction stamps</h3>
+        ${p.jurisdictions.map(j => `<div class="jur">
+          <div class="jur-top"><b>${esc(j.name)} (${esc(j.code)})</b><span>${esc(j.agency_label)} <span class="ov ${esc(j.oversight)}">${esc(j.oversight)}</span></span></div>
+          ${kv([['Authorised action', esc(j.authorized_action)], ['Escalation', esc(j.escalation)],
+                ['Legal entity', esc(j.legal_entity)], ['Applicable law', esc(j.applicable_law)], ['Status', esc(j.status)]])}
+        </div>`).join('')}
+        ${ceilingGap ? `<div class="gap"><b>Policy gap closed by the platform.</b> The agent is built to
+          ${esc(p.capability_ceiling.split(' —')[0].toLowerCase())}, but not every jurisdiction authorises that. Where a stamp
+          says HITL, the Trust platform holds the action for a human before it executes.</div>` : ''}
+      </div>
+      <div class="sec"><h3>Sovereignty</h3>
+        ${kv([['Acts in', esc(p.sovereignty.acts_in.join(', '))],
+              ['Data residency', esc(Object.entries(p.sovereignty.data_residency).map(([k, v]) => k + ': ' + v).join(' · '))],
+              ['Model region', esc(p.sovereignty.model_region)],
+              ['Transfer basis', Object.entries(p.sovereignty.transfer_basis).map(([k, v]) => `<div><b>${esc(k)}</b> — ${esc(v)}</div>`).join('')]])}
+      </div>
+      <div class="sec"><h3>Ownership &amp; lineage of authority</h3>
+        ${kv([['Owner', esc(p.ownership.owner_org)], ['Deployment owner', esc(p.ownership.deployment_owner)]])}
+        <ul class="lin" style="margin-top:10px">${p.lineage.map(g => `<li><b>${esc(g.from)}</b> → ${esc(g.to)}: ${esc(g.scope)} <span class="sub">(${esc(g.recorded)})</span></li>`).join('')}</ul>
+      </div>
+      <div class="sec"><h3>Assurance &amp; lifecycle</h3>
+        ${kv([['Pre-release eval', esc(p.assurance.pre_release_eval)], ['Certifying regime', esc(p.assurance.certifying_regime)],
+              ['Red team', esc(p.assurance.red_team)], ['Re-authorise on', esc(p.reauth_triggers.join(' · '))],
+              ['Revocation', esc(p.revocation)], ['Model', esc(p.model.base_model + ' — ' + p.model.weights_host)]])}
+      </div>
+    </div>`;
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer').setAttribute('aria-hidden', 'false');
+  document.getElementById('scrim').classList.add('open');
+}
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer').setAttribute('aria-hidden', 'true');
+  document.getElementById('scrim').classList.remove('open');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+load();
+</script>
+</body>
+</html>
