@@ -1,4 +1,7 @@
-# PharmaLogistics × NeuroTrust: demo guide
+# VitaLink Distribution × NeuroTrust: demo guide
+
+VitaLink Distribution is the demo's pharma distributor (US → EU). On the platform its app id is
+`pharmalogistics`, and the code lives in the `RAILogisticsClient` repo.
 
 ## 1. Git repo
 

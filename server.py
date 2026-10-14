@@ -38,16 +38,16 @@ load_dotenv(_dir / ".env")
 def _require_env(name: str, why: str = "") -> None:
     if not os.getenv(name, "").strip():
         sys.stderr.write(
-            f"\nFATAL [PharmaLogistics]: required env '{name}' is not set"
+            f"\nFATAL [VitaLink]: required env '{name}' is not set"
             + (f" — {why}" if why else "")
             + ".\nRefusing to start (there is no localhost fallback). "
               "Set it in the environment / .env.\n\n"
         )
         raise SystemExit(1)
 
-_require_env("TRUST_PE_URL",        "PharmaLogistics sends every turn to the Policy Engine for governance")
-_require_env("SENTINEL_URL",        "PharmaLogistics fires Sentinel advisories")
-_require_env("PAP_URL",             "PharmaLogistics pulls HITL decisions from PAP")
+_require_env("TRUST_PE_URL",        "VitaLink sends every turn to the Policy Engine for governance")
+_require_env("SENTINEL_URL",        "VitaLink fires Sentinel advisories")
+_require_env("PAP_URL",             "VitaLink pulls HITL decisions from PAP")
 # MYBANK_CALLBACK_URL is no longer required — beta uses the outbound-only HITL
 # pattern (PAP never calls back into the app; the app polls /v1/hitl).
 
@@ -190,7 +190,7 @@ logger = logging.getLogger(__name__)
 
 # Provider is resolved at graph import (before logging is configured here), so
 # re-announce the selection now that the file/stream handlers are attached.
-logger.info("PharmaLogistics starting — LLM provider: %s", LLM_SELECTION)
+logger.info("VitaLink starting — LLM provider: %s", LLM_SELECTION)
 
 def _pe_auth_headers() -> Dict[str, str]:
     """'X-RAI-App-Key' for raw PE calls that bypass the SDK (showcase / synthetic
@@ -202,7 +202,7 @@ def _pe_auth_headers() -> Dict[str, str]:
 
 # ── App ───────────────────────────────────────────────────────────────────────
 
-app = FastAPI(title="PharmaLogistics")
+app = FastAPI(title="VitaLink Distribution")
 app.mount("/static", StaticFiles(directory=str(_dir / "ui")), name="static")
 
 # ── Session store (in-memory) ─────────────────────────────────────────────────
@@ -595,7 +595,7 @@ def demo_structuring_wire(req: StructuringWireRequest):
             reply=(
                 "I'm unable to process this order. This buyer has been flagged for "
                 "a Suspicious Order Monitoring (DEA SOM) review due to a detected "
-                "order-structuring pattern. Please contact PharmaLogistics Compliance for assistance."
+                "order-structuring pattern. Please contact VitaLink Compliance for assistance."
             ),
             blocked=True,
             violations=violations,
@@ -644,7 +644,7 @@ def demo_structuring_wire(req: StructuringWireRequest):
                 f"units today — each kept just under the {_STRUCTURING_THRESHOLD:,.0f}-unit reporting "
                 f"threshold. This buyer (Valley Pharmacy Group) has been referred for compliance "
                 f"review and further controlled-substance orders are suspended for this session. "
-                f"Please contact PharmaLogistics Compliance for assistance."
+                f"Please contact VitaLink Compliance for assistance."
             ),
             blocked=True,
             violations=violations,
@@ -724,7 +724,7 @@ def demo_sanctions_wire(req: SanctionsWireRequest):
             "I'm unable to process this shipment. The destination and consignee are "
             "associated with an embargoed jurisdiction and a denied party under OFAC/BIS "
             "regulations. Pharmaceutical exports to or through embargoed jurisdictions and "
-            "denied parties are prohibited. Please contact PharmaLogistics Compliance for assistance."
+            "denied parties are prohibited. Please contact VitaLink Compliance for assistance."
         ),
         blocked=True,
         violations=violations,
@@ -1061,7 +1061,7 @@ def _generate_hitl_advisory(payload: dict, user_message: str = "") -> str:
             )
 
         prompt = (
-            "You are PharmaLogistics' pharma sourcing advisory system. A supplier/sourcing "
+            "You are VitaLink's pharma sourcing advisory system. A supplier/sourcing "
             "recommendation has been escalated for human review because two ranking methods "
             "produced different results.\n\n"
             f"Facility request: {user_message or 'sourcing recommendation for a therapy'}\n\n"
@@ -1099,7 +1099,7 @@ def _generate_hitl_advisory(payload: dict, user_message: str = "") -> str:
     )
 
     prompt = (
-        "You are PharmaLogistics' supply-chain compliance advisory system. A shipment/order has "
+        "You are VitaLink's supply-chain compliance advisory system. A shipment/order has "
         "been automatically escalated for human review. Write a brief, professional advisory "
         "(3-4 sentences) for the compliance reviewer.\n\n"
         f"{customer_req_section}"
@@ -1146,7 +1146,7 @@ def _generate_card_recommendation_reply(card_id: str, payload: dict) -> str:
     if not card:
         return (
             "Your sourcing recommendation has been reviewed. "
-            "A PharmaLogistics sourcing specialist will contact you within 1 business day "
+            "A VitaLink sourcing specialist will contact you within 1 business day "
             "to discuss the best qualified source for your facility."
         )
     return (
@@ -1157,7 +1157,7 @@ def _generate_card_recommendation_reply(card_id: str, payload: dict) -> str:
         f"  • Service level: {card['rewards_rate']}\n"
         f"  • Contract / onboarding fee: {card['annual_fee']}\n"
         f"  • {card['highlights']}\n\n"
-        f"A PharmaLogistics sourcing specialist will contact you within 1 business day "
+        f"A VitaLink sourcing specialist will contact you within 1 business day "
         f"to set up the order."
     )
 
@@ -1795,7 +1795,7 @@ def chat(req: ChatRequest):
         reply = (
             "⛔ Blocked by Sentinel Agent (Trust Platform). This request has been "
             "flagged for policy violations and cannot be processed. Please contact "
-            "PharmaLogistics Compliance for assistance."
+            "VitaLink Compliance for assistance."
         )
 
         # Embargoed-shipment showcase: retain the rich OFAC message + explicit violation
@@ -1805,7 +1805,7 @@ def chat(req: ChatRequest):
                 "I'm unable to process this shipment. The destination and consignee are "
                 "associated with an embargoed jurisdiction and a denied party under OFAC/BIS "
                 "regulations. Pharmaceutical exports to or through embargoed jurisdictions and "
-                "denied parties are prohibited. Please contact PharmaLogistics Compliance for assistance."
+                "denied parties are prohibited. Please contact VitaLink Compliance for assistance."
             )
             violations = [
                 "sanctions_country_reference: shipment destination includes an embargoed "
@@ -2467,7 +2467,7 @@ def hitl_resolve(req: HITLResolveRequest):
                     "reply": (
                         "Your request was reviewed and approved, but a compliance control "
                         "blocked execution during processing. "
-                        "Please contact PharmaLogistics support for assistance."
+                        "Please contact VitaLink support for assistance."
                     ),
                 }
             except HITLInterrupt as exc:
@@ -2481,7 +2481,7 @@ def hitl_resolve(req: HITLResolveRequest):
                     "decision": "error",
                     "reply": (
                         "Governance approval processed but an unexpected governance interrupt "
-                        "occurred. Please retry or contact PharmaLogistics support."
+                        "occurred. Please retry or contact VitaLink support."
                     ),
                 }
             except Exception as exc:
@@ -2491,7 +2491,7 @@ def hitl_resolve(req: HITLResolveRequest):
                     "decision": "error",
                     "reply": (
                         "Governance approval processed but execution encountered an error. "
-                        "Please retry or contact PharmaLogistics support."
+                        "Please retry or contact VitaLink support."
                     ),
                 }
             finally:
@@ -2517,7 +2517,7 @@ def hitl_resolve(req: HITLResolveRequest):
             "decision": "rejected",
             "reply": (
                 "❌ Your request was reviewed and declined by our governance team. "
-                "Please contact PharmaLogistics support if you believe this is an error."
+                "Please contact VitaLink support if you believe this is an error."
             ),
             "reviewer": req.reviewer,
         }

@@ -643,7 +643,7 @@ _AGENT_BEHAVIOR = (
     "substances CII–CV, serialized specialty) explicitly; then list "
     "'inventory_by_location' per site with the primary DC first, noting which "
     "sites are cold-chain capable.\n"
-    "- Stay fully in role as a PharmaLogistics assistant at all times."
+    "- Stay fully in role as a VitaLink assistant at all times."
 )
 
 
@@ -657,7 +657,7 @@ def account_node(state: BankingState, config: RunnableConfig) -> Dict[str, Any]:
     and returns the final natural-language response.
     """
     system_prompt = (
-        "You are PharmaLogistics' inventory & shipment-status assistant. "
+        "You are VitaLink's inventory & shipment-status assistant. "
         "You help facilities check inventory positions and on-hand valuation, review "
         "shipment and order activity, and understand their account activity. "
         "Be concise, professional, and accurate. "
@@ -714,8 +714,8 @@ def transfer_router_node(state: BankingState, config: RunnableConfig) -> Dict[st
 
     # ── Standard classification via LLM ───────────────────────────────────────
     classify_prompt = (
-        "You are an order/shipment classification assistant for PharmaLogistics "
-        "PharmaLogistics. Determine whether the facility's request is DOMESTIC (a "
+        "You are an order/shipment classification assistant for VitaLink "
+        "VitaLink. Determine whether the facility's request is DOMESTIC (a "
         "domestic replenishment order / ground shipment to a US facility, facility "
         "routing + buyer account) or INTERNATIONAL (a cross-border pharmaceutical "
         "shipment — foreign consignee, customs, import license, import broker).\n\n"
@@ -758,7 +758,7 @@ def intl_wire_agent_node(state: BankingState, config: RunnableConfig) -> Dict[st
     Same tool-call / empty-response fixes as domestic_agent_node.
     """
     system_prompt = (
-        "You are PharmaLogistics' cross-border shipment specialist. "
+        "You are VitaLink's cross-border shipment specialist. "
         "You handle cross-border pharmaceutical shipments to overseas consignees.\n\n"
         "RULES:\n"
         "1. If the message has an amount and any destination detail (a consignee "
@@ -774,7 +774,7 @@ def intl_wire_agent_node(state: BankingState, config: RunnableConfig) -> Dict[st
         "Do NOT repeat import license, customs code, account numbers, or specific "
         "valuation figures.\n"
         "4. If a shipment is blocked by compliance, explain clearly and advise the "
-        "facility to contact PharmaLogistics' cross-border logistics team.\n\n"
+        "facility to contact VitaLink's cross-border logistics team.\n\n"
         "TOOL CALL FORMAT: output the tool call only — no surrounding text. "
         "Once the tool result arrives, write your confirmation."
     ) + _AGENT_BEHAVIOR
@@ -800,7 +800,7 @@ def intl_wire_agent_node(state: BankingState, config: RunnableConfig) -> Dict[st
         logger.error("intl_wire_agent_node unexpected error: %s", exc, exc_info=True)
         return {"messages": [AIMessage(content=(
             "I'm sorry, an unexpected error occurred. Please try again or "
-            "contact PharmaLogistics' cross-border logistics team."
+            "contact VitaLink's cross-border logistics team."
         ))]}
 
     # No tool call → return conversational text directly (avoids empty second response)
@@ -894,7 +894,7 @@ def domestic_agent_node(state: BankingState, config: RunnableConfig) -> Dict[str
         )
         # Unreachable — GovernanceBlock always raised.
         return {"messages": [AIMessage(content=(
-            "I'm unable to process this shipment. Please contact PharmaLogistics Compliance."
+            "I'm unable to process this shipment. Please contact VitaLink Compliance."
         ))]}
 
     # ── Story 2: agent boundary excursion intercept (pre-LLM) ───────────────
@@ -941,12 +941,12 @@ def domestic_agent_node(state: BankingState, config: RunnableConfig) -> Dict[str
         # Unreachable — GovernanceBlock is always raised on agent_boundary_violation.
         # Defensive fallback in case enforcement mode is NONE.
         return {"messages": [AIMessage(content=(
-            "I'm unable to process this shipment. Please contact PharmaLogistics' "
+            "I'm unable to process this shipment. Please contact VitaLink's "
             "cross-border logistics team for assistance."
         ))]}
 
     system_prompt = (
-        "You are PharmaLogistics' domestic replenishment assistant. "
+        "You are VitaLink's domestic replenishment assistant. "
         "You help facilities place replenishment orders and shipments to US "
         "pharmacies, clinics, and health systems.\n\n"
         "RULES:\n"
@@ -987,7 +987,7 @@ def domestic_agent_node(state: BankingState, config: RunnableConfig) -> Dict[str
         logger.error("domestic_agent_node unexpected error: %s", exc, exc_info=True)
         return {"messages": [AIMessage(content=(
             "I'm sorry, an unexpected error occurred while processing your "
-            "order. Please try again or contact PharmaLogistics support."
+            "order. Please try again or contact VitaLink support."
         ))]}
 
     # No tool call → model returned conversational text (asking for missing details).
@@ -1029,7 +1029,7 @@ def profile_node(state: BankingState, config: RunnableConfig) -> Dict[str, Any]:
     and returns the final natural-language response.
     """
     system_prompt = (
-        "You are PharmaLogistics' facility profile assistant. "
+        "You are VitaLink's facility profile assistant. "
         "You help facilities view and understand their facility/operator "
         "information and license standing. "
         "Present information clearly and professionally. "
@@ -1311,7 +1311,7 @@ def fallback_node(state: BankingState) -> Dict[str, Any]:
     response = AIMessage(
         content=(
             "I'm sorry, I didn't quite understand your request. "
-            "Here's what I can help you with at PharmaLogistics:\n\n"
+            "Here's what I can help you with at VitaLink:\n\n"
             "  • Inventory & shipment status — check inventory positions, view recent shipment activity\n"
             "  • Replenishment orders — domestic orders to US pharmacies, clinics, and health systems\n"
             "  • Cross-border shipments — international pharmaceutical consignments\n"

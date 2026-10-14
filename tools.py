@@ -1,5 +1,5 @@
 """
-PharmaLogistics — LangChain tool definitions.
+VitaLink — LangChain tool definitions.
 
 Each tool represents a pharmaceutical supply-chain capability the LLM can invoke.
 Tools are grouped by domain for selective binding to agent nodes.
@@ -177,7 +177,7 @@ def domestic_transfer(
 ) -> dict:
     """
     Execute a domestic replenishment order / ground shipment to a US pharmacy,
-    clinic, or health-system from a PharmaLogistics inventory account.
+    clinic, or health-system from a VitaLink inventory account.
 
     Draws down inventory from the source account and records the order in the
     shipment/order ledger.
@@ -259,7 +259,7 @@ def international_transfer(
     passport: Optional[dict] = None,
 ) -> dict:
     """
-    Execute a cross-border pharmaceutical shipment from a PharmaLogistics
+    Execute a cross-border pharmaceutical shipment from a VitaLink
     inventory account.
 
     Args:
@@ -415,7 +415,7 @@ def search_credit_cards(
     annual_fee_max: float = 9999.0,
 ) -> dict:
     """
-    Search PharmaLogistics' catalog of sourcing options by cost
+    Search VitaLink's catalog of sourcing options by cost
     criteria and return the top matches ranked by cost-criteria score (highest first).
 
     The cost-criteria score is computed from supplier attributes only — it does

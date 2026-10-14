@@ -1,4 +1,4 @@
-"""Onboard PharmaLogistics onto a Trust platform (local beta or GCP) — config only.
+"""Onboard VitaLink onto a Trust platform (local beta or GCP) — config only.
 
     venv/bin/python onboard_trust.py [--pap URL] [--pe URL] [--rotate-key]
 
@@ -33,7 +33,7 @@ PACKS = ["session_guard", "sanctions", "prompt_filters", "eu_ai_act", "agent_coo
          "sanctions_advanced", "agent_passport"]
 
 APP = {
-    "app_id": APP_ID, "display_name": "PharmaLogistics", "owner": "PharmaLogistics Global N.V.",
+    "app_id": APP_ID, "display_name": "VitaLink Distribution", "owner": "VitaLink Distribution N.V.",
     "application_domain": "healthcare", "base_tier": "HIGH", "environment": "development",
     "description": "Multi-agent pharma distribution assistant: inventory, domestic replenishment, "
                    "US→EU cross-border release, diversion review.",
@@ -128,6 +128,10 @@ def main() -> int:
         exists = True
     else:
         print("  · app already registered")
+    # Operator metadata (display name, owner, purpose, regimes). Also fills it in when the
+    # SDK registered the app first, which creates the record without these fields.
+    r = pap.patch(f"/v1/apps/{APP_ID}", json={k: v for k, v in APP.items() if k != "app_id"}, headers=ACTOR)
+    print(f"  {'✓' if r.status_code == 200 else '✗'} app metadata ({APP['display_name']}): HTTP {r.status_code}")
     if cred is None and (a.rotate_key or not (HERE / ".env").exists()
                          or not re.search(r"(?m)^RAI_APP_KEY=.+", (HERE / ".env").read_text())):
         r = _retry_insert(lambda: pap.post(f"/v1/apps/{APP_ID}/credentials", headers=ACTOR))

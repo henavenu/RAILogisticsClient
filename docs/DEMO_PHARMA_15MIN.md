@@ -1,4 +1,4 @@
-# 15-Minute Demo — NeuroTrust PharmaLogistics
+# 15-Minute Demo — NeuroTrust VitaLink
 
 **Audience:** pharma distribution / supply-chain leadership + risk & compliance.
 **Emphasis:** the **Model Card** — the model as a governed supply-chain dependency.

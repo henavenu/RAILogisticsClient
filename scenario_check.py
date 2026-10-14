@@ -1,4 +1,4 @@
-"""Run every PharmaLogistics menu scenario against the live app and print the verdicts.
+"""Run every VitaLink menu scenario against the live app and print the verdicts.
 
     venv/bin/python scenario_check.py [base_url]
 

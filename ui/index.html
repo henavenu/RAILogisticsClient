@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PharmaLogistics</title>
+<title>VitaLink Distribution</title>
 <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* ── Dark theme (filter-based) ────────────────────────────────────────────
-   PharmaLogistics is authored light with many hardcoded inline hex colors, so a dark
+   VitaLink is authored light with many hardcoded inline hex colors, so a dark
    theme is produced by inverting the whole document and rotating hues 180° to
    keep the original hue families. Real raster media is counter-inverted so it
    renders normally; inline SVG/icons are UI chrome and invert with the page. */
@@ -29,7 +29,7 @@ body {
 }
 
 /* ── Top app bar ─────────────────────────────────────────────────
-   PharmaLogistics uses a full-width, top-bar-driven layout (distinct from
+   VitaLink uses a full-width, top-bar-driven layout (distinct from
    the sidebar-driven MyBank reference). The bar carries brand + facility
    identity + user; a second toolbar strip below carries actions. */
 header {
@@ -1313,7 +1313,7 @@ header {
 <!-- Login overlay -->
 <div id="login-overlay">
   <div class="login-card">
-    <div class="login-logo">Pharma<em>Logistics</em></div>
+    <div class="login-logo">VitaLink<em> Distribution</em></div>
     <div class="login-tagline">Supply-Chain Governance Portal — please sign in</div>
     <label class="login-label" for="login-user">Username</label>
     <input id="login-user" class="login-input" type="text"
@@ -1350,7 +1350,7 @@ header {
       <!-- Pediment highlight -->
       <path d="M16 4.5 L27 12 H5 Z" fill="#A594FF" opacity="0.35"/>
     </svg>
-    Pharma<em>Logistics</em>
+    VitaLink<em> Distribution</em>
   </div>
 
   <!-- Facility identity — mid top-bar -->
@@ -1455,7 +1455,7 @@ header {
     <div class="chat-header">
       <div class="online-dot"></div>
       <div class="chat-header-text">
-        <strong>PharmaLogistics Assistant</strong> — supply-chain governance, live
+        <strong>VitaLink Assistant</strong> — supply-chain governance, live
       </div>
       <button class="ip-toggle-btn active" id="ip-toggle-btn" onclick="toggleInteractionPanel()">
         Activity
@@ -1468,13 +1468,13 @@ header {
     <div class="messages" id="messages">
       <div class="welcome-state" id="welcome">
         <div class="welcome-icon">📦</div>
-        <h3>Welcome to PharmaLogistics</h3>
+        <h3>Welcome to VitaLink Distribution</h3>
         <p>Ask about inventory positions, recent shipment activity, replenishment orders, or the facility profile.</p>
       </div>
     </div>
 
     <div class="typing-row" id="typing">
-      <div class="msg-icon" style="background:#4B2A87;color:#ffffff;">PL</div>
+      <div class="msg-icon" style="background:#4B2A87;color:#ffffff;">VL</div>
       <div class="typing-bubble">
         <div class="dots"><span></span><span></span><span></span></div>
       </div>
@@ -1530,7 +1530,7 @@ header {
     <div class="gl-body">
       <div id="gl-intro" class="gl-intro"></div>
       <div id="gl-colhead" class="gl-colhead" style="display:none;">
-        <span>PharmaLogistics — app</span>
+        <span>VitaLink — app</span>
         <span>Trust Platform — governance
         </span>
       </div>
@@ -1774,7 +1774,7 @@ function handleCardAction(action, cardName) {
   var cn = cardName || `this card`;
   var msg = ``;
   if (action === `apply`) {
-    msg = `Your application for the ` + cn + ` has been initiated.\n\nOur team will review your details and you will receive a confirmation to your registered email address within 1-2 business days. You can also contact PharmaLogistics Compliance to complete your application.`;
+    msg = `Your application for the ` + cn + ` has been initiated.\n\nOur team will review your details and you will receive a confirmation to your registered email address within 1-2 business days. You can also contact VitaLink Compliance to complete your application.`;
   } else if (action === `remind`) {
     msg = `Noted! We will remind you about the ` + cn + ` when you are ready.\n\nJust message me any time and I will be happy to help you apply.`;
   } else if (action === `explore`) {
@@ -1853,7 +1853,7 @@ function appendBank(text, verdict, agentChain) {
     : '';
   msgs().insertAdjacentHTML('beforeend', `
     <div class="msg-row bank">
-      <div class="msg-icon">PL</div>
+      <div class="msg-icon">VL</div>
       <div class="msg-body">
         <div class="msg-bubble">${esc(text)}</div>
         ${chainHtml}
@@ -2027,7 +2027,7 @@ function appendBlocked(violations) {
     : '';
   msgs().insertAdjacentHTML('beforeend', `
     <div class="msg-row bank">
-      <div class="msg-icon">PL</div>
+      <div class="msg-icon">VL</div>
       <div class="msg-body">
         <div class="msg-blocked">
           <div class="blocked-header">🚫 Request blocked by ${blockerLabel}</div>
@@ -2045,7 +2045,7 @@ function appendAdvisory(message) {
   // Rendered as an amber informational bubble, distinct from the blocked (red) bubble.
   msgs().insertAdjacentHTML('beforeend', `
     <div class="msg-row bank">
-      <div class="msg-icon">PL</div>
+      <div class="msg-icon">VL</div>
       <div class="msg-body">
         <div class="msg-advisory">
           <div class="advisory-header">ℹ️ Compliance Advisory</div>
@@ -2063,7 +2063,7 @@ function appendHITLPending(text) {
   const row = document.createElement('div');
   row.className = 'msg-row bank';
   row.innerHTML = `
-    <div class="msg-icon">PL</div>
+    <div class="msg-icon">VL</div>
     <div class="msg-body">
       <div class="msg-hitl" id="hitl-bubble">
         <div class="hitl-header">⏳ Compliance Review in Progress</div>
@@ -2965,7 +2965,7 @@ function _roleChip(role){
 function _glApp(e){
   const lbl = e.who==='customer' ? 'Customer'
             : e.who==='system'   ? 'System'
-            : ('PharmaLogistics · ' + (e.from || 'Agent'));   // App · Agent identity
+            : ('VitaLink · ' + (e.from || 'Agent'));   // App · Agent identity
   const cls = (e.tally ? ' tally' : '') + (e.resolved ? ' resolved' : '');
   return `<div class="gl-msg ${e.who}${cls}" data-glidx="${e._idx}"><span class="who">${lbl}</span>${e.text||''}</div>`;
 }
@@ -3069,7 +3069,7 @@ function _glRenderPicker(){
     el.innerHTML = '<span class="pl">Recorded run</span>'
       + (ready
          ? '<span class="gl-recok">● Your recorded session is loaded — press ▶ Play</span>'
-         : '<span class="gl-recwait">No recording yet — run a scenario in PharmaLogistics’ chat first, then press Replay</span>');
+         : '<span class="gl-recwait">No recording yet — run a scenario in VitaLink’s chat first, then press Replay</span>');
   } else {
     // Interactive Walkthrough = the scripted scenarios.
     const chips = Object.keys(LENS_SCENARIOS).filter(id => id !== 'live_capture').map(id =>
@@ -3108,7 +3108,7 @@ function lensRender(){
     const intro = document.getElementById('gl-intro');
     intro.style.display = '';
     intro.innerHTML = `<div class="it">Replay your recorded run</div><div class="ig">recorded session</div>`
-      + `<div class="ib">There’s no recording yet. Run a scenario in PharmaLogistics’ chat — e.g. <b>Diversion Review Board</b> — let it reach Human Review, then switch to <b>Replay</b> again to play back your real run here.</div>`;
+      + `<div class="ib">There’s no recording yet. Run a scenario in VitaLink’s chat — e.g. <b>Diversion Review Board</b> — let it reach Human Review, then switch to <b>Replay</b> again to play back your real run here.</div>`;
     document.getElementById('gl-colhead').style.display = 'none';
     document.getElementById('gl-turns').innerHTML = '';
     document.getElementById('gl-spine').innerHTML = '';

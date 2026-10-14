@@ -1,4 +1,4 @@
-# PharmaLogistics — standalone Trust client
+# VitaLink Distribution — standalone Trust client
 
 A multi-agent pharmaceutical supply-chain assistant (LangGraph) governed by the
 **RAI Trust platform** through the RAI Trust SDK. This repo is the **app only**: it

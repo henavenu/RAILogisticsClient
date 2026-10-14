@@ -1,4 +1,4 @@
-# PharmaLogistics — Agent Passport demo (local)
+# VitaLink Distribution — Agent Passport demo (local)
 
 **Story in one line:** one agent, one action, two countries — the agent passport decides how
 much autonomy the agent gets *where it acts*, and the Trust platform enforces it at runtime.
@@ -11,10 +11,10 @@ Running time: ~10 minutes. Everything runs on this Mac.
 
 | What | URL |
 |---|---|
-| **PharmaLogistics app** (the governed client) | http://127.0.0.1:5001 — sign in `dana.reyes` / PIN `1234` |
+| **VitaLink app** (the governed client) | http://127.0.0.1:5001 — sign in `dana.reyes` / PIN `1234` |
 | **Agent passports** (list + full passport) | http://127.0.0.1:5001/passports |
 | **Trust dashboard** (Cockpit, Eval Trail, Agent Registry, Human Review) | http://127.0.0.1:3080/ui/dashboard |
-| **Agent Activity** — PharmaLogistics topology | http://127.0.0.1:3004/ui/agent-activity?app_id=pharmalogistics&window_min=60 |
+| **Agent Activity** — VitaLink topology | http://127.0.0.1:3080/ui/agent-activity?app_id=pharmalogistics&window_min=60 |
 | Trust admin UI (apps, policies, packs) | http://127.0.0.1:3004/ui |
 | Trust APIs — PAP / Policy Engine | http://127.0.0.1:3002/docs · http://127.0.0.1:3003/docs |
 

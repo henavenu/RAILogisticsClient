@@ -1,4 +1,4 @@
-# PharmaLogistics — CLAUDE.md
+# VitaLink Distribution — CLAUDE.md
 
 Standalone client app of the RAI Trust platform. See README.md for run, onboarding and
 scenarios. This file holds what is non-obvious when changing the code.

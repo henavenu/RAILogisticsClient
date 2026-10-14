@@ -1,4 +1,4 @@
-# PharmaLogistics — use cases, scenario by scenario
+# VitaLink Distribution — use cases, scenario by scenario
 
 App: http://127.0.0.1:5001 (dana.reyes / 1234). Passports: http://127.0.0.1:5001/passports.
 Human Review: http://127.0.0.1:3080/ui/dashboard → Human Review. Click **Reset demo** before you start.

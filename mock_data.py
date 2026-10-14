@@ -1,5 +1,5 @@
 """
-NeuroTrust PharmaLogistics — In-memory mock supply-chain data.
+NeuroTrust VitaLink — In-memory mock supply-chain data.
 
 Pharma distribution demo (Cencora-style). Contains the operating facility
 profile, inventory positions, shipment/order history, and a ledger for orders

@@ -1,7 +1,7 @@
-# PharmaLogistics — Pharma Supply Chain — Integration Outline
+# VitaLink Distribution — Pharma Supply Chain — Integration Outline
 
 **Client demo:** Cencora (pharmaceutical distribution & logistics)
-**Client app:** *PharmaLogistics* — a supply-chain assistant instrumented with the RAI Trust SDK, cloned from the MyBank reference app.
+**Client app:** *VitaLink* — a supply-chain assistant instrumented with the RAI Trust SDK, cloned from the MyBank reference app.
 
 ---
 

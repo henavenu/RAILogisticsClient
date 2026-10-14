@@ -1,5 +1,5 @@
 """
-Agent passports for the PharmaLogistics fleet.
+Agent passports for the VitaLink fleet.
 
 Every agent carries a passport: who owns it, what it may do and where, how it is
 overseen, and when the grant expires. The app owns the passports (the Trust platform
@@ -105,10 +105,10 @@ def assign_tier(agency: str, impact: int, reach: int, coordination: str, trust_b
 
 # ── Fleet-wide facts ──────────────────────────────────────────────────────────
 
-OWNER = "PharmaLogistics Global N.V."
+OWNER = "VitaLink Distribution N.V."
 DEPLOY = "Global Quality & Supply Chain Systems"
-US_ENTITY = "PharmaLogistics Inc. — Trenton, NJ"
-EU_ENTITY = "PharmaLogistics Europe B.V. — Amsterdam"
+US_ENTITY = "VitaLink Distribution Inc. — Trenton, NJ"
+EU_ENTITY = "VitaLink Distribution Europe B.V. — Amsterdam"
 REAUTH = ["new tool", "new authority", "new jurisdiction", "new model", "tier change"]
 
 US_LAW = "FDA 21 CFR 211 · DSCSA (DQSA Title II) · DEA CSA 21 CFR 1301"

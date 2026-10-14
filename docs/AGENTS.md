@@ -1,4 +1,4 @@
-# PharmaLogistics — Agent Architecture
+# VitaLink Distribution — Agent Architecture
 
 The app is a **multi-agent LangGraph** assistant for a pharma distribution facility.
 Every agent action (tool call and agent-to-agent handoff) is governed by the RAI
