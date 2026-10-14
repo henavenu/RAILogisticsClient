@@ -1,5 +1,5 @@
 {
-  "router": {
+  "order_intake": {
     "name": "Order Intake",
     "agent_type": "router",
     "capability": "orchestration",
@@ -23,7 +23,7 @@
     "hitl_mode": "none",
     "model_id": "llama-3.3-70b-versatile"
   },
-  "account": {
+  "inventory_agent": {
     "name": "Inventory Agent",
     "agent_type": "llm",
     "capability": "read-only lookup",
@@ -48,7 +48,7 @@
     "hitl_mode": "none",
     "model_id": "llama-3.3-70b-versatile"
   },
-  "profile": {
+  "facility_desk": {
     "name": "Facility Desk",
     "agent_type": "llm",
     "capability": "read-only lookup",
@@ -73,7 +73,7 @@
     "hitl_mode": "none",
     "model_id": "llama-3.3-70b-versatile"
   },
-  "domestic_agent": {
+  "route_optimizer": {
     "name": "Route Optimizer",
     "agent_type": "llm",
     "capability": "order execution",
@@ -98,7 +98,7 @@
     "hitl_mode": "agent",
     "model_id": "llama-3.3-70b-versatile"
   },
-  "intl_wire_agent": {
+  "cross_border_logistics": {
     "name": "Cross-Border Logistics",
     "agent_type": "llm",
     "capability": "cross-border shipment execution",
@@ -124,7 +124,7 @@
     "hitl_mode": "agent",
     "model_id": "llama-3.3-70b-versatile"
   },
-  "policy_council": {
+  "diversion_review_board": {
     "name": "Diversion Review Board",
     "agent_type": "router",
     "capability": "review orchestration",
@@ -150,7 +150,7 @@
     "hitl_mode": "agent",
     "model_id": "llama-3.3-70b-versatile"
   },
-  "coordinator": {
+  "supply_chain_coordinator": {
     "name": "Supply Chain Coordinator",
     "agent_type": "router",
     "capability": "orchestration",
@@ -177,7 +177,7 @@
     "hitl_mode": "agent",
     "model_id": "llama-3.3-70b-versatile"
   },
-  "transaction_monitoring": {
+  "order_monitoring": {
     "name": "Order Monitoring Agent",
     "agent_type": "llm",
     "capability": "advisory only",
@@ -202,7 +202,7 @@
     "hitl_mode": "by_design",
     "model_id": "llama-3.3-70b-versatile"
   },
-  "revenue_agent": {
+  "supply_continuity_reviewer": {
     "name": "Supply Continuity Reviewer",
     "agent_type": "llm",
     "capability": "advisory only",
@@ -226,7 +226,7 @@
     "hitl_mode": "by_design",
     "model_id": "llama-3.3-70b-versatile"
   },
-  "cx_agent": {
+  "patient_access_reviewer": {
     "name": "Patient Access Reviewer",
     "agent_type": "llm",
     "capability": "advisory only",
@@ -249,7 +249,7 @@
     "hitl_mode": "by_design",
     "model_id": "llama-3.3-70b-versatile"
   },
-  "risk_policy_agent": {
+  "regulatory_compliance_reviewer": {
     "name": "Regulatory Compliance Reviewer",
     "agent_type": "llm",
     "capability": "advisory only",
@@ -273,7 +273,7 @@
     "hitl_mode": "by_design",
     "model_id": "llama-3.3-70b-versatile"
   },
-  "payment_council": {
+  "diversion_review": {
     "name": "Diversion Review",
     "agent_type": "router",
     "capability": "review orchestration",
@@ -297,7 +297,7 @@
     "kill_switch": true,
     "hitl_mode": "agent"
   },
-  "fallback": {
+  "help_desk": {
     "name": "Help Desk",
     "agent_type": "llm",
     "capability": "conversational only",
@@ -317,7 +317,7 @@
     "kill_switch": true,
     "hitl_mode": "none"
   },
-  "transfer_router": {
+  "shipment_classifier": {
     "name": "Shipment Classifier",
     "agent_type": "router",
     "capability": "orchestration",

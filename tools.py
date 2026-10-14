@@ -830,7 +830,7 @@ def _reviewer_ack(agent_role: str, vote: str, round_number: int) -> dict:
 def transaction_monitoring_review(agent_prompt: str, vote: str = "UPHOLD", round_number: int = 1) -> dict:
     """Diversion Monitoring reviewer: assesses velocity/anomaly signals on the
     controlled-substance order and votes UPHOLD or OVERTURN. One A2A call per invocation."""
-    return _reviewer_ack("transaction_monitoring", vote, round_number)
+    return _reviewer_ack("order_monitoring", vote, round_number)
 
 
 @tool

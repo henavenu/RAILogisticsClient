@@ -403,6 +403,11 @@ header {
   align-items: center;
   gap: 6px;
 }
+.hitl-review-link {
+  margin-left: auto; white-space: nowrap; font-weight: 600;
+  color: #b45309; text-decoration: none; border-bottom: 1px dashed #d97706;
+}
+.hitl-review-link:hover { color: #78350f; }
 .hitl-spinner {
   width: 10px; height: 10px;
   border: 2px solid #fcd34d;
@@ -1550,6 +1555,9 @@ function _newSessionId() {
 }
 // `let` (not const) so a demo reset can rotate it — see resetDemo().
 let SESSION_ID = _newSessionId();
+// Human Review lives on the Trust dashboard: the local gateway (:3080) or GCP (TRUST_DASHBOARD_URL).
+let REVIEW_URL = 'http://127.0.0.1:3080/ui/dashboard?goto=hitl';
+fetch('/api/trust-links').then(r => r.json()).then(d => { if (d.review_url) REVIEW_URL = d.review_url; }).catch(() => {});
 let turns = 0;
 let _currentUser = { name: 'Alex Morgan', initials: 'AM' };
 
@@ -2063,6 +2071,8 @@ function appendHITLPending(text) {
         <div class="hitl-footer">
           <div class="hitl-spinner"></div>
           Awaiting compliance review — we will notify you once complete.
+          <a class="hitl-review-link" href="${esc(REVIEW_URL)}" target="_blank" rel="noopener"
+             title="Opens the NeuroTrust dashboard on the Human Review tab">Open Human Review ↗</a>
         </div>
       </div>
     </div>`;
@@ -2689,9 +2699,10 @@ function _isPausedHitl(f){ const c=LENS.cursor; return c>=0 && f[c] && f[c].hitl
 // Build a Lens scenario from a REAL captured run — request-scope eval trail
 // (real verdicts), real agent identities, real Sentinel checks + Coordinator
 // interventions, 2-stage HITL. This IS the captured reality, not a script.
-const _LIVE_DISP = { transaction_monitoring:'Transaction Monitoring', revenue:'Revenue Agent',
-  customer_experience:'Customer Experience Agent', risk_policy:'Risk Policy Agent',
-  coordinator:'Coordinator', banking_agent:'Banking Agent' };
+const _LIVE_DISP = { order_monitoring:'Order Monitoring Agent', revenue:'Supply Continuity Reviewer',
+  customer_experience:'Patient Access Reviewer', risk_policy:'Regulatory Compliance Reviewer',
+  supply_chain_coordinator:'Supply Chain Coordinator', coordinator:'Supply Chain Coordinator',
+  order_intake:'Order Intake', banking_agent:'Order Intake' };
 function _liveDisp(k){ return _LIVE_DISP[k] || (k ? k.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) : 'Agent'); }
 function _liveScenarioFromCapture(cap, chat, trigger){
   const council = cap.council||{}, sent = cap.sentinel||{}, coord = cap.coordinator||{};

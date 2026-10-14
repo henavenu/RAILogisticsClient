@@ -47,25 +47,25 @@ DEFAULT_CASE = (
 # ── Reviewer specs: mandate-driven vote + allowed reasons + canned fallback ──
 REVIEWER_SPECS = [
     {
-        "role": "transaction_monitoring", "label": "Transaction Monitoring", "vote": "UPHOLD",
+        "role": "order_monitoring", "label": "Order Monitoring Agent", "vote": "UPHOLD",
         "mandate": "Flag fraud risk from velocity and anomaly signals on the declined charge.",
         "reasons": UPHOLD_REASONS, "default_reason": "VELOCITY_ANOMALY",
         "canned": "Velocity anomaly — 5th high-value charge today, 3rd international; the decline was the correct control.",
     },
     {
-        "role": "revenue", "label": "Revenue", "vote": "OVERTURN",
+        "role": "revenue", "label": "Supply Continuity Reviewer", "vote": "OVERTURN",
         "mandate": "Protect legitimate revenue and retain high-value customers.",
         "reasons": OVERTURN_REASONS, "default_reason": "ESTABLISHED_RELATIONSHIP",
         "canned": "Premium long-tenure customer ($1.2M relationship); a false decline loses a genuine sale and risks attrition.",
     },
     {
-        "role": "customer_experience", "label": "Customer Experience", "vote": "OVERTURN",
+        "role": "customer_experience", "label": "Patient Access Reviewer", "vote": "OVERTURN",
         "mandate": "Avoid false declines and the friction/churn they cause.",
         "reasons": OVERTURN_REASONS, "default_reason": "FALSE_DECLINE_RISK",
         "canned": "A hard decline embarrasses a premium customer; offer one-time step-up verification instead.",
     },
     {
-        "role": "risk_policy", "label": "Risk Policy", "vote": "UPHOLD",
+        "role": "risk_policy", "label": "Regulatory Compliance Reviewer", "vote": "UPHOLD",
         "mandate": "Enforce thresholds and limit chargeback / compliance exposure.",
         "reasons": UPHOLD_REASONS, "default_reason": "EXPOSURE_RISK",
         "canned": "Same-day cross-border concentration creates chargeback/compliance exposure until identity is verified.",

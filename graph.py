@@ -813,7 +813,7 @@ def intl_wire_agent_node(state: BankingState, config: RunnableConfig) -> Dict[st
     for call in ai_msg.tool_calls:
         if call["name"] == "international_transfer":
             args = call["args"]
-            args["passport"] = stamp_action("intl_wire_agent", args.get("country", ""), args.get("bank_swift", ""))
+            args["passport"] = stamp_action("cross_border_logistics", args.get("country", ""), args.get("bank_swift", ""))
             _certified_by = _passport_certified.pop(state.get("session_id", ""), None)
             if _certified_by and args["passport"].get("passport_oversight") == "HITL":
                 args["passport"]["passport_oversight"] = "QP-CERTIFIED"
@@ -1073,19 +1073,19 @@ _council_cache: dict = {}
 # fires) while avoiding COERCIVE keywords (aml/sanctions/malicious/misconduct).
 #   tool, role, label, vote, explanation
 _REVIEWERS = [
-    (transaction_monitoring_review, "transaction_monitoring", "Transaction Monitoring", "UPHOLD",
+    (transaction_monitoring_review, "order_monitoring", "Order Monitoring Agent", "UPHOLD",
      "Velocity anomaly: card ending 7731 was AUTO-DECLINED on a $12,000 charge at TechMegastore "
      "Singapore — the 5th high-value purchase today and the 3rd international, well above this card's "
      "baseline for same-day cross-border spend. The decline was the correct control. Vote: UPHOLD the denial."),
-    (revenue_review, "revenue", "Revenue", "OVERTURN",
+    (revenue_review, "revenue", "Supply Continuity Reviewer", "OVERTURN",
      "The declined $12,000 purchase is from a premium customer (relationship value $1.2M) with a "
      "consistent, legitimate spending pattern. The decline lost a genuine high-value sale and risks "
      "attrition. Vote: OVERTURN the denial."),
-    (cx_review, "customer_experience", "Customer Experience", "OVERTURN",
+    (cx_review, "customer_experience", "Patient Access Reviewer", "OVERTURN",
      "A hard decline at checkout is a false decline that embarrasses a premium customer — false "
      "declines drive support friction and churn, and our decline rate is already above target. "
      "Vote: OVERTURN the denial (with step-up verification)."),
-    (risk_review, "risk_policy", "Risk Policy", "UPHOLD",
+    (risk_review, "risk_policy", "Regulatory Compliance Reviewer", "UPHOLD",
      "Same-day cross-border concentration plus this high-value charge creates chargeback / compliance "
      "exposure if the activity is not genuinely the cardholder's. Vote: UPHOLD the denial pending "
      "identity verification."),
@@ -1200,9 +1200,9 @@ def payment_council_node(state: BankingState, config: RunnableConfig) -> Dict[st
     # charged terms ("fraud", amounts) so they evaluate PERMISSIVE.
     for _i, _hp in enumerate((
         {"agent_prompt": "Please review this declined card transaction and coordinate an authorization decision.",
-         "from_agent": "banking_agent", "to_agent": "coordinator"},
+         "from_agent": "order_intake", "to_agent": "supply_chain_coordinator"},
         {"agent_prompt": "Reviewers, please assess this declined transaction across your domains and return your verdict.",
-         "from_agent": "coordinator", "to_agent": "reviewers"},
+         "from_agent": "supply_chain_coordinator", "to_agent": "reviewers"},
     )):
         _execute_tools(_synth_a2a_call(agent_handoff.name, _hp, f"pc-hand{_i+1}-{session_id[:8]}"),
                        {agent_handoff.name: agent_handoff}, config)
@@ -1214,15 +1214,15 @@ def payment_council_node(state: BankingState, config: RunnableConfig) -> Dict[st
     # former single-node version), so the cap=9 → Sentinel → HITL timing and the
     # 2-2 deadlock are preserved. Edge-mediated handoffs make the reviewers real
     # peer nodes that the SDK discovers from execution.
-    return Command(goto="coordinator", update={"council_round": 1, "council_idx": 0})
+    return Command(goto="supply_chain_coordinator", update={"council_round": 1, "council_idx": 0})
 
 
 # ── Reviewer node map (Stage 3): role → real graph-node name (agent identity) ──
 _ROLE_TO_NODE = {
-    "transaction_monitoring": "transaction_monitoring",
-    "revenue":                "revenue_agent",
-    "customer_experience":    "cx_agent",
-    "risk_policy":            "risk_policy_agent",
+    "order_monitoring": "order_monitoring",
+    "revenue":                "supply_continuity_reviewer",
+    "customer_experience":    "patient_access_reviewer",
+    "risk_policy":            "regulatory_compliance_reviewer",
 }
 # Reviewer specs in poll order: (node_name, tool, role, label)
 _REVIEWER_NODES = [
@@ -1254,7 +1254,7 @@ def _make_reviewer_node(node_name: str, tool, role: str, label: str):
                             f"pc-{node_name}-r{rnd}-{session_id[:8]}"),
             {tool.name: tool}, config,
         )
-        return Command(goto="coordinator", update={"council_idx": idx + 1})
+        return Command(goto="supply_chain_coordinator", update={"council_idx": idx + 1})
     return _reviewer_node
 
 
@@ -1301,7 +1301,7 @@ def coordinator_node(state: BankingState, config: RunnableConfig):
 
     # Round complete (all 4 reviewers polled) → re-poll (still 2-2, no majority).
     logger.info("coordinator_node: round %d tally 2-2 → no majority, re-polling", rnd)
-    return Command(goto="coordinator", update={"council_round": rnd + 1, "council_idx": 0})
+    return Command(goto="supply_chain_coordinator", update={"council_round": rnd + 1, "council_idx": 0})
 
 
 # ── Node: fallback ────────────────────────────────────────────────────────────
@@ -1329,7 +1329,7 @@ def route_intent(state: BankingState) -> str:
     intent = state.get("intent", "unknown")
     # "transfer" routes to the transfer_router sub-graph entry
     if intent == "transfer":
-        return "transfer_router"
+        return "transfer_router"   # intent key; mapped to the shipment_classifier node
     return intent
 
 
@@ -1345,57 +1345,57 @@ def build_graph():
     g = StateGraph(BankingState)
 
     # Top-level domain nodes
-    g.add_node("router",          router_node)
-    g.add_node("account",         account_node)
-    g.add_node("profile",         profile_node)
-    g.add_node("fallback",        fallback_node)
+    g.add_node("order_intake",          router_node)
+    g.add_node("inventory_agent",         account_node)
+    g.add_node("facility_desk",         profile_node)
+    g.add_node("help_desk",        fallback_node)
 
     # Transfer sub-graph: router → type classifier → specialist agent
-    g.add_node("transfer_router",       transfer_router_node)
-    g.add_node("intl_wire_agent",       intl_wire_agent_node)
-    g.add_node("domestic_agent",        domestic_agent_node)
+    g.add_node("shipment_classifier",       transfer_router_node)
+    g.add_node("cross_border_logistics",       intl_wire_agent_node)
+    g.add_node("route_optimizer",        domestic_agent_node)
 
     # Story 5 — payment surge council: real coordinator + 4 reviewer peer nodes
     # (Stage 3). payment_council sets up + hands to coordinator, which polls the
     # reviewer nodes via Command(goto) then escalates → HITL.
-    g.add_node("payment_council",       payment_council_node)
-    g.add_node("coordinator",           coordinator_node)
+    g.add_node("diversion_review",       payment_council_node)
+    g.add_node("supply_chain_coordinator",           coordinator_node)
     for _rn, _fn in _REVIEWER_NODE_FNS.items():
         g.add_node(_rn, _fn)
 
-    g.set_entry_point("router")
+    g.set_entry_point("order_intake")
 
     # Top-level routing: intent classifier → domain nodes
     g.add_conditional_edges(
-        "router",
+        "order_intake",
         route_intent,
         {
-            "account":              "account",
-            "transfer_router":      "transfer_router",
-            "profile":              "profile",
-            "unknown":              "fallback",
-            "payment_council":      "payment_council",       # Story 5
+            "account":              "inventory_agent",
+            "transfer_router":      "shipment_classifier",
+            "profile":              "facility_desk",
+            "unknown":              "help_desk",
+            "payment_council":      "diversion_review",       # Story 5
         },
     )
 
     # Transfer routing: type classifier → specialist agent
     g.add_conditional_edges(
-        "transfer_router",
+        "shipment_classifier",
         route_transfer_type,
         {
-            "international":           "intl_wire_agent",
-            "domestic":                "domestic_agent",
+            "international":           "cross_border_logistics",
+            "domestic":                "route_optimizer",
         },
     )
 
-    g.add_edge("account",              END)
-    g.add_edge("intl_wire_agent",      END)
-    g.add_edge("domestic_agent",       END)
+    g.add_edge("inventory_agent",              END)
+    g.add_edge("cross_border_logistics",      END)
+    g.add_edge("route_optimizer",       END)
     # payment_council hands to coordinator via Command(goto); coordinator returns
     # the closing message (→ END) after the HITL is resolved on re-invoke.
-    g.add_edge("coordinator",          END)
-    g.add_edge("profile",              END)
-    g.add_edge("fallback",             END)
+    g.add_edge("supply_chain_coordinator",          END)
+    g.add_edge("facility_desk",              END)
+    g.add_edge("help_desk",             END)
 
     return g.compile()
 

@@ -3,6 +3,8 @@
 **Open 3 tabs:** app http://127.0.0.1:5001 (dana.reyes / 1234) · passports http://127.0.0.1:5001/passports · dashboard http://127.0.0.1:3080/ui/dashboard
 **Before:** click **Reset demo** in the app.
 
+> **Human Review:** use the **Open Human Review ↗** link that appears on a held reply. Locally that's the :3080 dashboard (started by `./run.sh`). **Never use :3004:** its Human Review looks empty.
+
 | # | Do | Say |
 |---|---|---|
 | 1 | **Passports tab** → point at the tier column → click **Cross-Border Logistics** | "Every agent has a passport. Tiers come from our primer. Crossing a jurisdiction sets Tier 4 on its own, valid 6 months. Same agent: US stamp *Execute · HOTL*, EU stamp *Assist · HITL — a Qualified Person certifies*." |

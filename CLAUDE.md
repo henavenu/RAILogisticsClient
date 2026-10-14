@@ -12,17 +12,22 @@ scenarios. This file holds what is non-obvious when changing the code.
 - SDK: `rai_trust_sdk` + `rai_sdk_langgraph` 0.1.2 from `sdk-dist/wheelhouse`. Its config
   comes from `rai.env` (found by walking up from CWD); the app credential is
   `RAI_APP_KEY` in `.env`.
-- Code is a reskin of the platform's MyBank reference app: internal ids keep banking
-  names (`intl_wire_agent`, `international_transfer`, `domestic_transfer`,
-  `policy_council`), display names are pharma (`server.py` `_A2A_TOOL_AGENT`,
-  `_HITL_AGENT_LABEL`). Keep internal ids stable — the platform keys on them.
+- Code is a reskin of the platform's MyBank reference app. **Agent ids** (graph node
+  names, `a2a_tools` targets, passport/card keys) are pharma (`cross_border_logistics`,
+  `route_optimizer`, `order_intake`, `supply_chain_coordinator`, `diversion_review_board`, …)
+  because the dashboard's Agent Activity labels nodes from the id, and MyBank ids
+  (`intl_wire_agent`, `coordinator`, `banking_agent`) render as banking names. Avoid ids
+  in its MyBank `DISPLAY` map and `coordinator`. **Tool names** keep banking names
+  (`international_transfer`, `domestic_transfer`, `request_policy_review`, the 4 reviewer
+  tools): the platform's council detection and A2A caps key on them. Function names
+  (`intl_wire_agent_node`, …) and intent keys are internal and unchanged.
 
 ## Agent passports (`passports.py`)
 
 - Risk tiers follow the RAI primer (no LOA anywhere): max(agency, impact, reach); +1 per
   amplifier; swarm or cross-jurisdiction → T4 alone. Oversight follows agency per
   jurisdiction stamp: instruct/assist → HITL, execute → HOTL, delegate → HIC.
-- Enforcement: `graph.py intl_wire_agent_node` stamps `stamp_action()` onto the
+- Enforcement: `graph.py intl_wire_agent_node` (node `cross_border_logistics`) stamps `stamp_action()` onto the
   `international_transfer` args; the platform's `passport_oversight` rule (regex on the
   stamp) + app-scoped `hitl_trigger` policy hold `HITL` stamps for human review.
   `international_transfer` is in `a2a_tools`, so the hold fires on the A2A evaluation.

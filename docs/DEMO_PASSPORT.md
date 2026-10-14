@@ -80,7 +80,7 @@ Click **🇪🇺 Release · EU (QP confirms)**.
 
 ### 4 · The Qualified Person decides (2 min) — tab: **dashboard → Human Review**
 
-- Open **Human Review**. The item: app **pharmalogistics**, agent **intl_wire_agent**, category
+- Open **Human Review**. The item: app **pharmalogistics**, agent **cross_border_logistics**, category
   *agent_arbitration*, reason *Agent passport stamp requires human-in-the-loop…*
 - Click **✅ Approve**. "This is the QP certifying the batch."
 - Back in the **app**: within a few seconds the held release completes with a reference ID.

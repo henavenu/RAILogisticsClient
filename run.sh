@@ -41,5 +41,22 @@ fi
 [ -f rai.env ] || { echo "[PharmaLogistics] No rai.env — copying rai.env.example (Trust API URLs)."; cp rai.env.example rai.env; }
 [ -f .env ]    || { echo "[PharmaLogistics] No .env — copying .env.example. Set your LLM key and RAI_APP_KEY."; cp .env.example .env; }
 
+# Local Trust stack only: start the gateway on :3080, which gives the dashboard's Human Review
+# tab the routing the GKE ingress provides (served straight from :3004 the queue looks empty).
+# On GCP the ingress already does this, so it is skipped when rai.env points elsewhere.
+PAP_CFG="$(grep -E '^RAI_PAP_URL=' rai.env | cut -d= -f2 | awk '{print $1}')"
+if [[ "$PAP_CFG" =~ ^http://(127\.0\.0\.1|localhost)[:/] ]]; then
+  if ! lsof -nP -iTCP:3080 -sTCP:LISTEN >/dev/null 2>&1; then
+    nohup "$PY" trust_gateway.py > gateway.log 2>&1 &
+    sleep 2
+  fi
+  if curl -fs -o /dev/null http://127.0.0.1:3080/v1/hitl; then
+    echo "[PharmaLogistics] Human Review: http://127.0.0.1:3080/ui/dashboard?goto=hitl  (use :3080, not :3004)"
+  else
+    echo "[PharmaLogistics] WARNING: Human Review gateway on :3080 is not answering. Held requests will not show" >&2
+    echo "[PharmaLogistics]          in the dashboard. Check gateway.log (is the Trust platform up?)." >&2
+  fi
+fi
+
 echo "[PharmaLogistics] Starting on http://127.0.0.1:${MYBANK_PORT}  (app_id=pharmalogistics)"
 exec "$PY" server.py
