@@ -1897,14 +1897,14 @@ function _outcomeClass(outcome) {
 }
 
 function _verdictBadge(verdict, flags) {
-  if (flags && flags.blocked)      return '<span class="trace-verdict blocked">Blocked</span>';
-  if (flags && flags.hitl_pending) return '<span class="trace-verdict hitl">HITL Pending</span>';
+  if (flags && flags.blocked)      return '<span class="trace-verdict blocked">BLOCK</span>';
+  if (flags && flags.hitl_pending) return '<span class="trace-verdict hitl">REVIEW</span>';
   if (!verdict) return '';
   const cls = verdict === 'CLEAR' ? 'clear'
             : verdict === 'WATCH' ? 'watch'
             : verdict === 'ALERT' ? 'alert'
             : 'default';
-  return `<span class="trace-verdict ${cls}">${esc(verdict)}</span>`;
+  return `<span class="trace-verdict ${cls}">${esc(vlabel(verdict))}</span>`;
 }
 
 // Build flow nodes from eval_trace (server-provided) or fall back to agent_chain
@@ -1914,7 +1914,7 @@ function _buildFlowHtml(evalTrace, agentChain, flags) {
     nodes = evalTrace.map(step => {
       const meta  = _STEP_META[step.type] || { icon: '•', cls: '' };
       const label = step.outcome
-        ? `${step.label} <span style="opacity:.65;font-size:.9em;">(${step.outcome})</span>`
+        ? `${step.label} <span style="opacity:.65;font-size:.9em;">(${vlabel(step.outcome)})</span>`
         : step.label;
       return { html: `<span class="trace-node ${meta.cls}">${meta.icon} ${label}</span>` };
     });
@@ -2227,6 +2227,15 @@ function setEnabled(on) {
 function msgs() { return document.getElementById('messages'); }
 function scroll() { msgs().scrollTop = msgs().scrollHeight; }
 
+// Customer-facing verdict labels. The Trust platform's own terms (PERMISSIVE / NORMATIVE /
+// COERCIVE) stay on the platform dashboard; CSS classes still key on the platform verdict.
+const _VLABEL = { PERMISSIVE: 'PASS', CLEAR: 'PASS', NORMATIVE: 'WARN', WATCH: 'WARN',
+                  COERCIVE: 'BLOCK', BLOCKED: 'BLOCK', HITL: 'REVIEW' };
+function vlabel(v) {
+  const s = String(v == null ? '' : v);
+  return _VLABEL[s.toUpperCase()] || s;
+}
+
 function esc(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
           .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
@@ -2307,7 +2316,7 @@ async function runShowcase(scenario) {
           <span class="sc-role-badge ${role.cls}">${role.label}</span>
           ${agentLabel ? `<span class="sc-agents">${agentLabel}</span>` : ''}
           <span class="sc-verdict ${verd}" style="margin-left:${agentLabel?'4px':'auto'};">
-            ${icon} ${verd}
+            ${icon} ${vlabel(verd)}
           </span>
         </div>
         <div class="sc-content">${preview.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
@@ -2933,7 +2942,7 @@ function lensPause(){
 function _glVerdictBadge(v){
   if (!v) return '';
   const c = v==='PERMISSIVE'?'v-perm-b':v==='NORMATIVE'?'v-norm-b':'v-coer-b';
-  return `<span class="gl-verdict ${c}">${v}</span>`;
+  return `<span class="gl-verdict ${c}">${vlabel(v)}</span>`;
 }
 // Request-scope role chip — every PE evaluation is one governed request.
 function _roleChip(role){

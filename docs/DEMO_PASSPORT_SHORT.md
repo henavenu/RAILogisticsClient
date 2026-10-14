@@ -1,6 +1,6 @@
 # Agent Passport demo — short script (~7 min)
 
-**Open 3 tabs:** app http://127.0.0.1:5001 (dana.reyes / 1234) · passports http://127.0.0.1:5001/passports · dashboard http://127.0.0.1:3004/ui/dashboard
+**Open 3 tabs:** app http://127.0.0.1:5001 (dana.reyes / 1234) · passports http://127.0.0.1:5001/passports · dashboard http://127.0.0.1:3080/ui/dashboard
 **Before:** click **Reset demo** in the app.
 
 | # | Do | Say |

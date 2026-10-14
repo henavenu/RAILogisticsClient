@@ -340,7 +340,7 @@ def list_passports():
     return {"app_id": os.getenv("TRUST_APP_ID", "pharmalogistics"), "passports": summary(),
             "detail": PASSPORTS,
             # where each agent's identity-mode record (its agent card) lives
-            "registry_url": os.getenv("TRUST_DASHBOARD_URL", "http://127.0.0.1:3004/ui/dashboard")}
+            "registry_url": os.getenv("TRUST_DASHBOARD_URL", "http://127.0.0.1:3080/ui/dashboard")}
 
 
 @app.get("/api/passports/{agent_id}")

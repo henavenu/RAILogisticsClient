@@ -13,7 +13,7 @@ Running time: ~10 minutes. Everything runs on this Mac.
 |---|---|
 | **PharmaLogistics app** (the governed client) | http://127.0.0.1:5001 — sign in `dana.reyes` / PIN `1234` |
 | **Agent passports** (list + full passport) | http://127.0.0.1:5001/passports |
-| **Trust dashboard** (Cockpit, Eval Trail, Agent Registry, Human Review) | http://127.0.0.1:3004/ui/dashboard |
+| **Trust dashboard** (Cockpit, Eval Trail, Agent Registry, Human Review) | http://127.0.0.1:3080/ui/dashboard |
 | **Agent Activity** — PharmaLogistics topology | http://127.0.0.1:3004/ui/agent-activity?app_id=pharmalogistics&window_min=60 |
 | Trust admin UI (apps, policies, packs) | http://127.0.0.1:3004/ui |
 | Trust APIs — PAP / Policy Engine | http://127.0.0.1:3002/docs · http://127.0.0.1:3003/docs |
@@ -61,7 +61,7 @@ Click **🇺🇸 Release · US (Execute)**.
 
 > "Export release under the US stamp: Execute, human on the loop. The agent just does it."
 
-- Result: shipment submitted, reference ID. Activity panel: **PERMISSIVE**, Cross-Border Logistics.
+- Result: shipment submitted, reference ID. Activity panel: **PASS**, Cross-Border Logistics.
 
 ### 3 · EU release — same agent, same action, held (2 min)
 
@@ -74,7 +74,7 @@ Click **🇪🇺 Release · EU (QP confirms)**.
 - Explain the mechanism (no platform code was changed for this):
   1. Before the call is governed, the app stamps the passport onto it —
      `passport_jurisdiction: EU · passport_oversight: HITL · passport_tier: T4`.
-  2. The Trust platform's `passport_oversight` rule reads the stamp → NORMATIVE.
+  2. The Trust platform's `passport_oversight` rule reads the stamp → WARN.
   3. An app-scoped policy with `hitl_trigger` turns that into **REQUIRE_HUMAN_REVIEW**; the SDK
      pauses the agent.
 
@@ -88,15 +88,15 @@ Click **🇪🇺 Release · EU (QP confirms)**.
 > "On resume, the stamp records the certification — `QP-CERTIFIED`, by whom — so the audit trail
 > shows not just *that* a human approved, but *which authority* the human was exercising."
 
-- Optional: **Eval Trail** → filter app `pharmalogistics` → the NORMATIVE hold and the certified
+- Optional: **Eval Trail** → filter app `pharmalogistics` → the WARN hold and the certified
   release side by side.
 
 ### 5 · The rest of the guardrails still hold (2 min, pick 1–2)
 
 | Click | Shows |
 |---|---|
-| **Embargoed shipment** | COERCIVE — Russia destination + denied party (OFAC/BIS). Passports don't override sanctions. |
-| **Cold-chain excursion** ("expedite … skip the cold-chain validation") | COERCIVE — Route Optimizer tried to act outside its scope. |
+| **Embargoed shipment** | BLOCK — Russia destination + denied party (OFAC/BIS). Passports don't override sanctions. |
+| **Cold-chain excursion** ("expedite … skip the cold-chain validation") | BLOCK — Route Optimizer tried to act outside its scope. |
 | **Controlled-substance orders** ×3 | 3rd order blocked: orders split under the 8,500-unit DEA threshold (structuring). |
 | **Diversion Review Board** ("Why was our $12,000 … order held?") | HITL — four reviewer agents deadlock 2-2; the platform escalates to a human. |
 
