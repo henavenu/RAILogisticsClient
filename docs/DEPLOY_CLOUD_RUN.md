@@ -19,7 +19,7 @@ SDK `governance ACTIVE eval=SYNC enforce=RAISE`, `scenario_check.py` ALL PASS (1
 ## Before you deploy: confirm with the platform team
 
 1. **IAP.** The platform URL sits behind Google Identity-Aware Proxy: an anonymous request
-   gets a 302 to Google sign-in. The SDK (0.1.2 here, 0.1.7 in the new bundle) sends no IAP
+   gets a 302 to Google sign-in. The SDK (0.1.7) sends no IAP
    token. Ask how a client Cloud Run service should authenticate (IAP access for its
    service account plus an OIDC token, an internal route that bypasses IAP, or an SDK
    build that adds the token).
@@ -29,10 +29,7 @@ SDK `governance ACTIVE eval=SYNC enforce=RAISE`, `scenario_check.py` ALL PASS (1
    may not expose. Same for `onboard_supply_chain.py`.
 3. **Sentinel and Coordinator routes.** The app calls them directly for the Trust Radar
    and Human Review enrichment (`SENTINEL_URL`, `COORDINATOR_URL`).
-4. **SDK version.** The new bundle (`rai-sdk-wheelhouse-v1.53`: core 0.1.7, langgraph
-   0.1.4) adds `GovernanceHold` for NORMATIVE verdicts. VitaLink's Human Review flow was
-   built and tested on 0.1.2, so upgrade only after a local test.
-5. **Human Review deep link.** `?goto=hitl` was added by the local gateway; check the
+4. **Human Review deep link.** `?goto=hitl` was added by the local gateway; check the
    cloud dashboard supports it, or the link opens the dashboard home.
 
 ## Steps

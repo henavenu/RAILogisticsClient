@@ -131,13 +131,17 @@ banking_graph = instrument(
         # The 5th reaches A2A_HITL_THRESHOLD=5 → Sentinel sync → HITLInterrupt.
         # All four agent signals are advisory NORMATIVE (never COERCIVE).
         "request_policy_review": "diversion_review_board",
-        # Card Review Authority — each reviewer is its own A2A tool → distinct
-        # agent identity. The coordinator still uses request_policy_review above so
-        # the HITL detection (keyed on that tool) is unchanged.
-        "transaction_monitoring_review": "order_monitoring",
-        "revenue_review":                "supply_continuity_reviewer",
-        "cx_review":                     "patient_access_reviewer",
-        "risk_review":                   "regulatory_compliance_reviewer",
+        # Diversion Review Board votes — each reviewer node calls its vote tool, and the
+        # vote goes TO the Supply Chain Coordinator, so every vote is a genuine
+        # reviewer → coordinator agent_to_agent edge. (Mapping a tool to the node that
+        # calls it is a from==to self-loop, which SDK langgraph 0.1.4 governs as a plain
+        # tool_call — the deadlock then never reaches the PE's A2A threshold.) The
+        # coordinator still uses request_policy_review above, so the HITL detection
+        # keyed on that tool is unchanged.
+        "transaction_monitoring_review": "supply_chain_coordinator",
+        "revenue_review":                "supply_chain_coordinator",
+        "cx_review":                     "supply_chain_coordinator",
+        "risk_review":                   "supply_chain_coordinator",
         # Real, governed handoffs (Banking Agent → Coordinator → reviewers). Listing
         # agent_handoff here makes every handoff a genuine agent_to_agent evaluation
         # (not narration). It is one-shot routing (called once each) so it never

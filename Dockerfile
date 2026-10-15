@@ -18,8 +18,7 @@ WORKDIR /app
 # not on PyPI: it resolves from the wheelhouse shipped in the repo.
 COPY requirements.txt ./
 COPY sdk-dist/wheelhouse/ ./wheelhouse/
-RUN pip install --no-cache-dir -r requirements.txt \
- && pip install --no-cache-dir --find-links ./wheelhouse rai-sdk-langgraph \
+RUN pip install --no-cache-dir --find-links ./wheelhouse -r requirements.txt \
  && python -c "from rai_sdk_langgraph import instrument; print('RAI Trust SDK OK')"
 
 COPY . .

@@ -9,7 +9,8 @@ scenarios. This file holds what is non-obvious when changing the code.
   service — local beta stack (`~/NeuroAITrust-beta`, `start_all.sh`) or GCP. Do not
   add platform code here; platform behaviour is configured through its APIs
   (`onboard_trust.py`).
-- SDK: `rai_trust_sdk` + `rai_sdk_langgraph` 0.1.2 from `sdk-dist/wheelhouse`. Its config
+- SDK: `rai_trust_sdk` 0.1.7 + `rai_sdk_langgraph` 0.1.4 from `sdk-dist/wheelhouse` (pinned in
+  `requirements.txt`, installed with `--find-links sdk-dist/wheelhouse`). Its config
   comes from `rai.env` (found by walking up from CWD); the app credential is
   `RAI_APP_KEY` in `.env`.
 - Code is a reskin of the platform's MyBank reference app. **Agent ids** (graph node
@@ -30,11 +31,17 @@ scenarios. This file holds what is non-obvious when changing the code.
 - Enforcement: `graph.py intl_wire_agent_node` (node `cross_border_logistics`) stamps `stamp_action()` onto the
   `international_transfer` args; the platform's `passport_oversight` rule (regex on the
   stamp) + app-scoped `hitl_trigger` policy hold `HITL` stamps for human review.
-  `international_transfer` is in `a2a_tools`, so the hold fires on the A2A evaluation.
+  The rule covers `tool_call` and `agent_to_agent`. Since langgraph 0.1.4 the Cross-Border
+  agent calling its own a2a-mapped `international_transfer` is a self-loop and is governed
+  as a `tool_call`; the hold still fires there.
+- `a2a_tools` targets must be a DIFFERENT agent from the node that calls the tool. The
+  four Review Board vote tools map to `supply_chain_coordinator` (reviewer → coordinator).
+  Mapped to the reviewers themselves they become self-loops under 0.1.4, the votes stop
+  counting as agent_to_agent, and the 2-2 deadlock never reaches Human Review.
 - Resume: on approval `server.py hitl_resolve` sets `graph._passport_certified[sid]`;
-  the re-run stamps `QP-CERTIFIED` (does not match the rule). Without this the installed
-  SDK 0.1.2 re-raises the HITL on resume — it ignores `_hitl_cleared_sessions` for
-  directive HITLs.
+  the re-run stamps `QP-CERTIFIED` (does not match the rule). Without this the SDK
+  (seen on 0.1.2) re-raises the HITL on resume — it ignores `_hitl_cleared_sessions` for
+  directive HITLs. `scenario_check.py --approve` tests this loop.
 
 ## Gotchas
 

@@ -34,8 +34,8 @@ if [ ! -x "$PY" ]; then
   echo "[VitaLink] First run — creating venv with $BOOT_PY and installing dependencies..."
   "$BOOT_PY" -m venv "$VENV"
   "$PY" -m pip install --upgrade pip --quiet
-  "$PY" -m pip install -r requirements.txt
-  "$PY" -m pip install --find-links sdk-dist/wheelhouse rai-sdk-langgraph
+  # requirements.txt pins the RAI Trust SDK, which resolves from the bundled wheelhouse.
+  "$PY" -m pip install --find-links sdk-dist/wheelhouse -r requirements.txt
 fi
 
 [ -f rai.env ] || { echo "[VitaLink] No rai.env — copying rai.env.example (Trust API URLs)."; cp rai.env.example rai.env; }

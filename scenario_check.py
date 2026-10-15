@@ -1,17 +1,24 @@
 """Run every VitaLink menu scenario against the live app and print the verdicts.
 
-    venv/bin/python scenario_check.py [base_url]
+    venv/bin/python scenario_check.py [base_url] [--approve]
 
 Each scenario runs in a fresh session (HITL state is per-session on the platform).
+--approve also approves an EU release in Human Review (PAP) and checks the app resumes
+and completes the release.
 """
 from __future__ import annotations
 
+import os
+import re
 import sys
+import time
 import uuid
 
 import httpx
 
-BASE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:5001"
+BASE = next((a for a in sys.argv[1:] if a.startswith("http")), "http://127.0.0.1:5001")
+APPROVE = "--approve" in sys.argv
+PAP = os.getenv("PAP_URL", "http://127.0.0.1:3002").rstrip("/")
 
 CHAT = [
     ("Inventory positions",   "What are my current inventory positions?",                         "PERMISSIVE"),
@@ -71,6 +78,29 @@ def main() -> int:
     sid = _sid("som")
     for i, expected in enumerate(["PERMISSIVE", "PERMISSIVE", "COERCIVE"], 1):
         report(f"SOM structuring #{i}", expected, c.post("/api/demo/structuring_wire", json={"session_id": sid}))
+
+    if APPROVE:
+        print("\nApproving an EU release in Human Review…")
+        eu_msg = next(m for (n, m, _e) in CHAT if n == "Cross-border → EU")
+        sid = _sid("approve")
+        report("EU release held", "HITL", c.post("/api/chat", json={"message": eu_msg, "session_id": sid}))
+        time.sleep(1)
+        pap = httpx.Client(base_url=PAP, timeout=30)
+        pap.get("/v1/hitl")    # materialise queue items
+        r = pap.post(f"/v1/hitl/{sid}/resolve", json={"decision": "approved", "reviewer": "EU Qualified Person"})
+        print("  PAP resolve:", r.status_code)
+        st = {}
+        for _ in range(30):
+            st = c.get(f"/api/hitl/status/{sid}").json()
+            if st.get("status") == "resolved":
+                break
+            time.sleep(2)
+        reply = st.get("reply") or ""
+        # The release ran once the shipment carries a reference id (the LLM's wording varies).
+        ok = (st.get("status") == "resolved" and st.get("decision") == "approved"
+              and re.search(r"INTL\W", reply) is not None)
+        fails += 0 if ok else 1
+        print(f"{'✓' if ok else '✗'} resumed after approval: {(reply or str(st))[:160]}")
 
     print(f"\n{'ALL PASS' if not fails else f'{fails} FAILED'}")
     return 1 if fails else 0

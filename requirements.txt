@@ -19,3 +19,6 @@ langchain-groq==1.1.3            # 5) Groq (GROQ_API_KEY) — local dev
 # In this repo the wheelhouse is dist\2026-08-23\sdk\wheelhouse (the launcher _run.bat does this for you).
 # Keeping the SDK out of requirements.txt matches the documented deploy flow and lets the SDK version
 # travel with the dated bundle rather than being pinned inside this app.
+
+# RAI Trust SDK — not on PyPI; resolves from sdk-dist/wheelhouse (pip --find-links)
+rai-sdk-langgraph==0.1.4
