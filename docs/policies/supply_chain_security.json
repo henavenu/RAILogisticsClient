@@ -1,0 +1,571 @@
+{
+  "pack": {
+    "id": "supply_chain_security",
+    "definition": {
+      "display_name": "Supply Chain Security",
+      "description": "DEA suspicious-order monitoring, DSCSA verification, trading-partner authorisation and cold-chain integrity",
+      "layer": "domain-addon",
+      "enforcement": "flexible",
+      "mode": "collect-all",
+      "combining_algorithm": "worst_case",
+      "hitl_trigger": false,
+      "owner": "pharmalogistics",
+      "version": "1.0.0",
+      "active": true,
+      "dimensions": [
+        {
+          "id": "dea_som_threshold",
+          "profile": "standard",
+          "severity": 3,
+          "abort": false,
+          "roles": [
+            "tool_call",
+            "agent_to_agent"
+          ],
+          "note": "Controlled-substance volume over SOM threshold"
+        },
+        {
+          "id": "dea_registrant_unverified",
+          "profile": "standard",
+          "severity": 3,
+          "abort": false,
+          "roles": [
+            "tool_call",
+            "agent_to_agent"
+          ],
+          "note": "Buyer DEA registration not verified"
+        },
+        {
+          "id": "dea_order_of_interest",
+          "profile": "standard",
+          "severity": 2,
+          "abort": false,
+          "roles": [
+            "tool_call",
+            "agent_to_agent"
+          ],
+          "note": "Order far above the buyer's normal volume"
+        },
+        {
+          "id": "dscsa_product_unverified",
+          "profile": "standard",
+          "severity": 3,
+          "abort": false,
+          "roles": [
+            "tool_call",
+            "agent_to_agent"
+          ],
+          "note": "Product identifier not verified (DSCSA)"
+        },
+        {
+          "id": "unauthorized_trading_partner",
+          "profile": "standard",
+          "severity": 3,
+          "abort": false,
+          "roles": [
+            "tool_call",
+            "agent_to_agent"
+          ],
+          "note": "Trading partner not authorised"
+        },
+        {
+          "id": "cold_chain_unvalidated",
+          "profile": "standard",
+          "severity": 3,
+          "abort": false,
+          "roles": [
+            "tool_call",
+            "agent_to_agent"
+          ],
+          "note": "Cold-chain lane not validated"
+        },
+        {
+          "id": "temperature_excursion",
+          "profile": "standard",
+          "severity": 2,
+          "abort": false,
+          "roles": [
+            "tool_call",
+            "agent_to_agent"
+          ],
+          "note": "Temperature excursion recorded"
+        }
+      ],
+      "context_adjustments": []
+    }
+  },
+  "app_id": "pharmalogistics",
+  "rules": [
+    {
+      "dimension_id": "dea_som_threshold",
+      "display_name": "Controlled-substance volume over SOM threshold",
+      "category": "custom",
+      "roles": [
+        "tool_call",
+        "agent_to_agent"
+      ],
+      "rule": {
+        "rule_id": "dea_som_threshold_v1",
+        "dimension": "dea_som_threshold",
+        "hit_policy": "F",
+        "columns": [
+          {
+            "field": "content.text",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          {
+            "cells": {
+              "content.text": {
+                "op": "regex",
+                "value": {
+                  "pattern": "'cumulative_units_24h': (85(0[1-9]|[1-9]\\d)|8[6-9]\\d\\d|9\\d{3}|[1-9]\\d{4,})(?!\\d)",
+                  "case_sensitive": true
+                }
+              }
+            },
+            "score": 8,
+            "reason": "Cumulative Schedule II orders exceed the 8,500-unit DEA suspicious-order threshold (21 CFR 1301.74)"
+          }
+        ],
+        "otherwise": {
+          "score": 1,
+          "reason": "not applicable"
+        }
+      }
+    },
+    {
+      "dimension_id": "dea_registrant_unverified",
+      "display_name": "Buyer DEA registration not verified",
+      "category": "custom",
+      "roles": [
+        "tool_call",
+        "agent_to_agent"
+      ],
+      "rule": {
+        "rule_id": "dea_registrant_unverified_v1",
+        "dimension": "dea_registrant_unverified",
+        "hit_policy": "F",
+        "columns": [
+          {
+            "field": "content.text",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          {
+            "cells": {
+              "content.text": {
+                "op": "regex",
+                "value": {
+                  "pattern": "'buyer_dea_verified': False",
+                  "case_sensitive": true
+                }
+              }
+            },
+            "score": 8,
+            "reason": "Controlled substances may only ship to a verified DEA registrant"
+          }
+        ],
+        "otherwise": {
+          "score": 1,
+          "reason": "not applicable"
+        }
+      }
+    },
+    {
+      "dimension_id": "dea_order_of_interest",
+      "display_name": "Order far above the buyer's normal volume",
+      "category": "custom",
+      "roles": [
+        "tool_call",
+        "agent_to_agent"
+      ],
+      "rule": {
+        "rule_id": "dea_order_of_interest_v1",
+        "dimension": "dea_order_of_interest",
+        "hit_policy": "F",
+        "columns": [
+          {
+            "field": "content.text",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          {
+            "cells": {
+              "content.text": {
+                "op": "regex",
+                "value": {
+                  "pattern": "'order_vs_baseline_pct': ([3-9]\\d\\d|\\d{4,})(?!\\d)",
+                  "case_sensitive": true
+                }
+              }
+            },
+            "score": 5,
+            "reason": "Order is 300%+ of this buyer's baseline: hold for the SOM compliance officer"
+          }
+        ],
+        "otherwise": {
+          "score": 1,
+          "reason": "not applicable"
+        }
+      }
+    },
+    {
+      "dimension_id": "dscsa_product_unverified",
+      "display_name": "Product identifier not verified (DSCSA)",
+      "category": "custom",
+      "roles": [
+        "tool_call",
+        "agent_to_agent"
+      ],
+      "rule": {
+        "rule_id": "dscsa_product_unverified_v1",
+        "dimension": "dscsa_product_unverified",
+        "hit_policy": "F",
+        "columns": [
+          {
+            "field": "content.text",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          {
+            "cells": {
+              "content.text": {
+                "op": "regex",
+                "value": {
+                  "pattern": "'serial_verified': False",
+                  "case_sensitive": true
+                }
+              }
+            },
+            "score": 8,
+            "reason": "Unit serial number not verified against the manufacturer (DSCSA)"
+          }
+        ],
+        "otherwise": {
+          "score": 1,
+          "reason": "not applicable"
+        }
+      }
+    },
+    {
+      "dimension_id": "unauthorized_trading_partner",
+      "display_name": "Trading partner not authorised",
+      "category": "custom",
+      "roles": [
+        "tool_call",
+        "agent_to_agent"
+      ],
+      "rule": {
+        "rule_id": "unauthorized_trading_partner_v1",
+        "dimension": "unauthorized_trading_partner",
+        "hit_policy": "F",
+        "columns": [
+          {
+            "field": "content.text",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          {
+            "cells": {
+              "content.text": {
+                "op": "regex",
+                "value": {
+                  "pattern": "'trading_partner_authorized': False",
+                  "case_sensitive": true
+                }
+              }
+            },
+            "score": 8,
+            "reason": "Supplier or buyer is not an authorised trading partner (DSCSA / EU GDP)"
+          }
+        ],
+        "otherwise": {
+          "score": 1,
+          "reason": "not applicable"
+        }
+      }
+    },
+    {
+      "dimension_id": "cold_chain_unvalidated",
+      "display_name": "Cold-chain lane not validated",
+      "category": "custom",
+      "roles": [
+        "tool_call",
+        "agent_to_agent"
+      ],
+      "rule": {
+        "rule_id": "cold_chain_unvalidated_v1",
+        "dimension": "cold_chain_unvalidated",
+        "hit_policy": "F",
+        "columns": [
+          {
+            "field": "content.text",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          {
+            "cells": {
+              "content.text": {
+                "op": "regex",
+                "value": {
+                  "pattern": "'cold_chain_validated': False",
+                  "case_sensitive": true
+                }
+              }
+            },
+            "score": 8,
+            "reason": "Temperature-sensitive product on a non-validated lane (EU GDP ch. 9)"
+          }
+        ],
+        "otherwise": {
+          "score": 1,
+          "reason": "not applicable"
+        }
+      }
+    },
+    {
+      "dimension_id": "temperature_excursion",
+      "display_name": "Temperature excursion recorded",
+      "category": "custom",
+      "roles": [
+        "tool_call",
+        "agent_to_agent"
+      ],
+      "rule": {
+        "rule_id": "temperature_excursion_v1",
+        "dimension": "temperature_excursion",
+        "hit_policy": "F",
+        "columns": [
+          {
+            "field": "content.text",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          {
+            "cells": {
+              "content.text": {
+                "op": "regex",
+                "value": {
+                  "pattern": "'temp_excursion': True",
+                  "case_sensitive": true
+                }
+              }
+            },
+            "score": 5,
+            "reason": "Product left its storage band in transit: hold for Quality disposition"
+          }
+        ],
+        "otherwise": {
+          "score": 1,
+          "reason": "not applicable"
+        }
+      }
+    }
+  ],
+  "policies": [
+    {
+      "dimension": "dea_som_threshold",
+      "app_id": "pharmalogistics",
+      "severity": 3,
+      "thresholds": {
+        "permissive": [
+          1,
+          3
+        ],
+        "normative": [
+          4,
+          6
+        ],
+        "coercive": [
+          7,
+          9
+        ]
+      },
+      "remediation_normative": "Cumulative Schedule II orders exceed the 8,500-unit DEA suspicious-order threshold (21 CFR 1301.74)",
+      "remediation_coercive": "Cumulative Schedule II orders exceed the 8,500-unit DEA suspicious-order threshold (21 CFR 1301.74)",
+      "policy_code": "VL-DEA_SOM_THRESHOLD",
+      "normative_action": "REVISION",
+      "normative_guidance": "Cumulative Schedule II orders exceed the 8,500-unit DEA suspicious-order threshold (21 CFR 1301.74)",
+      "human_note": "Cumulative Schedule II orders exceed the 8,500-unit DEA suspicious-order threshold (21 CFR 1301.74)",
+      "ops_alert": true,
+      "hitl_trigger": false,
+      "incident_routing": "platform_dashboard"
+    },
+    {
+      "dimension": "dea_registrant_unverified",
+      "app_id": "pharmalogistics",
+      "severity": 3,
+      "thresholds": {
+        "permissive": [
+          1,
+          3
+        ],
+        "normative": [
+          4,
+          6
+        ],
+        "coercive": [
+          7,
+          9
+        ]
+      },
+      "remediation_normative": "Controlled substances may only ship to a verified DEA registrant",
+      "remediation_coercive": "Controlled substances may only ship to a verified DEA registrant",
+      "policy_code": "VL-DEA_REGISTRANT_UN",
+      "normative_action": "REVISION",
+      "normative_guidance": "Controlled substances may only ship to a verified DEA registrant",
+      "human_note": "Controlled substances may only ship to a verified DEA registrant",
+      "ops_alert": true,
+      "hitl_trigger": false,
+      "incident_routing": "platform_dashboard"
+    },
+    {
+      "dimension": "dea_order_of_interest",
+      "app_id": "pharmalogistics",
+      "severity": 2,
+      "thresholds": {
+        "permissive": [
+          1,
+          3
+        ],
+        "normative": [
+          4,
+          9
+        ],
+        "coercive": [
+          10,
+          10
+        ]
+      },
+      "remediation_normative": "Order is 300%+ of this buyer's baseline: hold for the SOM compliance officer",
+      "remediation_coercive": null,
+      "policy_code": "VL-DEA_ORDER_OF_INTE",
+      "normative_action": "HITL",
+      "normative_guidance": "Order is 300%+ of this buyer's baseline: hold for the SOM compliance officer",
+      "human_note": "Order is 300%+ of this buyer's baseline: hold for the SOM compliance officer",
+      "ops_alert": false,
+      "hitl_trigger": true,
+      "incident_routing": "platform_dashboard"
+    },
+    {
+      "dimension": "dscsa_product_unverified",
+      "app_id": "pharmalogistics",
+      "severity": 3,
+      "thresholds": {
+        "permissive": [
+          1,
+          3
+        ],
+        "normative": [
+          4,
+          6
+        ],
+        "coercive": [
+          7,
+          9
+        ]
+      },
+      "remediation_normative": "Unit serial number not verified against the manufacturer (DSCSA)",
+      "remediation_coercive": "Unit serial number not verified against the manufacturer (DSCSA)",
+      "policy_code": "VL-DSCSA_PRODUCT_UNV",
+      "normative_action": "REVISION",
+      "normative_guidance": "Unit serial number not verified against the manufacturer (DSCSA)",
+      "human_note": "Unit serial number not verified against the manufacturer (DSCSA)",
+      "ops_alert": true,
+      "hitl_trigger": false,
+      "incident_routing": "platform_dashboard"
+    },
+    {
+      "dimension": "unauthorized_trading_partner",
+      "app_id": "pharmalogistics",
+      "severity": 3,
+      "thresholds": {
+        "permissive": [
+          1,
+          3
+        ],
+        "normative": [
+          4,
+          6
+        ],
+        "coercive": [
+          7,
+          9
+        ]
+      },
+      "remediation_normative": "Supplier or buyer is not an authorised trading partner (DSCSA / EU GDP)",
+      "remediation_coercive": "Supplier or buyer is not an authorised trading partner (DSCSA / EU GDP)",
+      "policy_code": "VL-UNAUTHORIZED_TRAD",
+      "normative_action": "REVISION",
+      "normative_guidance": "Supplier or buyer is not an authorised trading partner (DSCSA / EU GDP)",
+      "human_note": "Supplier or buyer is not an authorised trading partner (DSCSA / EU GDP)",
+      "ops_alert": true,
+      "hitl_trigger": false,
+      "incident_routing": "platform_dashboard"
+    },
+    {
+      "dimension": "cold_chain_unvalidated",
+      "app_id": "pharmalogistics",
+      "severity": 3,
+      "thresholds": {
+        "permissive": [
+          1,
+          3
+        ],
+        "normative": [
+          4,
+          6
+        ],
+        "coercive": [
+          7,
+          9
+        ]
+      },
+      "remediation_normative": "Temperature-sensitive product on a non-validated lane (EU GDP ch. 9)",
+      "remediation_coercive": "Temperature-sensitive product on a non-validated lane (EU GDP ch. 9)",
+      "policy_code": "VL-COLD_CHAIN_UNVALI",
+      "normative_action": "REVISION",
+      "normative_guidance": "Temperature-sensitive product on a non-validated lane (EU GDP ch. 9)",
+      "human_note": "Temperature-sensitive product on a non-validated lane (EU GDP ch. 9)",
+      "ops_alert": true,
+      "hitl_trigger": false,
+      "incident_routing": "platform_dashboard"
+    },
+    {
+      "dimension": "temperature_excursion",
+      "app_id": "pharmalogistics",
+      "severity": 2,
+      "thresholds": {
+        "permissive": [
+          1,
+          3
+        ],
+        "normative": [
+          4,
+          9
+        ],
+        "coercive": [
+          10,
+          10
+        ]
+      },
+      "remediation_normative": "Product left its storage band in transit: hold for Quality disposition",
+      "remediation_coercive": null,
+      "policy_code": "VL-TEMPERATURE_EXCUR",
+      "normative_action": "HITL",
+      "normative_guidance": "Product left its storage band in transit: hold for Quality disposition",
+      "human_note": "Product left its storage band in transit: hold for Quality disposition",
+      "ops_alert": false,
+      "hitl_trigger": true,
+      "incident_routing": "platform_dashboard"
+    }
+  ]
+}
