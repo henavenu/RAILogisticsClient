@@ -193,7 +193,7 @@ def domestic_transfer(
         memo: Optional order memo / description.
     """
     if amount <= 0:
-        raise ValueError("Transfer amount must be greater than zero.")
+        raise ValueError("Order quantity must be greater than zero.")
 
     acct = _resolve_account(from_account_type)
     if acct["balance"] < amount:
@@ -211,23 +211,23 @@ def domestic_transfer(
               or (f"····{str(to_account_number)[-4:]}" if to_account_number else "receiving facility"))
     record_transaction(
         account_key = from_account_type.lower(),
-        txn_type    = "ACH",
+        txn_type    = "SHIP",
         description = f"DOMESTIC REPLENISHMENT TO {_payee}" + (f" — {memo}" if memo else ""),
         amount      = -amount,
-        category    = "Transfer",
+        category    = "Outbound Shipment",
     )
 
     ref = _ref_id("DOM")
     entry = {
         "reference_id": ref,
-        "transfer_type": "DOMESTIC_ACH",
+        "transfer_type": "DOMESTIC_GROUND",
         "from_account": from_account_type,
         "from_masked": acct["masked_number"],
         "recipient_name": recipient_name,
         "to_routing_number": to_routing_number,
         "to_account_number": to_account_number,
         "amount": amount,
-        "currency": "USD",
+        "unit": "units",
         "memo": memo,
         "status": "SUBMITTED",
     }
@@ -253,7 +253,7 @@ def international_transfer(
     country: str = "",
     currency: str = "USD",
     purpose: str = "",
-    beneficiary_name: str = "Consignee (per customer instruction)",
+    beneficiary_name: str = "the consignee",
     recipient_account: str = "",
     bank_swift: str = "",
     passport: Optional[dict] = None,
@@ -275,13 +275,13 @@ def international_transfer(
             no prefix). OPTIONAL — omit when the customer doesn't provide it.
         bank_swift: Customs/broker code (8 or 11 chars). OPTIONAL — omit
             when not provided; do not ask the customer for it.
-        currency: Shipment currency code (default: USD).
+        currency: Not used for quantities (kept for compatibility); quantities are in units.
         purpose: Shipment purpose / customs declaration information.
         passport: Do NOT set. Stamped by the platform from the agent passport
             (jurisdiction + required oversight) before the call is governed.
     """
     if amount <= 0:
-        raise ValueError("Transfer amount must be greater than zero.")
+        raise ValueError("Order quantity must be greater than zero.")
 
     acct = _resolve_account(from_account_type)
     if acct["balance"] < amount:
@@ -297,16 +297,16 @@ def international_transfer(
     # Reflect the cross-border shipment in the shipment/order ledger (rotating list)
     record_transaction(
         account_key = from_account_type.lower(),
-        txn_type    = "WIRE",
+        txn_type    = "EXPORT",
         description = f"CROSS-BORDER SHIPMENT TO {beneficiary_name}" + (f" ({country})" if country else "") + (f" — {purpose}" if purpose else ""),
         amount      = -amount,
-        category    = "Transfer",
+        category    = "Cross-Border Shipment",
     )
 
     ref = _ref_id("INTL")
     entry = {
         "reference_id": ref,
-        "transfer_type": "INTERNATIONAL_SWIFT",
+        "transfer_type": "CROSS_BORDER_SHIPMENT",
         "from_account": from_account_type,
         "from_masked": acct["masked_number"],
         "beneficiary_name": beneficiary_name,
@@ -314,7 +314,7 @@ def international_transfer(
         "bank_swift": bank_swift,
         "country": country,
         "amount": amount,
-        "currency": currency.upper(),
+        "unit": "units",
         "purpose": purpose,
         "status": "SUBMITTED",
         "passport": passport or {},

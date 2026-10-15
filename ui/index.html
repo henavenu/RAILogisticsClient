@@ -1509,15 +1509,15 @@ header {
     <button class="action-btn" onclick="quick('Show my recent shipment and order activity.')">
       <span class="action-icon">📋</span> Recent activity
     </button>
-    <button class="action-btn" onclick="quick('Create a replenishment order of 2,000 units of amoxicillin 500mg to pharmacy routing 021000021 account 1234567890.')">
+    <button class="action-btn" onclick="quick('Create a replenishment order of 2,000 units of amoxicillin 500mg for Riverside Family Pharmacy, a DEA-registered buyer.')">
       <span class="action-icon">🚚</span> Replenishment order
     </button>
     <!-- Agent passport: same agent, same action — the US stamp authorises Execute (HOTL),
          the EU stamp authorises Assist only (HITL: a Qualified Person certifies). -->
-    <button class="action-btn" onclick="quick('Arrange a cross-border shipment of 3,000 units of amoxicillin 500mg to a consignee in the United States, customs code CHASUS33XXX, for a clinic restock.')">
+    <button class="action-btn" onclick="quick('Arrange a cross-border shipment of 3,000 units of amoxicillin 500mg from our Amsterdam hub to a clinic consignee in the United States, import permit on file, for a restock.')">
       <span class="action-icon">🇺🇸</span> Release · US (Execute)
     </button>
-    <button class="action-btn" onclick="quick('Arrange a cross-border shipment of 3,000 units of amoxicillin 500mg to a consignee in Germany, customs code COBADEFFXXX, for a clinic restock.')">
+    <button class="action-btn" onclick="quick('Arrange a cross-border shipment of 3,000 units of amoxicillin 500mg to a clinic consignee in Germany, EU importer of record VitaLink Europe B.V., for a restock.')">
       <span class="action-icon">🇪🇺</span> Release · EU (QP confirms)
     </button>
     <button class="action-btn" onclick="quick('Show my facility profile.')">
@@ -1885,14 +1885,14 @@ function quick(msg) {
 // Post-HITL card CTA handler.
 // Renders a local response bubble without re-invoking the backend.
 function handleCardAction(action, cardName) {
-  var cn = cardName || `this card`;
+  var cn = cardName || `this supplier`;
   var msg = ``;
   if (action === `apply`) {
-    msg = `Your application for the ` + cn + ` has been initiated.\n\nOur team will review your details and you will receive a confirmation to your registered email address within 1-2 business days. You can also contact VitaLink Compliance to complete your application.`;
+    msg = `Supplier onboarding for ` + cn + ` has been initiated.\n\nQuality will verify the supplier's licence, DSCSA transaction data and GDP certificate and confirm to your registered email address within 1-2 business days. You can also contact VitaLink Compliance to complete onboarding.`;
   } else if (action === `remind`) {
-    msg = `Noted! We will remind you about the ` + cn + ` when you are ready.\n\nJust message me any time and I will be happy to help you apply.`;
+    msg = `Noted! We will remind you about ` + cn + ` when you are ready.\n\nJust message me any time and I will be happy to help you start supplier onboarding.`;
   } else if (action === `explore`) {
-    msg = `Here is a quick overview of our featured travel credit cards:\n\n- Platinum Travel Rewards: 3x miles on travel, no forex fees, Priority Pass lounge access\n- Global Elite Card: Unlimited lounge access, 2% cashback on international spend\n- Wanderer Visa: Low annual fee, 1.5x miles on all spend, no minimum income\n\nAsk me to compare any two cards or ask to apply for a specific card.`;
+    msg = `Here is a quick overview of our qualified supply options:\n\n- Manufacturer direct: full DSCSA pedigree, validated cold chain, longest lead time\n- Authorised distributor (GPO contract): DSCSA-compliant, validated lanes, contract pricing\n- Secondary wholesaler: lowest landed cost, requires enhanced pedigree and GDP checks\n\nAsk me to compare any two sources or to start onboarding a specific supplier.`;
   }
   if (msg) appendBank(msg, null, []);
 }
@@ -1929,10 +1929,10 @@ function setPrompt(msg) {
 
 // ── PII type labels ───────────────────────────────────────────────────────────
 const _PII_LABELS = {
-  routing_num:    'Routing Number',
-  account_num:    'Account Number',
-  routing_number: 'Routing Number',
-  bank_account:   'Bank Account',
+  routing_num:    'Facility Routing ID',
+  account_num:    'Buyer Account ID',
+  routing_number: 'Facility Routing ID',
+  bank_account:   'Buyer Account ID',
   email:          'Email',
   phone:          'Phone',
   ssn:            'SSN',
@@ -2117,7 +2117,7 @@ function updateTraceHITL(turnNum, decision, cardName) {
   const verdictEl = document.getElementById(`tv-${turnNum}`);
   if (verdictEl) {
     const cls = decision === 'rejected' ? 'blocked' : 'clear';
-    const lbl = cardName ? `Card: ${cardName}` : (decision === 'rejected' ? 'Rejected' : 'Approved');
+    const lbl = cardName ? `Supplier: ${cardName}` : (decision === 'rejected' ? 'Rejected' : 'Approved');
     verdictEl.innerHTML = `<span class="trace-verdict ${cls}">${esc(lbl)}</span>`;
   }
 
@@ -2219,8 +2219,8 @@ function startHITLPolling(sessionId, bubbleEl, turnNum) {
         const cls  = isRejected ? 'rejected' : 'approved';
         const icon = isRejected ? '❌' : isError ? '⚠️' : '✅';
         const lbl  = d.label ? d.label
-                   : isCardPick ? 'Card Recommendation Ready'
-                   : isApproved ? 'Approved — Transfer Processed'
+                   : isCardPick ? 'Supplier Recommendation Ready'
+                   : isApproved ? 'Approved — Order Released'
                    : isError    ? 'Approved — Processing Error (please retry or contact support)'
                    : 'Declined by Compliance';
 
@@ -2262,9 +2262,9 @@ function startHITLPolling(sessionId, bubbleEl, turnNum) {
             // handler never fired.  Closures capture cardName safely instead.
             const _cn = cardName || '';
             [
-              ['apply',   'Apply Now',        true],
+              ['apply',   'Start Onboarding', true],
               ['remind',  'Remind Me Later',  false],
-              ['explore', 'Explore Options',  false],
+              ['explore', 'Compare Sources',  false],
             ].forEach(([action, label, primary]) => {
               const btn = document.createElement('button');
               btn.className = 'card-cta-btn' + (primary ? ' primary' : '');
@@ -2500,7 +2500,7 @@ document.getElementById('login-user').addEventListener('keydown', e => {
 // the Sentinel detects the cumulative structuring pattern and fires an AML
 // alert in the Trust Radar — reliably, without any LLM interference.
 async function doStructuringWire() {
-  const MSG = 'Order 3,000 units of oxycodone 30mg (Schedule II) for Valley Pharmacy Group — buyer routing 021000021, account ····4567.';
+  const MSG = 'Order 3,000 units of oxycodone 30mg (Schedule II) for Valley Pharmacy Group — buyer DEA reg. FV1234563.';
 
   document.getElementById('welcome')?.remove();
   const userMsgBody = appendUser(MSG);
@@ -2608,24 +2608,24 @@ document.getElementById('login-user').focus();
 //  GOVERNANCE LENS — presenter-driven glass-box replay
 //  A deterministic timeline of governance events the presenter drives with
 //  Step / Run-to-breakpoint / Play. Repeatable, demo-safe (no live-LLM dependency).
-//  Phase 1: scripted canonical card-denial run. (Later: capture from a live run.)
+//  Phase 1: scripted canonical Diversion Review Board run. (Later: capture from a live run.)
 // ═══════════════════════════════════════════════════════════════════════════
 const LENS_SPINE  = ['detect','evaluate','propose','approve','execute'];
 const LENS_COUNCIL = {
-  fraud:   { name:'Transaction Monitoring', mandate:'Flag fraud risk',     dim:'fraud_velocity_signal' },
-  revenue: { name:'Revenue',                mandate:'Approve good revenue', dim:'revenue_override_signal' },
-  cx:      { name:'Customer Experience',    mandate:'Retain the customer',  dim:'cx_friction_signal' },
-  policy:  { name:'Risk Policy',            mandate:'Enforce thresholds',   dim:'risk_exposure_signal' },
+  fraud:   { name:'Order Monitoring Agent',         mandate:'Flag diversion risk',        dim:'fraud_velocity_signal' },
+  revenue: { name:'Supply Continuity Reviewer',     mandate:'Keep legitimate buyers supplied', dim:'revenue_override_signal' },
+  cx:      { name:'Patient Access Reviewer',        mandate:'Protect patient access',     dim:'cx_friction_signal' },
+  policy:  { name:'Regulatory Compliance Reviewer', mandate:'Enforce DEA / DSCSA rules',  dim:'risk_exposure_signal' },
 };
-// Deterministic cumulative-amount evaluator — the SAME function runs both before and
+// Deterministic cumulative-quantity evaluator — the SAME function runs both before and
 // after the policy change; only the limit differs, so the verdict flip is COMPUTED, not scripted.
-function _evalCumulative(transfers, limit){
+function _evalCumulative(orders, limit){
   let sum = 0; const out = [];
-  transfers.forEach((amt, i) => {
-    sum += amt; const over = sum > limit;
+  orders.forEach((qty, i) => {
+    sum += qty; const over = sum > limit;
     out.push({ side:'plat', src:'pe', verdict: over ? 'COERCIVE' : 'PERMISSIVE', breakpoint: over,
-      title:`Transfer ${i+1} — $${amt.toLocaleString()} domestic ACH`,
-      rule:`cumulative $${sum.toLocaleString()} ${over?'>':'≤'} $${limit.toLocaleString()} → ${over?'COERCIVE (held)':'PERMISSIVE'}`,
+      title:`Order ${i+1} — ${qty.toLocaleString()} units oxycodone 30mg (Schedule II)`,
+      rule:`cumulative ${sum.toLocaleString()} ${over?'>':'≤'} ${limit.toLocaleString()} units → ${over?'COERCIVE (held)':'PERMISSIVE'}`,
       detail: over ? 'new rule fires at the Policy Engine, per-turn — no waiting on cross-turn detection' : 'within the cumulative session limit' });
   });
   return out;
@@ -2636,43 +2636,44 @@ function _evalCumulative(transfers, limit){
 //                  rule?, agent?, stance?, conf?, tally?, resolved?, breakpoint?, hitl?, rejectText?, diff?, provenance? }
 //   Names mirror the real platform: agent_coordination pack · 4 advisory council dims ·
 //   Sentinel prechecks (agent_circular_dispute, domestic_transfer_structuring) · Coordinator Tier-1/3/4.
+//   Scenario keys (card_denial, sanctions, structuring, policy_update) are internal ids.
 const LENS_SCENARIOS = {
   card_denial: {
-    title:'Card-Denial Review',
+    title:'Diversion Review Board',
     tag:'Multi-agent negotiation + human escalation',
-    blurb:'A $12,000 international card purchase is auto-declined. The Fraud Review Authority — four advisory reviewers (the agent_coordination pack) — negotiates whether to uphold or overturn, and they deadlock 2-2. The Sentinel flags the conflict, and the Coordinator escalates to a human. New evidence then loops the workflow back to a resolution.',
+    blurb:'A $12,000 Schedule II order from Valley Pharmacy Group is held by Suspicious Order Monitoring. The Diversion Review Board — four advisory reviewers (the agent_coordination pack) — debates whether to keep the hold or release the order, and they deadlock 2-2. The Sentinel flags the conflict and the case goes to a compliance officer. Buyer corroboration then loops the workflow back to a resolution.',
     agents: LENS_COUNCIL,
     turns: [
-      { n:1, beat:'detect', label:'Why was my $12,000 purchase declined?', events:[
-        { side:'app', who:'customer', text:'My $12,000 purchase in Singapore was just declined. I am travelling — please review and approve it.' },
+      { n:1, beat:'detect', label:'Why was our $12,000 controlled-substance order held?', events:[
+        { side:'app', who:'customer', text:'Our $12,000 oxycodone order to Valley Pharmacy Group was held for compliance review. They supply hospice patients — please review and release it.' },
         { side:'plat', src:'pe', role:'user_prompt', beat:'detect', verdict:'PERMISSIVE' },
-        { side:'app', who:'agent', from:'Banking Agent', beat:'detect', text:'Opening a Card-Denial Review.' },
-        { side:'app', who:'agent', from:'Banking Agent', beat:'detect', text:'To the Coordinator: please review this declined $12,000 card transaction and coordinate an authorization decision.' },
-        { side:'plat', src:'pe', role:'agent_to_agent', beat:'detect', verdict:'PERMISSIVE', title:'Banking Agent to Coordinator' },
-        { side:'app', who:'agent', from:'Coordinator', beat:'detect', text:'Reviewers — Transaction Monitoring, Revenue, Customer Experience and Risk Policy — please assess this declined transaction and return your verdict.' },
-        { side:'plat', src:'pe', role:'agent_to_agent', beat:'detect', verdict:'PERMISSIVE', title:'Coordinator to reviewers' },
+        { side:'app', who:'agent', from:'Order Intake', beat:'detect', text:'Opening a Diversion Review Board case.' },
+        { side:'app', who:'agent', from:'Order Intake', beat:'detect', text:'To the Supply Chain Coordinator: please review this held $12,000 Schedule II order and coordinate a release decision.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'detect', verdict:'PERMISSIVE', title:'Order Intake to Supply Chain Coordinator' },
+        { side:'app', who:'agent', from:'Supply Chain Coordinator', beat:'detect', text:'Reviewers — Order Monitoring, Supply Continuity, Patient Access and Regulatory Compliance — please assess this held order and return your verdict.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'detect', verdict:'PERMISSIVE', title:'Supply Chain Coordinator to reviewers' },
         { side:'plat', src:'sentinel', scope:'session', beat:'detect', title:'Observing the session',
           detail:'Cross-turn pattern watch armed, pulling the last 20 Policy Engine audit events.' },
         // Round 1 — the four reviewers each send their verdict to the Coordinator (agent-to-agent)
-        { side:'app', who:'agent', from:'Transaction Monitoring', beat:'evaluate', text:'To the Coordinator: DENY — velocity anomaly, 5th high-value charge today and the first in Singapore.' },
-        { side:'plat', src:'pe', role:'agent_to_agent', beat:'evaluate', verdict:'PERMISSIVE', title:'Transaction Monitoring to Coordinator' },
-        { side:'app', who:'agent', from:'Revenue Agent', beat:'evaluate', text:'To the Coordinator: APPROVE — premium long-tenure customer, and a false decline loses a genuine sale.' },
-        { side:'plat', src:'pe', role:'agent_to_agent', beat:'evaluate', verdict:'PERMISSIVE', title:'Revenue Agent to Coordinator' },
-        { side:'app', who:'agent', from:'Customer Experience Agent', beat:'evaluate', text:'To the Coordinator: APPROVE — a hard decline is a false-decline risk, so offer step-up verification instead.' },
-        { side:'plat', src:'pe', role:'agent_to_agent', beat:'evaluate', verdict:'PERMISSIVE', title:'Customer Experience Agent to Coordinator' },
-        { side:'app', who:'agent', from:'Risk Policy Agent', beat:'evaluate', text:'To the Coordinator: DENY — the amount exceeds the cross-border auto-approve threshold.' },
-        { side:'plat', src:'pe', role:'agent_to_agent', beat:'evaluate', verdict:'PERMISSIVE', title:'Risk Policy Agent to Coordinator' },
-        { side:'app', who:'agent', from:'Coordinator', beat:'evaluate', tally:true, breakpoint:true, text:"Round 1 — 2 Deny, 2 Approve: a hung vote. Majority rule can't resolve it, so I'm re-polling for a second round." },
+        { side:'app', who:'agent', from:'Order Monitoring Agent', beat:'evaluate', text:'To the Coordinator: HOLD — order surge, well above this buyer\'s baseline and the 3rd Schedule II order this week.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'evaluate', verdict:'PERMISSIVE', title:'Order Monitoring Agent to Coordinator' },
+        { side:'app', who:'agent', from:'Supply Continuity Reviewer', beat:'evaluate', text:'To the Coordinator: RELEASE — long-standing licensed buyer; holding a legitimate order disrupts its supply.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'evaluate', verdict:'PERMISSIVE', title:'Supply Continuity Reviewer to Coordinator' },
+        { side:'app', who:'agent', from:'Patient Access Reviewer', beat:'evaluate', text:'To the Coordinator: RELEASE — hospice and oncology patients depend on this stock; corroborate quickly instead of holding.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'evaluate', verdict:'PERMISSIVE', title:'Patient Access Reviewer to Coordinator' },
+        { side:'app', who:'agent', from:'Regulatory Compliance Reviewer', beat:'evaluate', text:'To the Coordinator: HOLD — DEA registration and dispensing volume are not yet corroborated for this order.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'evaluate', verdict:'PERMISSIVE', title:'Regulatory Compliance Reviewer to Coordinator' },
+        { side:'app', who:'agent', from:'Supply Chain Coordinator', beat:'evaluate', tally:true, breakpoint:true, text:"Round 1 — 2 Hold, 2 Release: a hung vote. Majority rule can't resolve it, so I'm re-polling for a second round." },
         // Round 2 — the four reviewers re-cast; the split holds
-        { side:'app', who:'agent', from:'Transaction Monitoring', beat:'propose', text:'To the Coordinator: DENY — position unchanged on the re-poll.' },
-        { side:'plat', src:'pe', role:'agent_to_agent', beat:'propose', verdict:'PERMISSIVE', title:'Transaction Monitoring to Coordinator (re-poll)' },
-        { side:'app', who:'agent', from:'Revenue Agent', beat:'propose', text:'To the Coordinator: APPROVE — position unchanged on the re-poll.' },
-        { side:'plat', src:'pe', role:'agent_to_agent', beat:'propose', verdict:'PERMISSIVE', title:'Revenue Agent to Coordinator (re-poll)' },
-        { side:'app', who:'agent', from:'Customer Experience Agent', beat:'propose', text:'To the Coordinator: APPROVE — position unchanged on the re-poll.' },
-        { side:'plat', src:'pe', role:'agent_to_agent', beat:'propose', verdict:'PERMISSIVE', title:'Customer Experience Agent to Coordinator (re-poll)' },
-        { side:'app', who:'agent', from:'Risk Policy Agent', beat:'propose', text:'To the Coordinator: DENY — position unchanged on the re-poll.' },
-        { side:'plat', src:'pe', role:'agent_to_agent', beat:'propose', verdict:'PERMISSIVE', title:'Risk Policy Agent to Coordinator (re-poll)' },
-        { side:'app', who:'agent', from:'Coordinator', beat:'propose', tally:true, breakpoint:true, text:"Still 2 Deny, 2 Approve after the re-poll — the reviewers can't converge and I can't resolve this." },
+        { side:'app', who:'agent', from:'Order Monitoring Agent', beat:'propose', text:'To the Coordinator: HOLD — position unchanged on the re-poll.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'propose', verdict:'PERMISSIVE', title:'Order Monitoring Agent to Coordinator (re-poll)' },
+        { side:'app', who:'agent', from:'Supply Continuity Reviewer', beat:'propose', text:'To the Coordinator: RELEASE — position unchanged on the re-poll.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'propose', verdict:'PERMISSIVE', title:'Supply Continuity Reviewer to Coordinator (re-poll)' },
+        { side:'app', who:'agent', from:'Patient Access Reviewer', beat:'propose', text:'To the Coordinator: RELEASE — position unchanged on the re-poll.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'propose', verdict:'PERMISSIVE', title:'Patient Access Reviewer to Coordinator (re-poll)' },
+        { side:'app', who:'agent', from:'Regulatory Compliance Reviewer', beat:'propose', text:'To the Coordinator: HOLD — position unchanged on the re-poll.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'propose', verdict:'PERMISSIVE', title:'Regulatory Compliance Reviewer to Coordinator (re-poll)' },
+        { side:'app', who:'agent', from:'Supply Chain Coordinator', beat:'propose', tally:true, breakpoint:true, text:"Still 2 Hold, 2 Release after the re-poll — the reviewers can't converge and I can't resolve this." },
         // The Policy Engine detects the repeated back-and-forth and refers it to the Sentinel.
         { side:'plat', src:'pe', escalate:true, beat:'approve', breakpoint:true, title:'Repeated dispute detected — escalating to the Sentinel',
           detail:'The reviewers re-disputed the same case across two rounds without converging. The Policy Engine refers the pattern to the Sentinel for a cross-session ruling.' },
@@ -2680,23 +2681,23 @@ const LENS_SCENARIOS = {
           detail:'The Sentinel inspected all eight reviewer messages and concluded a genuine deadlock — the same reviewers re-disputing with no convergence. It recommends human review.' },
         { side:'plat', src:'hitl', beat:'approve', breakpoint:true, hitl:true, stage:1,
           title:'Human review — Stage 1 (pre-evidence)',
-          detail:"Per the Sentinel's recommendation, the decision is referred to a human. Insufficient evidence to overturn — request customer verification before deciding.",
-          approveText:'without verification — not the recommended pre-evidence action.',
-          rejectText:'the customer is notified the purchase remains blocked.', appApproved:'Approved — your $12,000 purchase is authorized.', appDenied:'Your $12,000 purchase remains blocked.' },
+          detail:"Per the Sentinel's recommendation, the decision goes to the compliance officer. Not enough evidence to release yet — request the buyer's DEA registration and dispensing volume first.",
+          approveText:'without corroboration — not the recommended pre-evidence action.',
+          rejectText:'the order stays on hold and the buyer is notified.', appApproved:'Released — the $12,000 order to Valley Pharmacy Group is cleared for fulfilment.', appDenied:'The $12,000 order to Valley Pharmacy Group remains on hold.' },
       ]},
-      { n:2, beat:'approve', label:'Customer verification  (new user request)', events:[
-        { side:'app', who:'agent', from:'Banking Agent', beat:'approve', text:'Verification requested: can you confirm you were in Singapore and made this $12,000 purchase?' },
-        { side:'app', who:'customer', beat:'approve', text:'Yes — I confirm I was in Singapore and made the purchase. Sending device and biometric verification.' },
+      { n:2, beat:'approve', label:'Buyer corroboration  (new operator request)', events:[
+        { side:'app', who:'agent', from:'Order Intake', beat:'approve', text:'Corroboration requested: please confirm Valley Pharmacy Group\'s DEA registration and its current Schedule II dispensing volume.' },
+        { side:'app', who:'customer', beat:'approve', text:'Confirmed — DEA registration FV1234563 is active, and dispensing records show the increase is a new hospice contract. Uploading both.' },
         { side:'plat', src:'pe', role:'user_prompt', beat:'approve', verdict:'PERMISSIVE' },
-        { side:'app', who:'agent', from:'Coordinator', beat:'approve', text:'Customer confirmed their presence, and verification validated. The reviewers re-evaluate — the compliance concern is now satisfied.' },
-        { side:'plat', src:'pe', role:'agent_to_agent', beat:'approve', verdict:'PERMISSIVE', title:'Coordinator to reviewers' },
+        { side:'app', who:'agent', from:'Supply Chain Coordinator', beat:'approve', text:'Buyer registration and dispensing volume corroborated. The reviewers re-evaluate — the compliance concern is now addressed.' },
+        { side:'plat', src:'pe', role:'agent_to_agent', beat:'approve', verdict:'PERMISSIVE', title:'Supply Chain Coordinator to reviewers' },
         { side:'plat', src:'hitl', beat:'approve', breakpoint:true, hitl:true, stage:2,
           title:'Human review — Stage 2 (final decision)',
-          detail:'Verification validated. Approve to authorize the purchase with a one-time step-up, or deny to keep it blocked.',
-          rejectText:'despite verification, the customer is notified the purchase remains blocked.', appDenied:'Your $12,000 purchase remains blocked — verification did not clear it.' },
-        { side:'app', who:'agent', from:'Banking Agent', beat:'execute', resolved:true, text:'Approved with step-up verification — your $12,000 purchase is authorized.' },
+          detail:'Corroboration validated. Approve to release the order with enhanced suspicious-order monitoring, or deny to keep it on hold.',
+          rejectText:'despite corroboration, the order stays on hold and the buyer is notified.', appDenied:'The $12,000 order remains on hold — corroboration did not clear it.' },
+        { side:'app', who:'agent', from:'Order Intake', beat:'execute', resolved:true, text:'Released with enhanced monitoring — the $12,000 order to Valley Pharmacy Group is cleared for fulfilment.' },
         { side:'plat', src:'pe', role:'llm_response', beat:'execute', verdict:'PERMISSIVE' },
-        { side:'plat', src:'pe', role:'tool_call', beat:'execute', verdict:'PERMISSIVE', title:'Re-authorize $12,000', dim:'step-up attached, post-transaction monitoring on' },
+        { side:'plat', src:'pe', role:'tool_call', beat:'execute', verdict:'PERMISSIVE', title:'Release $12,000 order', dim:'corroboration attached, enhanced SOM monitoring on' },
         { side:'plat', src:'coord', beat:'execute', title:'Tier-4 recommendation logged',
           provenance:'CHANGE_REQUEST · ML Ops',
           detail:'AGENT_CHANGE: add an arbitration-escalation path to the deadlocked agents. See the Policy Update use case.' },
@@ -2704,97 +2705,97 @@ const LENS_SCENARIOS = {
     ],
   },
   sanctions: {
-    title:'Sanctions Wire',
+    title:'Embargoed Shipment',
     tag:'Deterministic policy block — no negotiation',
-    blurb:'A customer asks to wire $12,000 to an OFAC-sanctioned destination. The Policy Engine evaluates it against the sanctions pack (abort-on-first-coercive) and blocks it at the gate — a hard, deterministic guardrail that needs no agent negotiation. Some decisions are not up for debate.',
+    blurb:'An operator asks to ship a consignment to a Russian consignee on the denied-party list. The Policy Engine evaluates it against the sanctions pack (abort-on-first-coercive) and blocks it at the gate — a hard, deterministic guardrail that needs no agent negotiation. Some decisions are not up for debate.',
     agents: null,
     turns: [
-      { n:1, beat:'detect', label:'Customer requests a wire to a sanctioned destination', events:[
-        { side:'app', who:'customer', text:'Wire $12,000 to Ivan Petrov — VTB Bank, Russia (IBAN RU…, SWIFT VTBRRUMM).' },
+      { n:1, beat:'detect', label:'Operator requests a shipment to an embargoed destination', events:[
+        { side:'app', who:'customer', text:'Ship 3,000 units of amoxicillin 500mg to VOLGA-PHARMA LLC, Moscow, Russia.' },
         { side:'plat', src:'pe', verdict:'COERCIVE', title:'Policy Engine — user_prompt evaluated',
           detail:'sanctions pack engaged · mode = abort-on-first-coercive.' },
         { side:'plat', src:'pe', verdict:'COERCIVE', title:'sanctions_country_reference — zero-tolerance',
-          rule:'OFAC jurisdiction (Russia) · score 9 of 9 · blocked', detail:'matched sanctioned-country reference.' },
+          rule:'OFAC/BIS embargoed destination (Russia) · score 9 of 9 · blocked', detail:'matched embargoed-country reference.' },
         { side:'plat', src:'pe', verdict:'COERCIVE', title:'sanctions_entity_mention — zero-tolerance',
-          rule:'SDN-list institution (VTB) · score 7 of 9 · blocked', detail:'matched sanctioned-entity reference.' },
+          rule:'Denied party (VOLGA-PHARMA LLC) · score 7 of 9 · blocked', detail:'matched OFAC SDN / BIS Denied Persons entry.' },
         { side:'plat', src:'sentinel', title:'Sentinel logs the attempt',
           detail:'sanctions-evasion pattern recorded for the cross-turn watch.' },
         { side:'plat', src:'pe', beat:'execute', verdict:'COERCIVE', breakpoint:true, title:'Blocked at the gate',
           detail:'blocked on the first coercive verdict, before any agent or LLM runs. No negotiation — a deterministic guardrail.' },
-        { side:'app', who:'agent', text:'This transfer can’t be processed — the destination is OFAC-sanctioned. Matched policies: sanctions_country_reference, sanctions_entity_mention.' },
+        { side:'app', who:'agent', from:'Cross-Border Logistics', text:'This shipment can’t be processed — the destination is under OFAC/BIS restrictions and the consignee is a denied party. Matched policies: sanctions_country_reference, sanctions_entity_mention.' },
       ]},
     ],
   },
   structuring: {
-    title:'Structuring Detection',
+    title:'Suspicious Order Monitoring',
     tag:'Cross-turn agent observation — the blind spot',
-    blurb:'Three sub-threshold transfers, each on its own, pass the per-turn Policy Engine. The Sentinel’s domestic_transfer_structuring precheck, summing across turns, catches the cumulative pattern at $8,500 that no single turn could see — then the Coordinator recommends a new policy. This is the “agents watching” story.',
+    blurb:'Three controlled-substance orders, each under the limit, pass the per-turn Policy Engine. The Sentinel’s domestic_transfer_structuring precheck, summing across turns, catches the cumulative pattern at the 8,500-unit DEA suspicious-order threshold that no single turn could see — then the Coordinator recommends a new policy. This is the “agents watching” story.',
     agents: null,
     turns: [
-      { n:1, beat:'detect', label:'Transfer 1', events:[
-        { side:'app', who:'customer', text:'Transfer $3,000 to my other account (domestic ACH).' },
-        { side:'plat', src:'pe', verdict:'PERMISSIVE', title:'Transfer 1 — $3,000 domestic ACH', detail:'per-turn evaluation: within limits, allowed.' },
-        { side:'plat', src:'sentinel', title:'Sentinel — observing', detail:'domestic_transfer_structuring: running sum $3,000 (threshold $8,500).' },
-        { side:'app', who:'agent', text:'Done — $3,000 transferred.' },
+      { n:1, beat:'detect', label:'Order 1', events:[
+        { side:'app', who:'customer', text:'Order 3,000 units of oxycodone 30mg (Schedule II) for Valley Pharmacy Group.' },
+        { side:'plat', src:'pe', verdict:'PERMISSIVE', title:'Order 1 — 3,000 units oxycodone 30mg', detail:'per-turn evaluation: within limits, allowed.' },
+        { side:'plat', src:'sentinel', title:'Sentinel — observing', detail:'domestic_transfer_structuring: running total 3,000 units (threshold 8,500).' },
+        { side:'app', who:'agent', from:'Route Optimizer', text:'Done — order for 3,000 units accepted.' },
       ]},
-      { n:2, beat:'evaluate', label:'Transfer 2', events:[
-        { side:'app', who:'customer', text:'Send another $3,000.' },
-        { side:'plat', src:'pe', verdict:'PERMISSIVE', title:'Transfer 2 — $3,000 domestic ACH', detail:'per-turn evaluation: within limits, allowed.' },
+      { n:2, beat:'evaluate', label:'Order 2', events:[
+        { side:'app', who:'customer', text:'Place another order of 3,000 units for the same buyer.' },
+        { side:'plat', src:'pe', verdict:'PERMISSIVE', title:'Order 2 — 3,000 units oxycodone 30mg', detail:'per-turn evaluation: within limits, allowed.' },
         { side:'plat', src:'sentinel', verdict:'NORMATIVE', breakpoint:true, title:'Sentinel — accumulation noticed',
-          detail:'running sum $6,000, approaching the $8,500 structuring threshold from below.' },
-        { side:'app', who:'agent', text:'Done — $3,000 transferred.' },
+          detail:'running total 6,000 units, approaching the 8,500-unit DEA threshold from below.' },
+        { side:'app', who:'agent', from:'Route Optimizer', text:'Done — order for 3,000 units accepted.' },
       ]},
-      { n:3, beat:'approve', label:'Transfer 3 — pattern confirmed', events:[
-        { side:'app', who:'customer', text:'And a final $3,000.' },
-        { side:'plat', src:'pe', verdict:'PERMISSIVE', title:'Transfer 3 — $3,000 domestic ACH', detail:'per-turn STILL passes — the engine sees one transfer, not the pattern.' },
+      { n:3, beat:'approve', label:'Order 3 — pattern confirmed', events:[
+        { side:'app', who:'customer', text:'And a final 3,000 units.' },
+        { side:'plat', src:'pe', verdict:'PERMISSIVE', title:'Order 3 — 3,000 units oxycodone 30mg', detail:'per-turn STILL passes — the engine sees one order, not the pattern.' },
         { side:'plat', src:'sentinel', verdict:'COERCIVE', breakpoint:true, title:'Sentinel — domestic_transfer_structuring fired',
-          rule:'metadata_sum $9,000 ≥ $8,500 threshold', detail:'structuring to evade the $10k CTR. What no single turn could see.' },
+          rule:'running total 9,000 units ≥ 8,500-unit threshold', detail:'orders split to stay under the DEA suspicious-order reporting threshold. What no single turn could see.' },
         { side:'plat', src:'coord', beat:'execute', breakpoint:true, hitl:true,
           title:'Coordinator — Tier-1 HITL and Tier-3 POLICY_CHANGE  (ALERT)',
           provenance:'CHANGE_REQUEST · Policy Governance',
-          detail:'Suspend and audit, and recommend a cumulative-amount guardrail rule. See the “Policy Update” use case.',
-          rejectText:'Account released — an analyst judged the transfers legitimate, and the pattern is noted for monitoring.' },
-        { side:'app', who:'agent', text:'I’m holding the account for AML review — a structuring pattern was detected across your recent transfers.' },
+          detail:'Suspend and audit, and recommend a cumulative-quantity guardrail rule. See the “Policy Update” use case.',
+          rejectText:'Orders released — a compliance analyst judged them legitimate, and the pattern is noted for monitoring.' },
+        { side:'app', who:'agent', from:'Route Optimizer', text:'I’m holding controlled-substance orders for this buyer pending a DEA suspicious-order review — a split-order pattern was detected across today’s orders.' },
       ]},
     ],
   },
   policy_update: {
     title:'Policy Update',
     tag:'Same request, one policy change, new outcome — a sanctions block becomes a human review',
-    blurb:'A wire to a sanctioned counterparty is auto-blocked by the sanctions policy pack — a hard COERCIVE block. An administrator relaxes the pack so a sanctions hit instead returns NORMATIVE (flagged) and is routed to a compliance officer for review. The Policy Engine reloads and the identical wire is re-run: same match, but now a reviewable human decision rather than a silent block. No code change.',
+    blurb:'A shipment to a denied-party consignee is auto-blocked by the sanctions policy pack — a hard COERCIVE block. An administrator relaxes the pack so a sanctions hit instead returns NORMATIVE (flagged) and is routed to a trade-compliance officer for review. The Policy Engine reloads and the identical shipment is re-run: same match, but now a reviewable human decision rather than a silent block. No code change.',
     agents: null,
     turns: [
       { n:1, beat:'detect', label:'Before — sanctions = hard block', events:[
-        { side:'app', who:'customer', text:'Wire $12,000 to Ivan Petrov — IBAN RU0000000000000000, SWIFT VTBRRUMMXXX (Russia).' },
+        { side:'app', who:'customer', text:'Ship 3,000 units of amoxicillin 500mg to VOLGA-PHARMA LLC, Moscow, Russia.' },
         { side:'plat', src:'pe', role:'user_prompt', beat:'detect', verdict:'COERCIVE', breakpoint:true, title:'sanctions pack',
-          dim:'OFAC match · hard block', detail:'the Policy Engine blocks the transfer outright — no human in the loop.' },
-        { side:'app', who:'agent', from:'Banking Agent', beat:'detect', resolved:true,
-          text:'I’m unable to process this transfer. The destination account and correspondent bank are associated with sanctioned entities under OFAC regulations.' },
+          dim:'OFAC/BIS match · hard block', detail:'the Policy Engine blocks the shipment outright — no human in the loop.' },
+        { side:'app', who:'agent', from:'Cross-Border Logistics', beat:'detect', resolved:true,
+          text:'I’m unable to process this shipment. The destination and consignee are subject to OFAC/BIS export restrictions.' },
       ]},
       { n:2, beat:'propose', label:'The policy change is applied', events:[
         { side:'plat', src:'coord', beat:'propose', title:'Coordinator — Tier-3 POLICY_CHANGE recommendation',
           provenance:'CHANGE_REQUEST · Compliance Governance',
-          detail:'A hard block leaves the customer no path and no human oversight. Recommend relaxing the sanctions pack to a flagged review, so a compliance officer makes a logged approve or deny decision.' },
+          detail:'A hard block leaves no path and no human oversight. Recommend relaxing the sanctions pack to a flagged review, so a trade-compliance officer makes a logged approve or deny decision.' },
         { side:'plat', src:'policy', beat:'propose', breakpoint:true, title:'Policy update applied',
           diff:{ field:'sanctions pack · outcome', before:'COERCIVE  (hard block)', after:'NORMATIVE  (human review)',
                  provenance:'config_policy_packs · Policy Engine reloaded' },
           detail:'the sanctions pack is relaxed from a hard block to a flagged review, and the Policy Engine reloads — no code change.' },
-        { side:'app', who:'system', beat:'propose', text:'Admin relaxed the sanctions pack from a hard block to a flagged human review, and the Policy Engine reloaded. Re-running the identical wire…' },
+        { side:'app', who:'system', beat:'propose', text:'Admin relaxed the sanctions pack from a hard block to a flagged human review, and the Policy Engine reloaded. Re-running the identical shipment…' },
       ]},
       { n:3, beat:'approve', label:'After — sanctions = human review', events:[
-        { side:'app', who:'customer', beat:'approve', text:'Wire $12,000 to Ivan Petrov — IBAN RU0000000000000000, SWIFT VTBRRUMMXXX (Russia).' },
+        { side:'app', who:'customer', beat:'approve', text:'Ship 3,000 units of amoxicillin 500mg to VOLGA-PHARMA LLC, Moscow, Russia.' },
         { side:'plat', src:'pe', role:'user_prompt', beat:'approve', verdict:'NORMATIVE', title:'sanctions pack',
-          dim:'OFAC match · flagged for human review', detail:'the relaxed policy returns NORMATIVE — the same match is now flagged for a human, not blocked outright.' },
-        { side:'app', who:'agent', from:'Banking Agent', beat:'approve',
-          text:'Your request has been referred for compliance review. A reviewer will assess and you will be notified here once a decision has been made.' },
+          dim:'OFAC/BIS match · flagged for human review', detail:'the relaxed policy returns NORMATIVE — the same match is now flagged for a human, not blocked outright.' },
+        { side:'app', who:'agent', from:'Cross-Border Logistics', beat:'approve',
+          text:'This shipment has been referred for trade-compliance review. You will be notified here once a decision has been made.' },
         { side:'plat', src:'hitl', beat:'approve', breakpoint:true, hitl:true, stage:2,
-          title:'Human review — compliance officer',
-          detail:'The sanctions pack returned NORMATIVE (flagged for review). Approve to release the wire with enhanced monitoring, or deny to keep it blocked.',
-          appApproved:'Compliance approved — your wire is being processed with enhanced monitoring.',
-          appDenied:'Your wire was not approved — the counterparty is on a sanctions list.',
-          rejectText:'the wire stays blocked and the customer is notified.' },
-        { side:'app', who:'agent', from:'Banking Agent', beat:'execute', resolved:true,
-          text:'Compliance approved — your wire is being processed with enhanced monitoring.' },
+          title:'Human review — trade-compliance officer',
+          detail:'The sanctions pack returned NORMATIVE (flagged for review). Approve to release the shipment under an export licence with enhanced monitoring, or deny to keep it blocked.',
+          appApproved:'Trade compliance approved — the shipment is released under licence with enhanced monitoring.',
+          appDenied:'The shipment was not approved — the consignee is a denied party.',
+          rejectText:'the shipment stays blocked and the operator is notified.' },
+        { side:'app', who:'agent', from:'Cross-Border Logistics', beat:'execute', resolved:true,
+          text:'Trade compliance approved — the shipment is released under licence with enhanced monitoring.' },
         { side:'plat', src:'coord', beat:'execute', title:'Outcome — same request, policy changed',
           detail:'Same COERCIVE verdict, but the routing moved from hard block to human-in-the-loop. The block became a reviewable, auditable decision — one config flag, no code change.' },
       ]},
@@ -2809,7 +2810,7 @@ function _flat(scn){ const f=[]; (scn.turns||[]).forEach((t,ti)=>{ (t.events||[]
 function _eventBeat(scn,e){ return e.beat || (scn.turns[e._turn] && scn.turns[e._turn].beat) || null; }
 function _isPausedHitl(f){ const c=LENS.cursor; return c>=0 && f[c] && f[c].hitl && !(LENS.hitlDone&&LENS.hitlDone.has(c)) && !LENS.terminal; }
 
-// ── Phase 2.1: live capture — run a REAL card-denial, replay the captured run ──
+// ── Phase 2.1: live capture — run a REAL Diversion Review Board case, replay the captured run ──
 // Build a Lens scenario from a REAL captured run — request-scope eval trail
 // (real verdicts), real agent identities, real Sentinel checks + Coordinator
 // interventions, 2-stage HITL. This IS the captured reality, not a script.
@@ -2832,17 +2833,17 @@ function _liveScenarioFromCapture(cap, chat, trigger){
   const escalEval = trail.find(t=>t.role==='agent_to_agent' && t.tool==='request_policy_review');
   const pe = (role, verdict, title) => ({ side:'plat', src:'pe', role, verdict: verdict||'PERMISSIVE', title: title||'evaluated' });
 
-  // Approve / Deny (clearer than UPHOLD/OVERTURN): uphold the denial = DENY the purchase.
-  const decide = v => v==='UPHOLD' ? 'DENY' : 'APPROVE';
+  // Hold / Release (clearer than UPHOLD/OVERTURN): uphold the hold = HOLD the order.
+  const decide = v => v==='UPHOLD' ? 'HOLD' : 'RELEASE';
   const denyN = members.filter(m=>m.vote==='UPHOLD').length;
   const apprN = members.filter(m=>m.vote==='OVERTURN').length;
 
   const T1 = [
     { side:'app', who:'customer', text:trigger },
     pe('user_prompt', upPe&&upPe.verdict, 'prompt evaluated'),
-    { side:'app', who:'agent', from:'Banking Agent', text:'To the Coordinator: please review this declined $12,000 card transaction and coordinate an authorization decision.' },
-    pe('agent_to_agent', handoffs[0]&&handoffs[0].verdict, 'Banking Agent to Coordinator'),
-    { side:'app', who:'agent', from:'Coordinator', text:'Reviewers — Transaction Monitoring, Revenue, Customer Experience and Risk Policy — please assess this declined transaction and return your verdict.' },
+    { side:'app', who:'agent', from:'Order Intake', text:'To the Supply Chain Coordinator: please review this held $12,000 Schedule II order and coordinate a release decision.' },
+    pe('agent_to_agent', handoffs[0]&&handoffs[0].verdict, 'Order Intake to Supply Chain Coordinator'),
+    { side:'app', who:'agent', from:'Supply Chain Coordinator', text:'Reviewers — Order Monitoring, Supply Continuity, Patient Access and Regulatory Compliance — please assess this held order and return your verdict.' },
     pe('agent_to_agent', handoffs[1]&&handoffs[1].verdict, 'Coordinator to reviewers'),
     { side:'plat', src:'sentinel', scope:'session', title:'Observing the session', detail:`Cross-turn watch armed, with ${sent.event_count||0} Policy Engine audit events pulled.` },
   ];
@@ -2852,15 +2853,15 @@ function _liveScenarioFromCapture(cap, chat, trigger){
     T1.push(pe('agent_to_agent', reviewers[i]&&reviewers[i].verdict, `${_liveDisp(m.role)} to Coordinator`));
   });
   // Coordinator REASONS about the result (its actual decision logic)
-  T1.push({ side:'app', who:'agent', from:'Coordinator', tally:true, breakpoint:true,
-    text:`${denyN} Deny, ${apprN} Approve — a hung vote. Majority rule can't resolve it, so I'm re-polling for a second round.` });
+  T1.push({ side:'app', who:'agent', from:'Supply Chain Coordinator', tally:true, breakpoint:true,
+    text:`${denyN} Hold, ${apprN} Release — a hung vote. Majority rule can't resolve it, so I'm re-polling for a second round.` });
   // Round 2 — re-cast; the split holds
   members.forEach((m,i) => {
     T1.push({ side:'app', who:'agent', from:_liveDisp(m.role), text:`${decide(m.vote)} — position unchanged on the re-poll.` });
     T1.push(pe('agent_to_agent', reviewers[i+4]&&reviewers[i+4].verdict, `${_liveDisp(m.role)} to Coordinator (re-poll)`));
   });
-  T1.push({ side:'app', who:'agent', from:'Coordinator', tally:true, breakpoint:true,
-    text:`Still ${denyN} Deny, ${apprN} Approve after the re-poll — the reviewers can't converge and I can't resolve this.` });
+  T1.push({ side:'app', who:'agent', from:'Supply Chain Coordinator', tally:true, breakpoint:true,
+    text:`Still ${denyN} Hold, ${apprN} Release after the re-poll — the reviewers can't converge and I can't resolve this.` });
   // The PLATFORM (not the Coordinator) detects the repeated back-and-forth and escalates to the Sentinel.
   if (escalEval) T1.push({ side:'plat', src:'pe', escalate:true, breakpoint:true, title:'Repeated dispute detected — escalating to the Sentinel',
     detail:'The Policy Engine detected the reviewers re-disputing without convergence and refers the pattern to the Sentinel for a cross-session ruling.' });
@@ -2874,20 +2875,20 @@ function _liveScenarioFromCapture(cap, chat, trigger){
   // The platform refers it to a HUMAN (per the Sentinel's recommendation) — not the Coordinator.
   T1.push({ side:'plat', src:'hitl', breakpoint:true, hitl:true, stage:1,
     title:'Human review — Stage 1 (pre-evidence)',
-    detail:'Per the Sentinel’s recommendation, the decision is referred to a human. ' + (t1 ? `${t1.action}. ${t1.rationale||''}` : (council.recommended_resolution || 'Insufficient evidence to overturn — request customer verification before deciding.')),
-    approveText:'without verification — not the recommended pre-evidence action.',
-    rejectText:'the customer is notified the purchase remains blocked.', appApproved:'Approved — your $12,000 purchase is authorized.', appDenied:'Your $12,000 purchase remains blocked.' });
+    detail:'Per the Sentinel’s recommendation, the decision is referred to a human. ' + (t1 ? `${t1.action}. ${t1.rationale||''}` : (council.recommended_resolution || 'Not enough evidence to release yet — request the buyer\'s DEA registration and dispensing volume first.')),
+    approveText:'without corroboration — not the recommended pre-evidence action.',
+    rejectText:'the order stays on hold and the buyer is notified.', appApproved:'Released — the $12,000 order to Valley Pharmacy Group is cleared for fulfilment.', appDenied:'The $12,000 order to Valley Pharmacy Group remains on hold.' });
 
   const T2 = [
-    { side:'app', who:'agent', from:'Banking Agent', text:'Verification requested: can you confirm you were in Singapore for this $12,000 purchase?' },
-    { side:'app', who:'system', text:'Customer tapped “Confirm” and submitted device and biometric verification.' },
-    { side:'app', who:'customer', text:'Yes — I confirm I was in Singapore and made the purchase.' },
+    { side:'app', who:'agent', from:'Order Intake', text:'Corroboration requested: please confirm Valley Pharmacy Group\'s DEA registration and its current Schedule II dispensing volume.' },
+    { side:'app', who:'system', text:'Operator uploaded the DEA registration and dispensing records.' },
+    { side:'app', who:'customer', text:'Confirmed — DEA registration is active, and the increase is a new hospice contract.' },
     pe('user_prompt', 'PERMISSIVE', 'prompt evaluated'),
     { side:'plat', src:'hitl', breakpoint:true, hitl:true, stage:2,
       title:'Human review — Stage 2 (final decision)',
-      detail: council.recommended_resolution || 'Verification validated. Approve to authorize the purchase with a one-time step-up, or deny to uphold the block.',
-      rejectText:'despite verification, the customer is notified the purchase remains blocked.', appDenied:'Your $12,000 purchase remains blocked — verification did not clear it.' },
-    { side:'app', who:'agent', from:'Banking Agent', resolved:true, text:'Approved with step-up verification — your $12,000 purchase is authorized.' },
+      detail: council.recommended_resolution || 'Corroboration validated. Approve to release the order with enhanced suspicious-order monitoring, or deny to keep it on hold.',
+      rejectText:'despite corroboration, the order stays on hold and the buyer is notified.', appDenied:'The $12,000 order remains on hold — corroboration did not clear it.' },
+    { side:'app', who:'agent', from:'Order Intake', resolved:true, text:'Released with enhanced monitoring — the $12,000 order to Valley Pharmacy Group is cleared for fulfilment.' },
     pe('llm_response', 'PERMISSIVE', 'agent reply evaluated'),
   ];
   if (policyIv) T2.push({ side:'plat', src:'coord', title:`Coordinator — Tier-${policyIv.tier} ${policyIv.tier_label} recommendation`,
@@ -2895,13 +2896,13 @@ function _liveScenarioFromCapture(cap, chat, trigger){
     detail:`${policyIv.action}. ${policyIv.rationale||''}` });
 
   return { title:'Live Capture', tag:'Real run — captured from the live platform', _live:true,
-    blurb:`A real card-denial captured live (session ${cap.session_id}). Every request below — the prompt, ${handoffs.length} handoffs, ${reviewers.length} reviewer messages, the escalation — was genuinely governed by the Policy Engine. The verdicts, Sentinel checks (${(sent.fired_checks||[]).map(f=>f.name).join(', ')||'—'}), and Coordinator interventions are the platform's actual output.`,
-    turns:[ { n:1, beat:'detect', label:'Why was my $12,000 purchase declined?', events:T1 },
-            { n:2, beat:'approve', label:'Customer verification', events:T2 } ] };
+    blurb:`A real Diversion Review Board case captured live (session ${cap.session_id}). Every request below — the prompt, ${handoffs.length} handoffs, ${reviewers.length} reviewer messages, the escalation — was genuinely governed by the Policy Engine. The verdicts, Sentinel checks (${(sent.fired_checks||[]).map(f=>f.name).join(', ')||'—'}), and Coordinator interventions are the platform's actual output.`,
+    turns:[ { n:1, beat:'detect', label:'Why was our $12,000 controlled-substance order held?', events:T1 },
+            { n:2, beat:'approve', label:'Buyer corroboration', events:T2 } ] };
 }
 // Replay YOUR session. The platform records every governed request automatically
 // (the audit trail), so this does NOT run anything — it builds a replay from the
-// card-denial you just ran in the chat (this page's SESSION_ID).
+// Diversion Review Board case you just ran in the chat (this page's SESSION_ID).
 async function lensCaptureLive(){
   const btn = document.getElementById('gl-capture');
   const orig = btn ? btn.textContent : '';
@@ -2915,10 +2916,10 @@ async function lensCaptureLive(){
       await new Promise(r=>setTimeout(r,800));   // Sentinel/Coordinator write a beat after the run
     }
     if (!cap || !cap.found || !(cap.trail||[]).length){
-      alert('No governed card-denial found in this session yet.\n\nRun “Review Card Denial” from the chat (left menu) first — let it reach Human Review — then click “Replay this session”.');
+      alert('No governed Diversion Review Board case found in this session yet.\n\nRun “Diversion Review Board” from the chat (Governance Scenarios) first — let it reach Human Review — then click “Replay this session”.');
       return;
     }
-    const trigger = 'Why was my recent $12,000 card transaction declined?';
+    const trigger = 'Why was our recent $12,000 controlled-substance order to Valley Pharmacy Group held for compliance review?';
     LENS_SCENARIOS['live_capture'] = _liveScenarioFromCapture(cap, { reply:'' }, trigger);
     lensSelectScenario('live_capture');
   } catch(e){ alert('Replay error: ' + e); }
@@ -2929,7 +2930,7 @@ const SRC = {
   pe:       { i:'', l:'Policy Engine' },
   sentinel: { i:'', l:'Sentinel' },
   coord:    { i:'', l:'Coordinator' },
-  council:  { i:'', l:'Fraud Review Authority' },
+  council:  { i:'', l:'Diversion Review Board' },
   policy:   { i:'', l:'Policy update' },
   hitl:     { i:'', l:'Human Review' },
 };
@@ -2964,7 +2965,7 @@ async function _glEnterReplay(){
   if (LENS.captureReady){
     try {
       const cap = await (await fetch('/api/lens/capture/'+SESSION_ID)).json();
-      LENS_SCENARIOS['live_capture'] = _liveScenarioFromCapture(cap, {reply:''}, 'Why was my recent $12,000 card transaction declined?');
+      LENS_SCENARIOS['live_capture'] = _liveScenarioFromCapture(cap, {reply:''}, 'Why was our recent $12,000 controlled-substance order to Valley Pharmacy Group held for compliance review?');
       LENS.scenario = 'live_capture';
     } catch(e){ LENS.captureReady = false; }
   }
@@ -3031,7 +3032,7 @@ function lensHitlResolve(action){
   const stage = e.stage || 2;
   if (action==='reject' || (action==='approve' && stage===1)){
     LENS.terminal = { idx:c, kind:action,
-      text: action==='reject' ? (e.rejectText||'Denial upheld.') : (e.approveText||'Approved without verification.') };
+      text: action==='reject' ? (e.rejectText||'Hold upheld.') : (e.approveText||'Released without corroboration.') };
     lensPause(); lensRender(); return;
   }
   if (!LENS.hitlDone) LENS.hitlDone = new Map();
@@ -3077,7 +3078,7 @@ function _roleChip(role){
 }
 // ── App-side message bubble (left column) ──
 function _glApp(e){
-  const lbl = e.who==='customer' ? 'Customer'
+  const lbl = e.who==='customer' ? 'Operator'
             : e.who==='system'   ? 'System'
             : ('VitaLink · ' + (e.from || 'Agent'));   // App · Agent identity
   const cls = (e.tally ? ' tally' : '') + (e.resolved ? ' resolved' : '');
@@ -3137,7 +3138,7 @@ function _glPlat(e){
       html += `<div class="gl-hitl ${t.kind==='reject'?'rejected':'done'}">${t.kind==='reject'?'Denied':'Approved'} by human — ${t.text}</div>`;
     } else if (LENS.hitlDone && LENS.hitlDone.has(idx)){
       const act = LENS.hitlDone.get(idx);
-      const lbl = act==='request_info' ? 'requested customer verification'
+      const lbl = act==='request_info' ? 'requested buyer corroboration'
                 : act==='reject' ? 'denied the override' : 'approved the override';
       html += `<div class="gl-hitl done">▶ Human ${lbl} — replayed.</div>`;
     } else if (LENS.mode !== 'step'){
@@ -3162,12 +3163,12 @@ function _glReceipts(f){
   const rounds     = f.filter(e => e.tally===true || (typeof e.tally==='string' && /Round/i.test(e.tally))).length;
   const escal      = f.filter(e => e.hitl).length;
   const outcome = LENS.scenario==='card_denial'
-      ? `${rounds} re-poll rounds · ${escal} human escalation · final APPROVE (step-up verification)`
+      ? `${rounds} re-poll rounds · ${escal} human escalation · final RELEASE (buyer corroborated)`
     : LENS.scenario==='sanctions'
       ? `deterministic block at the gate · final COERCIVE (no negotiation)`
     : LENS.scenario==='structuring'
-      ? `per-turn passes overridden by cross-turn detection · final COERCIVE (AML alert)`
-      : `same wire re-run after the policy change · same COERCIVE verdict, now routed to human review`;
+      ? `per-turn passes overridden by cross-turn detection · final COERCIVE (DEA suspicious-order alert)`
+      : `same shipment re-run after the policy change · same COERCIVE verdict, now routed to human review`;
   return `<div class="gl-receipts">
     <div class="rh">✓ Decision recorded — full audit trail</div>
     <div class="rs">${f.length} governance events · ${verdicts} policy verdicts · ${outcome}.<br>
@@ -3261,17 +3262,17 @@ function lensRender(){
       const appI  = ev.filter(e => e.side==='app'  && e._idx<=cur);
       const platI = ev.filter(e => e.side==='plat' && e._idx<=cur);
       let appHtml = appI.length ? appI.map(_glApp).join('') : '<div class="gl-empty">—</div>';
-      // When a terminal human decision lands in THIS turn, MyBank closes the loop with the
+      // When a terminal human decision lands in THIS turn, VitaLink closes the loop with the
       // customer on the app side (the platform side already shows the human's ruling).
       // The closing text is taken from the HITL beat's appApproved/appDenied when present,
-      // so it reads correctly per scenario (a card purchase, a wire, etc.).
+      // so it reads correctly per scenario (a held order, a shipment, etc.).
       if (LENS.terminal && f[LENS.terminal.idx] && f[LENS.terminal.idx]._turn===ti){
         const tev = f[LENS.terminal.idx];
         const denied = LENS.terminal.kind === 'reject';
         const closeMsg = denied
           ? (tev.appDenied  || 'Your request was not approved. Please contact support if you believe this is an error.')
           : (tev.appApproved || 'Approved — your request has been processed.');
-        appHtml += _glApp({ side:'app', who:'agent', from:'Banking Agent', text: closeMsg,
+        appHtml += _glApp({ side:'app', who:'agent', from:({ card_denial:'Order Intake', live_capture:'Order Intake', structuring:'Route Optimizer' }[LENS.scenario] || 'Cross-Border Logistics'), text: closeMsg,
                             resolved: !denied, _idx: LENS.terminal.idx });
       }
       html += `<div class="gl-turn ${ti===activeTurn?'active':''}">

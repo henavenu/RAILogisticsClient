@@ -318,12 +318,23 @@ def _get_final_response(
         + [ai_msg]
         + tool_results
     )
-    response = (
-        llm.invoke(full_messages, config=config)
-        if config is not None
-        else llm.invoke(full_messages)
-    )
-    return response
+    def _call():
+        return (
+            llm.invoke(full_messages, config=config)
+            if config is not None
+            else llm.invoke(full_messages)
+        )
+
+    # Groq sometimes emits a tool call in this tool-free summary turn and rejects its own
+    # output (400 tool_use_failed). Retry, then fall back to the tool results themselves.
+    for _ in range(2):
+        try:
+            return _call()
+        except Exception as e:  # noqa: BLE001
+            if "tool_use_failed" not in str(e):
+                raise
+            logger.warning("final response: LLM tool_use_failed, retrying")
+    return AIMessage(content="\n\n".join(str(t.content) for t in tool_results) or "Done.")
 
 
 # ── A2A synthetic-call helper ─────────────────────────────────────────────────
@@ -790,10 +801,10 @@ def intl_wire_agent_node(state: BankingState, config: RunnableConfig) -> Dict[st
                 "To process your cross-border pharmaceutical shipment I need the "
                 "following details:\n"
                 "  • Consignee full name\n"
-                "  • Import license or local account number\n"
+                "  • Import license number\n"
                 "  • Customs code / import broker\n"
                 "  • Destination country\n"
-                "  • Amount and currency\n"
+                "  • Product and quantity (units)\n"
                 "  • Fulfilment source — primary or alternate distribution center\n\n"
                 "Please provide all of these and I'll process the shipment."
             ))]}
@@ -977,12 +988,11 @@ def domestic_agent_node(state: BankingState, config: RunnableConfig) -> Dict[str
             return {"messages": [AIMessage(content=(
                 "To complete your domestic replenishment order I need a few details. "
                 "Please provide:\n"
-                "  • Facility routing number (9-digit routing number)\n"
-                "  • Buyer account number\n"
-                "  • Order amount in USD\n"
+                "  • Receiving facility (pharmacy, clinic or health system)\n"
+                "  • Product and quantity (units)\n"
                 "  • Fulfilment source — primary or alternate distribution center\n\n"
-                "Example: \"Order $200 from the primary DC to routing 021000021, "
-                "account 987654321\""
+                "Example: \"Order 2,000 units of amoxicillin 500mg from the primary DC "
+                "for Riverside Family Pharmacy\""
             ))]}
         logger.error("domestic_agent_node unexpected error: %s", exc, exc_info=True)
         return {"messages": [AIMessage(content=(
@@ -1291,8 +1301,8 @@ def coordinator_node(state: BankingState, config: RunnableConfig):
         _execute_tools(coord_ai, {request_policy_review.name: request_policy_review}, config)
         # Reached only on re-invoke after HITL resolution (Sentinel sync suppressed).
         return {"messages": [AIMessage(content=(
-            "Thanks for your patience — I'm reviewing the decline on your $12,000 Singapore charge "
-            "with our card review team now. I'll be back with an update shortly."
+            "Thanks for your patience — the Diversion Review Board is reviewing the held $12,000 "
+            "controlled-substance order to Valley Pharmacy Group now. I'll be back with an update shortly."
         ))]}
 
     # Within a round: dispatch the next reviewer.

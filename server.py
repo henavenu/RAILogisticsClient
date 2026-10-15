@@ -75,10 +75,10 @@ except ModuleNotFoundError as _exc:
     sys.stderr.write(
         "\n"
         "=======================================================================\n"
-        f"  MyBank startup error: cannot import the RAI Trust SDK ('{_exc.name}').\n"
+        f"  VitaLink startup error: cannot import the RAI Trust SDK ('{_exc.name}').\n"
         "\n"
         "  The SDK is installed *editable* (pip install -e) and is reachable only\n"
-        "  from the venv that holds its .pth files. You are running MyBank with an\n"
+        "  from the venv that holds its .pth files. You are running VitaLink with an\n"
         "  interpreter that does not have the SDK on its path:\n"
         f"      current interpreter : {sys.executable}\n"
         "\n"
@@ -679,7 +679,7 @@ def demo_structuring_wire(req: StructuringWireRequest):
         f"(Suspicious Order Monitoring active).\n\n"
         f"  Product:          Oxycodone 30mg (Schedule II)\n"
         f"  Quantity:         {AMOUNT:,.0f} units\n"
-        f"  Buyer:            Valley Pharmacy Group · Routing {ROUTING} · Acct ····{ACCOUNT[-4:]}\n"
+        f"  Buyer:            Valley Pharmacy Group · DEA reg. FV1234563\n"
         f"  PO Reference:     {ref}\n"
         f"  Cumulative today: {cum:,.0f} of {_STRUCTURING_THRESHOLD:,.0f}-unit DEA SOM threshold\n"
         f"  Inventory:        {new_bal:,.0f} units on hand (Central Rx Inventory)\n"
@@ -1129,8 +1129,8 @@ def _generate_hitl_advisory(payload: dict, user_message: str = "") -> str:
         return (
             f"Inter-agent compliance threshold reached after {count} handoff(s). "
             f"Policy signal: {viol_text}. "
-            f"Transaction details: {user_message[:200] if user_message else 'not available'}. "
-            f"Recommended: review the transaction details and verify compliance "
+            f"Order details: {user_message[:200] if user_message else 'not available'}. "
+            f"Recommended: review the order details and verify compliance "
             f"requirements before approving."
         )
 
@@ -2330,10 +2330,10 @@ def hitl_resolve(req: HITLResolveRequest):
         if req.decision == "rejected":
             # Reviewer declined all options
             reply = (
-                "Your card recommendation request has been reviewed by our compliance team. "
-                "After careful assessment, we are unable to make a specific recommendation "
-                "at this time. A MyBank card specialist will contact you within 1 business day "
-                "to discuss the most suitable options for your profile."
+                "Your supplier recommendation request has been reviewed by our compliance team. "
+                "After careful assessment, we are unable to recommend a specific source "
+                "at this time. A VitaLink sourcing specialist will contact you within 1 business day "
+                "to discuss qualified, DSCSA-compliant supply options."
             )
             _sessions[req.session_id]["hitl_resolved"] = {
                 "decision": "rejected",
@@ -2539,5 +2539,6 @@ def hitl_resolve(req: HITLResolveRequest):
 # ── Entry ─────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    _port = int(os.getenv("MYBANK_PORT", "5001"))
+    # Cloud Run sets PORT; locally run.sh uses MYBANK_PORT / the 5001 default.
+    _port = int(os.getenv("PORT") or os.getenv("MYBANK_PORT", "5001"))
     uvicorn.run(app, host="0.0.0.0", port=_port)

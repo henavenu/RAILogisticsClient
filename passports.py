@@ -174,7 +174,7 @@ def _passport(agent_id: str, name: str, role: str, *, agency: str, impact: int, 
             "acts_in": [s["code"] for s in stamps],
             "data_residency": {"US": "US (us-east)"},
             "model_region": "US",
-            "transfer_basis": {"US": "domestic deployment — no cross-border transfer"},
+            "transfer_basis": {"US": "domestic deployment — no cross-border data transfer"},
         },
         "ownership": {"owner_org": OWNER, "deployment_owner": DEPLOY,
                       "legal_entities": {s["code"]: s["legal_entity"] for s in stamps}},
@@ -223,7 +223,7 @@ _CROSS_BORDER = _passport(
         "data_residency": {"US": "US (us-east)", "EU": "EU (Frankfurt)"},
         "model_region": "US",
         "transfer_basis": {
-            "US": "domestic deployment — no cross-border transfer",
+            "US": "domestic deployment — no cross-border data transfer",
             "EU": "EU–US Data Privacy Framework + SCCs (2021/914) — consignee data pseudonymised "
                   "before the inference call leaves the EU",
         },

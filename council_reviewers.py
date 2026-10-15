@@ -1,7 +1,7 @@
 """
-Fraud Authority reviewers — real LLM agents with a strict, constrained protocol.
+Diversion Review Board reviewers — real LLM agents with a strict, constrained protocol.
 
-Each of the four reviewers assesses the SAME declined-charge case from its own
+Each of the four reviewers assesses the SAME held controlled-substance order from its own
 mandate and returns a compact verdict:
 
     { "vote": "UPHOLD" | "OVERTURN",
@@ -15,8 +15,8 @@ Design goals
 • CANNED — in MYBANK_COUNCIL_MODE=canned (default) the verdicts are fixed →
            instant, deterministic, zero external calls.
 • DEMO-SAFE — the showcase depends on the 2-2 deadlock, so each reviewer's VOTE
-           is pinned to its mandate (Transaction Monitoring + Risk → UPHOLD,
-           Revenue + Customer Experience → OVERTURN) when pin_votes=True.
+           is pinned to its mandate (Order Monitoring + Regulatory Compliance → UPHOLD,
+           Supply Continuity + Patient Access → OVERTURN) when pin_votes=True.
            The LLM still produces real reasoning + the reason_code.
 """
 from __future__ import annotations
@@ -31,50 +31,51 @@ from typing import Dict, List
 logger = logging.getLogger("mybank.council")
 
 # ── Reason taxonomies (the "1 of 5" verdict the reviewer must choose) ──
-UPHOLD_REASONS = ["VELOCITY_ANOMALY", "CROSS_BORDER_RISK", "THRESHOLD_EXCEEDED",
-                  "IDENTITY_UNVERIFIED", "EXPOSURE_RISK"]
-OVERTURN_REASONS = ["ESTABLISHED_RELATIONSHIP", "CONSISTENT_PATTERN", "FALSE_DECLINE_RISK",
-                    "STEP_UP_AVAILABLE", "WITHIN_RISK_APPETITE"]
+UPHOLD_REASONS = ["ORDER_SURGE", "THRESHOLD_EXCEEDED", "REGISTRANT_UNVERIFIED",
+                  "DIVERSION_RISK", "REPORTING_EXPOSURE"]
+OVERTURN_REASONS = ["ESTABLISHED_BUYER", "CONSISTENT_DISPENSING", "PATIENT_ACCESS_RISK",
+                    "CORROBORATION_AVAILABLE", "WITHIN_SOM_LIMITS"]
 
 # ── The shared case every reviewer assesses ──
 DEFAULT_CASE = (
-    "A $12,000 card purchase at TechMegastore Singapore was AUTO-DECLINED. Context: "
-    "it is the cardholder's 5th high-value purchase today and the 3rd international; "
-    "the cardholder is a long-tenure premium customer (relationship value $1.2M) with an "
-    "otherwise consistent spending pattern; the cardholder has NOT yet been identity-verified."
+    "A $12,000 Schedule II order (oxycodone 30mg) from Valley Pharmacy Group was HELD by "
+    "Suspicious Order Monitoring. Context: the order is well above this buyer's usual monthly "
+    "volume and is the 3rd controlled-substance order this week; Valley Pharmacy Group is a "
+    "long-standing buyer that supplies hospice and oncology patients; the buyer's DEA "
+    "registration and dispensing volume have NOT yet been corroborated for this order."
 )
 
 # ── Reviewer specs: mandate-driven vote + allowed reasons + canned fallback ──
 REVIEWER_SPECS = [
     {
         "role": "order_monitoring", "label": "Order Monitoring Agent", "vote": "UPHOLD",
-        "mandate": "Flag fraud risk from velocity and anomaly signals on the declined charge.",
-        "reasons": UPHOLD_REASONS, "default_reason": "VELOCITY_ANOMALY",
-        "canned": "Velocity anomaly — 5th high-value charge today, 3rd international; the decline was the correct control.",
+        "mandate": "Flag diversion risk from order velocity and anomaly signals on controlled substances.",
+        "reasons": UPHOLD_REASONS, "default_reason": "ORDER_SURGE",
+        "canned": "Order surge: well above this buyer's baseline and the 3rd Schedule II order this week; the hold is correct.",
     },
     {
         "role": "revenue", "label": "Supply Continuity Reviewer", "vote": "OVERTURN",
-        "mandate": "Protect legitimate revenue and retain high-value customers.",
-        "reasons": OVERTURN_REASONS, "default_reason": "ESTABLISHED_RELATIONSHIP",
-        "canned": "Premium long-tenure customer ($1.2M relationship); a false decline loses a genuine sale and risks attrition.",
+        "mandate": "Keep legitimate buyers supplied and avoid blocking an established customer.",
+        "reasons": OVERTURN_REASONS, "default_reason": "ESTABLISHED_BUYER",
+        "canned": "Long-standing licensed buyer; holding a legitimate order disrupts supply to its pharmacies.",
     },
     {
         "role": "customer_experience", "label": "Patient Access Reviewer", "vote": "OVERTURN",
-        "mandate": "Avoid false declines and the friction/churn they cause.",
-        "reasons": OVERTURN_REASONS, "default_reason": "FALSE_DECLINE_RISK",
-        "canned": "A hard decline embarrasses a premium customer; offer one-time step-up verification instead.",
+        "mandate": "Protect downstream patient access to essential medicines.",
+        "reasons": OVERTURN_REASONS, "default_reason": "PATIENT_ACCESS_RISK",
+        "canned": "Hospice and oncology patients depend on this stock; corroborate quickly rather than hold indefinitely.",
     },
     {
         "role": "risk_policy", "label": "Regulatory Compliance Reviewer", "vote": "UPHOLD",
-        "mandate": "Enforce thresholds and limit chargeback / compliance exposure.",
-        "reasons": UPHOLD_REASONS, "default_reason": "EXPOSURE_RISK",
-        "canned": "Same-day cross-border concentration creates chargeback/compliance exposure until identity is verified.",
+        "mandate": "Enforce DEA suspicious-order rules and limit DEA / DSCSA regulatory exposure.",
+        "reasons": UPHOLD_REASONS, "default_reason": "REGISTRANT_UNVERIFIED",
+        "canned": "DEA registration and dispensing volume are uncorroborated; shipping now creates suspicious-order reporting exposure.",
     },
 ]
 _SPEC_BY_ROLE = {s["role"]: s for s in REVIEWER_SPECS}
 
 _SYSTEM_TMPL = (
-    "You are the {label} reviewer on MyBank's Fraud Authority. "
+    "You are the {label} on VitaLink Distribution's Diversion Review Board. "
     "Your mandate: {mandate}\n"
     "Assess this case:\n{case}\n\n"
     "Respond with ONLY compact JSON, no prose, no markdown:\n"

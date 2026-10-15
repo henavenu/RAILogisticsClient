@@ -186,7 +186,7 @@ function openDrawer(id) {
         ${kv([['Acts in', esc(p.sovereignty.acts_in.join(', '))],
               ['Data residency', esc(Object.entries(p.sovereignty.data_residency).map(([k, v]) => k + ': ' + v).join(' · '))],
               ['Model region', esc(p.sovereignty.model_region)],
-              ['Transfer basis', Object.entries(p.sovereignty.transfer_basis).map(([k, v]) => `<div><b>${esc(k)}</b> — ${esc(v)}</div>`).join('')]])}
+              ['Data transfer basis', Object.entries(p.sovereignty.transfer_basis).map(([k, v]) => `<div><b>${esc(k)}</b> — ${esc(v)}</div>`).join('')]])}
       </div>
       <div class="sec"><h3>Ownership &amp; lineage of authority</h3>
         ${kv([['Owner', esc(p.ownership.owner_org)], ['Deployment owner', esc(p.ownership.deployment_owner)]])}
