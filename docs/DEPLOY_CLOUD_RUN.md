@@ -27,8 +27,6 @@ SDK `governance ACTIVE eval=SYNC enforce=RAISE`, `scenario_check.py` ALL PASS (1
    cloud platform. `onboard_trust.py --pap <url> --pe <url>` does it locally, but it also
    calls Policy Engine `/internal/packs` and `/internal/app-stacks/…`, which the ingress
    may not expose. Same for `onboard_supply_chain.py`.
-3. **Sentinel and Coordinator routes.** The app calls them directly for the Trust Radar
-   and Human Review enrichment (`SENTINEL_URL`, `COORDINATOR_URL`).
 4. **Human Review deep link.** `?goto=hitl` was added by the local gateway; check the
    cloud dashboard supports it, or the link opens the dashboard home.
 
@@ -71,6 +69,21 @@ gcloud run services update vitalink --region us-east1 \
 - Logs show `PE … connected`, `PAP … connected`, `Ready -- governance ACTIVE eval=SYNC enforce=RAISE`.
 - `venv/bin/python scenario_check.py https://<service-url>` passes.
 - Evaluations appear on the platform dashboard (`/ui/`) under `pharmalogistics`.
+
+## Deployed (15 Oct 2026)
+
+- Project `cb9252819a-raigov-gc`, service `vitalink` in `us-east1`:
+  https://vitalink-82745682889.us-east1.run.app
+- Created with Cloud Run **Connect repository → Cloud Build** (GitHub `main`, build type
+  Dockerfile `/Dockerfile`). Every push to `main` rebuilds and redeploys; the service keeps
+  its environment variables.
+- Required at startup: `TRUST_PE_URL`, `PAP_URL`, `SENTINEL_URL`. Without one the container
+  exits ("Refusing to start") and Cloud Run reports it failed to listen on port 8080.
+  Sentinel and Coordinator are at `/agents/sentinel` and `/agents/coordinator` on the
+  platform URL.
+- Until IAP lets the service through and `RAI_APP_KEY` is set, the SDK starts
+  `Ready (DEGRADED) -- observe-only eval=ASYNC enforce=NONE`: the app runs but nothing is
+  enforced.
 
 ## Rules for this app
 
