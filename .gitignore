@@ -177,3 +177,6 @@ _inspect_db.py
 # SDK config (per-environment Trust API URLs)
 rai.env
 *.out
+
+# Cloud Run env file (secrets)
+cloudrun.env

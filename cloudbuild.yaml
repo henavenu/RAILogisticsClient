@@ -1,0 +1,32 @@
+# Build the VitaLink image, push it to Artifact Registry and deploy it to Cloud Run.
+#
+#   gcloud builds submit --config cloudbuild.yaml \
+#     --substitutions=_REGION=us-east1,_REPO=<artifact-registry-repo>,_SERVICE=vitalink .
+#
+# Environment variables and the RAI_APP_KEY secret are set on the Cloud Run service
+# (see docs/DEPLOY_CLOUD_RUN.md), not here, so redeploys keep them.
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:${_TAG}', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:${_TAG}']
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - '${_SERVICE}'
+      - '--image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:${_TAG}'
+      - '--region=${_REGION}'
+      - '--port=8080'
+      # In-memory demo state (sessions, Human Review holds, order counts): one instance only.
+      - '--min-instances=1'
+      - '--max-instances=1'
+images:
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE}:${_TAG}'
+substitutions:
+  _REGION: us-east1
+  _REPO: vitalink
+  _IMAGE: vitalink
+  _SERVICE: vitalink
+  _TAG: latest

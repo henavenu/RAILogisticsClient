@@ -1,0 +1,22 @@
+# Keep secrets, local config, environments and logs out of the image.
+.git
+.gitignore
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+rai.env
+rai.toml
+cloudrun.env
+*.log
+*.out
+*.db
+*.db-wal
+*.db-shm
+docs/
+Dockerfile
+.dockerignore
+cloudbuild.yaml
