@@ -47,8 +47,7 @@ venv/bin/python scenario_check.py http://127.0.0.1:8080
 To run the container against the local beta platform, use `http://host.docker.internal:3002/3003/3012/3013` for the URLs.
 
 ### 2. Commit and push
-Branch `main` of https://github.com/henavenu/RAILogisticsClient (the old full-platform
-version is tagged `old-platform`).
+Branch `main` of https://github.com/henavenu/RAILogisticsClient.
 
 ### 3. GCP setup (once)
 ```bash
