@@ -8,8 +8,8 @@ VitaLink Distribution is the demo's pharma distributor (US → EU). On the platf
 | | |
 |---|---|
 | Repo | https://github.com/henavenu/RAILogisticsClient |
-| Branch | **`beta-standalone`** (the standalone client for the beta Trust platform). `main` still holds the old platform version. |
-| Clone | `git clone -b beta-standalone https://github.com/henavenu/RAILogisticsClient.git PharmaLogistics-Demo` |
+| Branch | **`main`** (the standalone client for the beta Trust platform). The old full-platform version is tagged `old-platform`. |
+| Clone | `git clone https://github.com/henavenu/RAILogisticsClient.git PharmaLogistics-Demo` |
 | What's in it | The app (`server.py`, `graph.py`, `tools.py`, `mock_data.py`, `council_reviewers.py`), agent passports (`passports.py`, `ui/passports.html`), registry cards (`agent_cards.json`), onboarding (`onboard_trust.py`), smoke test (`scenario_check.py`), launcher (`run.sh`), local Trust gateway (`trust_gateway.py`), the SDK wheels (`sdk-dist/wheelhouse`, RAI Trust SDK 0.1.2), and the docs (`docs/`). |
 | Not in git | `.env` (LLM key, `RAI_APP_KEY`) and `rai.env` (Trust URLs). `run.sh` creates both from the `.example` files. |
 
