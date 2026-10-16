@@ -72,7 +72,7 @@ gcloud run services update vitalink --region us-east1 \
 
 ## Deployed (15 Oct 2026)
 
-- Project `cb9252819a-raigov-gc`, service `vitalink` in `us-east1`:
+- Project `cb9252819a-raigov-gc` (project ID `cog01kmzvxwkcp4jrwtxtgttgsnh0`), service `vitalink` in `us-east1`:
   https://vitalink-82745682889.us-east1.run.app
 - Created with Cloud Run **Connect repository → Cloud Build** (GitHub `main`, build type
   Dockerfile `/Dockerfile`). Every push to `main` rebuilds and redeploys; the service keeps
