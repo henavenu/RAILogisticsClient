@@ -772,7 +772,7 @@ def _push_sentinel_advisory(
     import urllib.request as _urlreq
 
     sentinel_url = os.getenv("SENTINEL_URL", "http://127.0.0.1:3012")
-    app_id       = os.getenv("TRUST_APP_ID", "mybank")
+    app_id       = os.getenv("TRUST_APP_ID", "pharmalogistics")
 
     # Synthetic webhook — Sentinel uses session_id to pull audit events from PE.
     data = {
@@ -838,7 +838,7 @@ def _write_domestic_transfer_audit_event(
     import urllib.request as _urlreq
 
     pe_url = os.getenv("TRUST_PE_URL", "http://127.0.0.1:3003")
-    app_id = os.getenv("TRUST_APP_ID", "mybank")
+    app_id = os.getenv("TRUST_APP_ID", "pharmalogistics")
 
     content = (
         f"Domestic ACH transfer of ${amount:,.2f} submitted successfully. "
@@ -903,7 +903,7 @@ def _write_boundary_excursion_audit_event(session_id: str) -> None:
     import urllib.request as _urlreq
 
     pe_url = os.getenv("TRUST_PE_URL", "http://127.0.0.1:3003")
-    app_id = os.getenv("TRUST_APP_ID", "mybank")
+    app_id = os.getenv("TRUST_APP_ID", "pharmalogistics")
 
     content = (
         "domestic_agent called international_transfer — scope violation detected. "
@@ -967,7 +967,7 @@ def _push_hitl_to_pap(session_id: str, payload: dict) -> None:
         **payload,
         "session_id":   session_id,
         "callback_url": callback_url,
-        "app_id":       os.getenv("TRUST_APP_ID", "mybank"),
+        "app_id":       os.getenv("TRUST_APP_ID", "pharmalogistics"),
     }
 
     def _post() -> None:
@@ -1608,7 +1608,7 @@ async def run_showcase(scenario: str):
 
     turns    = _SHOWCASE_TURNS[scenario]
     pe_url   = os.getenv("TRUST_PE_URL", "http://127.0.0.1:3003")
-    app_id   = os.getenv("TRUST_APP_ID", "mybank")
+    app_id   = os.getenv("TRUST_APP_ID", "pharmalogistics")
     session_id = f"showcase-{scenario}-{_uuid.uuid4().hex[:8]}"
 
     results: List[dict] = []
